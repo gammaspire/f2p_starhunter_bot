@@ -7,8 +7,12 @@ from commands import get_quote
 from commands import add_encouraging_message, load_encouragement_keywords, save_encouragement_keywords
 from commands import print_loc_key
 
+from pull_from_gs import get_wave_time
+
 #load environment variables from 'token.env' file
 load_dotenv('token.env')
+
+CHANNEL_ID = os.getenv('CHANNEL_ID')   #will need channel ID for later
 
 #define intents; required to read message content in on_message
 intents = discord.Intents.default()
@@ -83,5 +87,20 @@ async def on_message(message):
     #DISSEMINATE THE GUIDE!
     if message.content.startswith("$guide"):
         await message.channel.send('Check out out Scouting Guide Here: https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/')
+        
+    #print current wave time into the chat!   
+    if message.content.startswith("$wave"):
+        wave_time = int(get_wave_time())
+    
+        if wave_time>45.:
+            scout_string='All stars have spawned. Late wave scouting time!'
+        elif (wave_time >= 10.) & (wave_time <= 45.):
+            scout_string='Begin early-mid scouting now!'
+        else:
+            scout_string='You can lounge for a bit before scouting.'
+            
+        await message.channel.send(
+            f"Minutes into Wave: +{wave_time}\nMinutes Until End of Wave: +{92 - wave_time}\n{scout_string}"
+        )
 
 client.run(os.getenv('TOKEN'))

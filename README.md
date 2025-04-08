@@ -18,7 +18,8 @@ python main.py
 * $loc location_shorthand
     * will output what location our shorthand points to, along with a link to https://locations.dust.wiki that includes a more exact pointer to where the star spawns! e.g., `$loc nc` will output 'nc = North Crandor'.
 
-*
+* $wave
+    * will output current wave time, the time until end-of-wave, and whether (according to our conventions) we can go scouting for stars.
 
 ## Misc. Commands List
 
