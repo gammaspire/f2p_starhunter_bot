@@ -7,7 +7,7 @@ from commands import get_quote
 from commands import add_encouraging_message, load_encouragement_keywords, save_encouragement_keywords
 from commands import print_loc_key
 
-from pull_from_gs import get_wave_time
+from pull_from_gs import *
 
 #load environment variables from 'token.env' file
 load_dotenv('token.env')
@@ -38,7 +38,12 @@ async def on_message(message):
     if message.author == client.user:
         return
         
-    #if the message includes any of the following, reply with a random greeting
+    ############################################################
+    #If message includes any of the keywords, random greeting will print
+    #use: 
+    #   e.g., user types "hello"
+    #   bot might respond with "uWu, {name}!"
+    ############################################################
     greeting_keywords = ['hello','Hello','hi','Hi','hey','Hey','hello bot','Hello bot','hi bot','Hi bot','hey bot',
                         'Hey bot']
     if any(word in message.content for word in greeting_keywords):
@@ -55,19 +60,29 @@ async def on_message(message):
             
         await message.channel.send(f'{chosen_greeting}, {name}!')
     
-    #if the message includes any of the following, reply with random encouragement
+    ############################################################
+    #If message includes any of the keywords, random encouraging message will print
+    #use: 
+    #   e.g., user types "I am feeling upset"
+    #   bot might respond with "Smile, {name}."
+    ############################################################
     sad_keywords = ['miserable','sad','unhappy','sadgams','angry','upset','depressed','infuriated','grumpy']
     if any(word in message.content for word in sad_keywords):
         encouragement = load_encouragement_keywords()   #load list of encouragement phrases!
         chosen_encouragement=random.choice(encouragement)
         await message.channel.send(f'{chosen_encouragement}, {name}.')
-        
+    
+    ############################################################
+    #Print randon inspirational quote
+    #use: 
+    #   $inspire
+    ############################################################
     if message.content.startswith('$inspire'):
         quote = get_quote()
         await message.channel.send(f'You seem to be in need of scouting motivation, {name}. Here is a quote.')
         await message.channel.send(quote)
     
-    #add encouragements to the list
+    #add encouragements to the list, if a user defined any
     if message.content.startswith("$add "):
         encouragement = load_encouragement_keywords()   #load list of encouragement phrases!
         flag=add_encouraging_message(message,encouragement)   #return flag; if true, then phrase is not in keywords!
@@ -77,30 +92,49 @@ async def on_message(message):
         else:
             await message.channel.send(f"This phrase is already in the list, {name}!")
     
-    #a key for our location shorthand
+    ############################################################
+    #Print the key to our shorthand for star spawning locations!
+    #use: 
+    #   $loc shorthand
+    #e.g., '$loc nc' will output 'North Crandor'
+    ############################################################
     if message.content.startswith("$loc "):
         
         loc_shorthand, loc_key = print_loc_key(message)
         await message.channel.send(f'{loc_shorthand} = {loc_key}')
         await message.channel.send(f'See https://locations.dust.wiki for exact location!')
     
-    #DISSEMINATE THE GUIDE!
+    ############################################################
+    #print wave guide URL into the chat!
+    #use:
+    #    $guide
+    ############################################################
     if message.content.startswith("$guide"):
         await message.channel.send('Check out out Scouting Guide Here: https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/')
-        
+       
+    ############################################################
     #print current wave time into the chat!   
+    #use:
+    #    $wave
+    ############################################################
     if message.content.startswith("$wave"):
-        wave_time = int(get_wave_time())
-    
-        if wave_time>45.:
-            scout_string='All stars have spawned. Late wave scouting time!'
-        elif (wave_time >= 10.) & (wave_time <= 45.):
-            scout_string='Begin early-mid scouting now!'
-        else:
-            scout_string='You can lounge for a bit before scouting.'
-            
-        await message.channel.send(
-            f"Minutes into Wave: +{wave_time}\nMinutes Until End of Wave: +{92 - wave_time}\n{scout_string}"
-        )
+        
+        wave_message = create_wave_message()
+        
+        await message.channel.send(wave_message)
+        
+    ############################################################
+    #Print the current poof time estimate for a world!
+    #use: 
+    #   $poof world
+    #e.g., '$poof 308' will output '+30' if +30 is the poof time
+    ############################################################
+    if message.content.startswith("$poof "):
+        
+        world = message.content[6:].strip()
+        poof_message = create_poof_message(world)
+        
+        await message.channel.send(poof_message)
+        
 
 client.run(os.getenv('TOKEN'))

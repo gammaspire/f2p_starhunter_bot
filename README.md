@@ -21,6 +21,9 @@ python main.py
 
 * $wave
     * will output current wave time, the time until end-of-wave, and whether (according to our conventions) we can go scouting for stars.
+    
+* $poof f2p_world
+    * will output the poof time from dust.wiki for the inputted f2p world as well as the current wave time, for ease of comparison.
 
 ## Misc. Commands List
 

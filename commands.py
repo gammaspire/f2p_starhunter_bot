@@ -71,3 +71,6 @@ def print_loc_key(message):
         return loc_shorthand, loc_dict[loc_shorthand]
     except:
         return 'Location invalid! See https://locations.dust.wiki for a list of our shorthand.'
+    
+    
+
