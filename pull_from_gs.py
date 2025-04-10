@@ -70,8 +70,11 @@ def get_poof_time(world_string):
     #open Google Sheet (you can also use .worksheet("Tab Name"))
     #key is part of dust.wiki hyperlink...which is public
     spreadsheet=gc.open_by_key('17rGbgylW_IPQHaHUW1WsJAhuWI7y2WhplQR79g-obqg')
-
-    poof_time = spreadsheet.worksheet('Spawn Time Estimates').get(cell)[0][0]
+    
+    try:
+        poof_time = spreadsheet.worksheet('Spawn Time Estimates').get(cell)[0][0]
+    except:
+        poof_time = 'TBD'
     
     return poof_time
     
@@ -79,12 +82,17 @@ def get_poof_time(world_string):
 #print the poof time for the world, the current wave time, and whether the star is callable.
 #otherwise, the print message will a default "World unknown", etc.
 def create_poof_message(world_string):
-    wave_time = get_wave_time()
+    
     try:
         poof_time = get_poof_time(world_string)
         
         #prints poof time for world and current wave time.
-        return f'Poof time for {world_string} is +{poof_time}. The current wave time is +{wave_time}.'
+        
+        if poof_time=='TBD':
+            return f'Poof time for {world_string} is {poof_time}!'
+        else:
+            wave_time = get_wave_time()
+            return f'Poof time for {world_string} is +{poof_time}. The current wave time is +{wave_time}.'
     
     except:
         return 'World unknown. Please retry using an F2P world.'

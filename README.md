@@ -25,13 +25,18 @@ python main.py
 * $poof f2p_world
     * will output the poof time from dust.wiki for the inputted f2p world as well as the current wave time, for ease of comparison.
 
-## Misc. Commands List
+## Miscellaneous Commands List
 
 * $add encouraging_message
-    * will add an encouraging message to the list of options that the bot will select from (when it detects a "sad" word in a user's message)
+    * will add an encouraging message to the list of options that the bot will select from (when it detects an "unhappy" word in a user's message)
 
 * $inspire
     * will pull from a random assortment of inspirational messages, taken from https://zenquotes.io/api/random
 
 * $guide
     * Will print a link to out Scouting Guide (courtesy of WoolyClammoth!)
+    
+
+#### Notes
+
+* The base of this code originated from https://www.freecodecamp.org/news/create-a-discord-bot-with-python/.

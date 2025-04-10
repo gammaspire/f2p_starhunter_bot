@@ -3,10 +3,7 @@ import os
 from dotenv import load_dotenv
 import random
 
-from commands import get_quote
-from commands import add_encouraging_message, load_encouragement_keywords, save_encouragement_keywords
-from commands import print_loc_key
-
+from commands import *
 from pull_from_gs import *
 
 #load environment variables from 'token.env' file
@@ -32,6 +29,7 @@ async def on_ready():
 #the function is called when something happens (in this case, when the bot receives message)
 async def on_message(message):
     
+    #determine name of the user
     name = message.author.display_name
     
     #if the message is from the bot, the bot will not respond...and this function will "exit"
@@ -44,15 +42,14 @@ async def on_message(message):
     #   e.g., user types "hello"
     #   bot might respond with "uWu, {name}!"
     ############################################################
-    greeting_keywords = ['hello','Hello','hi','Hi','hey','Hey','hello bot','Hello bot','hi bot','Hi bot','hey bot',
-                        'Hey bot']
+    
+    #load greeting keywords 
+    greeting_keywords = pull_greeting_keywords()
+
     if any(word in message.content for word in greeting_keywords):
         
-        common_greetings=['Eyyy','Heeeeey','Yo','Hello','Howdy','Hola','Greetings',
-                      'Salutations','Hallo','Sup','Wassup','Haaaaay','Aloha','OMG','uWu',
-                         'WAZZAAAAPPPP','Hewwo','NiHao','Guten Taggity','Yo yo','Bonjour',
-                         'Ready to rumble']
-        wooly_dislike_list=[]
+        common_greetings, wooly_dislike_list = greeting_response_keywords()
+        
         if name not in wooly_dislike_list:
             chosen_greeting=random.choice(common_greetings)
         else:
@@ -66,7 +63,7 @@ async def on_message(message):
     #   e.g., user types "I am feeling upset"
     #   bot might respond with "Smile, {name}."
     ############################################################
-    sad_keywords = ['miserable','sad','unhappy','sadgams','angry','upset','depressed','infuriated','grumpy']
+    sad_keywords = load_sad_keywords()
     if any(word in message.content for word in sad_keywords):
         encouragement = load_encouragement_keywords()   #load list of encouragement phrases!
         chosen_encouragement=random.choice(encouragement)
@@ -82,7 +79,11 @@ async def on_message(message):
         await message.channel.send(f'You seem to be in need of scouting motivation, {name}. Here is a quote.')
         await message.channel.send(quote)
     
-    #add encouragements to the list, if a user defined any
+    ############################################################
+    #add encouragements to the 'grab bag' list, only if phrase is unique and not already in the list
+    #use: 
+    #   $add encouraging_phrase_here
+    ############################################################
     if message.content.startswith("$add "):
         encouragement = load_encouragement_keywords()   #load list of encouragement phrases!
         flag=add_encouraging_message(message,encouragement)   #return flag; if true, then phrase is not in keywords!
@@ -110,7 +111,7 @@ async def on_message(message):
     #    $guide
     ############################################################
     if message.content.startswith("$guide"):
-        await message.channel.send('Check out out Scouting Guide Here: https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/')
+        await message.channel.send(print_guide())
        
     ############################################################
     #print current wave time into the chat!   
