@@ -25,6 +25,9 @@ python main.py
 * $poof f2p_world
     * will output the poof time from dust.wiki for the inputted f2p world as well as the current wave time, for ease of comparison.
 
+* $hold f2p_world star_tier
+    * will output the suggested call time from dust.wiki of a held star given the world it spawned into and its tier. additionally, there will be a more explicit message stating whether or not the star is callable.
+
 ## Miscellaneous Commands List
 
 * $add encouraging_message

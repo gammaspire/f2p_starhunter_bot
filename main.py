@@ -136,6 +136,26 @@ async def on_message(message):
         poof_message = create_poof_message(world)
         
         await message.channel.send(poof_message)
+    
+    
+    ############################################################
+    #Print the current call time estimate for a star given its
+    #world and tier!
+    #use: 
+    #   $hold world tier
+    #e.g., '$hold 308 7' (for a t7 star in world 308)
+    ############################################################
+    if message.content.startswith("$hold "):
+        
+        #separate components of the message (default delimiter is ' ')
+        components = message.content.split()
+        world = components[1]
+        tier = components[2]
+        
+        call_message = create_call_message(world,tier)
+        
+        await message.channel.send(call_message)
+        
         
 
 client.run(os.getenv('TOKEN'))
