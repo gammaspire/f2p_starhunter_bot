@@ -1,5 +1,6 @@
 import requests
 import json
+import os
 
 
 ############################################################
@@ -156,6 +157,18 @@ def print_loc_key(message):
 
 def print_guide():
     return 'Check out out Scouting Guide Here: https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/'
-    
-    
 
+############################################################
+#load json file which holds all scheduled jobs!
+############################################################
+def load_scheduled_jobs(job_file_name):
+    if os.path.exists(job_file_name):
+        with open(job_file_name, 'r') as f:
+            return json.load(f)
+    else:
+        return {}
+
+#this will write job to job_file_name, and create job_file_name if does not already exist
+def save_scheduled_jobs(data, job_file_name):
+    with open(job_file_name, 'w') as f:
+        json.dump(data, f)
