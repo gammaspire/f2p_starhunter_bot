@@ -8,3 +8,13 @@ sup bot
 Sup bot
 yo bot
 Yo bot
+hello, bot
+Hello, bot
+hi, bot
+Hi, bot
+hey, bot
+Hey, bot
+sup, bot
+Sup, bot
+yo, bot
+Yo, bot

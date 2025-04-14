@@ -22,12 +22,6 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 # Begin scheduler...need for $start_jokes command; will generate scheduled messages!
 scheduler = AsyncIOScheduler()
 
-#create dictionary of all scheduled channel ids! otherwise, if I want 
-#to run $start_jokes in multiple channels, using the $start_jokes command
-#in one channel will overwrite the other channel's id
-#KEY = guild.id (server ID), value = channel.id
-scheduled_channel_ids_jokes = {}   #this one specifically is for the JOKES
-
 #@bot.even is used to register an event
 @bot.event
 async def on_ready():
@@ -194,27 +188,22 @@ async def hold(ctx, world, tier):
 @bot.command()
 
 #registers this function as a bot command that is called when user types $start_jokes
-async def start_jokes(ctx,minutes=60):
+async def start_jokes(ctx,hours=1):
     
-    #unique identifier for a Discord SERVER
-    guild_id = ctx.guild.id
-    
-    #associates server ID with the channel ID
-    scheduled_channel_ids_jokes[guild_id] = ctx.channel.id
+    #create dictionary of all scheduled channel ids! otherwise, if I want 
+    #to run $start_jokes in multiple channels, using the $start_jokes command
+    #in one channel will overwrite the other channel's id
+    #KEY = guild.id, value = channel.id
+    scheduled_channel_ids = {}
     
     #stores the ID of the channel where the command was called
     scheduled_channel_id = ctx.channel.id
-    await ctx.send(f"I will post tj44's haha-funnies here every {minutes} minute(s)!")
+    await ctx.send(f"I will post tj44's haha-funnies here every {hours} hour(s)!")
 
     #defines the async function to send the joke message
     async def send_message():
-       
-    #pull the channel ID given the server ID in which the command was sent
-        channel_id = scheduled_channel_ids_jokes.get(guild_id)
-                                                                    
-        #grab channel in which the command was sent
-        channel = bot.get_channel(scheduled_channel_ids_jokes[guild_id])
-        
+        #grab channel
+        channel = bot.get_channel(scheduled_channel_id)
         #if channel exists...send randomly chosen joke
         if channel:
             joke_list = load_tj_jokes()
@@ -227,14 +216,16 @@ async def start_jokes(ctx,minutes=60):
     def run_job():
         asyncio.run_coroutine_threadsafe(send_message(), bot.loop)
 
-    #creates job id given the server! this way, I can have multiple jobs for multiple servers :-)
-    job_id = f"scheduled_msg_{guild_id}"    
-        
     #only add job if it hasn't been added yet
     #this *actually* schedules the event!
-    if not scheduler.get_job(job_id):
+    if not scheduler.get_job("scheduled_msg"):
         #use scheduler that we defined at for on_ready()
-        scheduler.add_job(run_job, trigger='interval', minutes=minutes, id=job_id)    
+        scheduler.add_job(
+            run_job,
+            trigger='interval',
+            hours=hours,
+            id="scheduled_msg"
+        )    
         
 ############################################################
 #In the same channel as above, type command and bot will cease typing
@@ -244,12 +235,8 @@ async def start_jokes(ctx,minutes=60):
 ############################################################
 @bot.command()
 async def stop_jokes(ctx):
-    
-    #pull the job id (again, given the server id)
-    job_id = f"scheduled_msg_{ctx.guild.id}"
-    
     #if $stop_jokes, then remove the job if said job exists.
-    job = scheduler.get_job(job_id)
+    job = scheduler.get_job("scheduled_msg")
     if job:
         job.remove()
         await ctx.send("The posting of haha-funnies has been terminated.")

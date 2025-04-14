@@ -19,6 +19,9 @@ python main.py
 * $loc location_shorthand
     * will output what location our shorthand points to, along with a link to https://locations.dust.wiki that includes a more exact pointer to where the star spawns! e.g., `$loc nc` will output 'nc = North Crandor'.
 
+* $guide
+    * Will print a link to our Scouting Guide (courtesy of WoolyClammoth!)
+
 * $wave
     * will output current wave time, the time until end-of-wave, and whether (according to our conventions) we can go scouting for stars.
     
@@ -35,11 +38,23 @@ python main.py
 
 * $inspire
     * will pull from a random assortment of inspirational messages, taken from https://zenquotes.io/api/random
+    
+* $rand
+    * will print a random factoid for your amusement, taken from https://uselessfacts.jsph.pl/
 
-* $guide
-    * Will print a link to out Scouting Guide (courtesy of WoolyClammoth!)
+* $haha 
+    * will print a random joke, pulling from a list written by our very own tj44
+
+* $start_jokes minutes
+    * will begin scheduled messages (with a frequency of every # minutes per user input) which print a random joke from the aforementioned list
+    * messages will print in the same channel the command is sent to
+    * example usage: $start_jokes 5
+        * will print every 5 minutes
+
+* $stop_jokes 
+    * if sent to a channel in which $start_jokes is active, will terminate the scheduled messages
     
 
-#### Notes
+## Notes
 
 * The base of this code originated from https://www.freecodecamp.org/news/create-a-discord-bot-with-python/.

@@ -6,6 +6,9 @@ sc                                  South_Crandor
 fb                                  Falador_East_Bank
 ice                                 Northern_Dwarven_Mine_Entrance
 apa                                 Al_Kharid_PvP_Arena
+akp                                 Al_Kharid_PvP_Arena
+akpvp                               Al_Kharid_PvP_Arena
+akpvpemta                           GTFO_with_that_alphabet_soup
 akm                                 Al_Kharid_Mine
 akb                                 Al_Kharid_Bank
 vb                                  Varrock_East_Bank

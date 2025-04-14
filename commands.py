@@ -3,6 +3,22 @@ import json
 
 
 ############################################################
+#print a random joke, courtesy of our own tj44
+#use: 
+#   e.g., $haha
+#   print randomly-generated TJ joke
+############################################################
+
+def load_tj_jokes():
+    try:
+        with open("keyword_lists/tj_jokes.txt", "r") as f:
+            tj_jokes = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        print('keyword_lists/tj_jokes.txt file not found; loading default list instead.')
+        tj_jokes = ["Did you hear about the bacon that got sick? It was later cured!","Do you know the song 'acne'? It was a breakout hit."]
+    return tj_jokes
+
+############################################################
 #If message includes any of the keywords, random greeting will print
 #use: 
 #   e.g., user types "hello"
@@ -37,7 +53,6 @@ def greeting_response_keywords():
         print('keyword_lists/wooly_dislike_list.txt file not found; loading default list instead.')
         wooly_dislike_list = []
 
-    print('hi')
     return common_greetings, wooly_dislike_list
 
 ################################################
@@ -45,10 +60,21 @@ def greeting_response_keywords():
 #result is JSON, so the json module ensures we can more easily work with the data
 ################################################
 
-def get_quote():
+def get_zen_quote():
     response = requests.get("https://zenquotes.io/api/random")
     json_data = json.loads(response.text)   #converts API to JSON (I guess)
     quote = json_data[0]['q']+" -"+json_data[0]['a']   #format is from trial and error
+    return quote
+
+################################################
+#pulls randomly-generated zen quote 
+#result is JSON, so the json module ensures we can more easily work with the data
+################################################
+
+def get_random_quote():
+    response = requests.get("https://uselessfacts.jsph.pl/api/v2/facts/random")
+    json_data = json.loads(response.text)   #converts API to JSON (I guess)
+    quote = json_data["text"]   #format is from trial and error
     return quote
 
 ################################################
