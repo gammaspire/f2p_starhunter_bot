@@ -1,9 +1,15 @@
+# ALL OF THE FUNCTIONS WHICH INVOLVE PULLING FROM GOOGLE SHEETS (dust.wiki) ARE ADDED HERE
+
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 import numpy as np
 import json
 
+#remove any T prefixes 
+def remove_frontal_corTex(tier_string)
+if tier_string[0]=='t' | tier_string[0]=='T':
+    return tier_string[1]
 
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
 #star tier index for "Suggested EOW Call Times" sheet on dust.wiki
@@ -132,6 +138,9 @@ def get_call_time(world_string, tier_string):
     return call_time
     
 def create_call_message(world_string, tier_string):
+    
+    #remove any t or T prefix
+    tier_string = remove_frontal_corTex(tier_string)
     
     #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E        
     #if tier is not one of the default 4, wir haben einen Problem. 

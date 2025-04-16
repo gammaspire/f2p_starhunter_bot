@@ -3,6 +3,11 @@ import json
 import os
 import random
 
+#remove any T prefixes 
+def remove_frontal_corTex(tier_string)
+if tier_string[0]=='t' | tier_string[0]=='T':
+    return tier_string[1]
+
 
 ############################################################
 #print a random joke, courtesy of our own tj44
@@ -208,23 +213,41 @@ def add_held_star(username,user_id,world,loc,tier,filename='held_stars.json'):
     except FileNotFoundError:
         held_stars = []
     
-    if (tier[0]=='t') | (tier[0]=='T'):
-        tier = tier[1]
+    #isolate the tier number in case someone entered t# or T#
+    tier = remove_frontal_corTex(tier)
     
-    held_stars.append({
-        "username": username,
-        "user_id": user_id,
-        "world": world,
-        "loc": loc,
-        "tier": tier
-    })
+    #if an entry with the same f2p world is not already in the .json file, add it!
+    world_check = any(entry.get("world") == str(world) for entry in held_stars)
+    
+    if not world_check:    
+        held_stars.append({
+            "username": username,
+            "user_id": user_id,
+            "world": world,
+            "loc": loc,
+            "tier": tier
+        })
     
     with open(f'keyword_lists/{filename}','w') as f:
-        json.dump(held_stars, f, indent=4)   #indent indicates number of entries per array
+        json.dump(held_stars, f, indent=5)   #indent indicates number of entries per array?
+    
+    #return the flag. will use to print a message if there is already a held star with this world registered
+    return world_check
 
-def remove_held_star(world,filename='held_stars.json'):
+def remove_held_star(world,filename='held_stars.json',output_data=False):
     #remove star from the .json
     all_held_stars = load_json_file(f'keyword_lists/{filename}')
+    
+    #if output_data needed for the $remove command...
+    if output_data:
+        for n in all_held_stars:
+        if n['world']==world:
+            loc=n['loc']
+            tier=n['tier']
+    
     #the WORLD is the only unique identifier for every entry -- remove entry corresponding to world!
     updated_held_stars = [entry for entry in all_held_stars if entry["world"] != str(world)]
+    
     save_json_file(updated_held_stars, f'keyword_lists/{filename}')
+    
+    return loc,tier

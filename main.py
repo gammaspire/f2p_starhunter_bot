@@ -40,7 +40,7 @@ async def on_ready():
         json.dump([], f)
     
     #ALSO, we must load the .json file which contains the scheduled joke jobs!
-    joke_jobs = load_json_file('scheduled_joke_jobs.json')
+    joke_jobs = load_json_file('keyword_lists/scheduled_joke_jobs.json')
     for guild_id, job_info in joke_jobs.items():
         guild_id = int(guild_id)
         channel_id, minutes = grab_job_ids(job_info)
@@ -244,12 +244,12 @@ async def start_jokes(ctx,minutes=60):
         scheduler.add_job(run_job, trigger='interval', minutes=minutes, id=job_id)    
     
     #save to JSON so it persists (i.e., not wiped from memory when main.py is terminated)
-    all_jobs = load_json_file('scheduled_joke_jobs.json')   #if .json already exists, load
+    all_jobs = load_json_file('keyword_lists/scheduled_joke_jobs.json')   #if .json already exists, load
     all_jobs[str(guild_id)] = {
         'channel_id': scheduled_channel_ids_jokes[guild_id],
         'interval': minutes
     }
-    save_json_file(all_jobs, 'scheduled_joke_jobs.json')
+    save_json_file(all_jobs, 'keyword_lists/scheduled_joke_jobs.json')
     
 ############################################################
 #In the same channel as above, type command and bot will cease typing
@@ -278,11 +278,11 @@ async def stop_jokes(ctx):
     #if guild_id not found, the "None" ensures there is no output error message in terminal
     scheduled_channel_ids_jokes.pop(guild_id, None)
     #load all jobs .json file
-    all_jobs = load_json_file('scheduled_joke_jobs.json')
+    all_jobs = load_json_file('keyword_lists/scheduled_joke_jobs.json')
     #remove the job associated with the server!
     all_jobs.pop(str(guild_id), None)
     #re-write .json file
-    save_json_file(all_jobs, 'scheduled_joke_jobs.json')
+    save_json_file(all_jobs, 'keyword_lists/scheduled_joke_jobs.json')
 
 ############################################################
 #hold star in held_stars.json file until time to release
@@ -297,22 +297,36 @@ async def hold(ctx, world=None, loc=None, tier=None):
     user_id = ctx.author.id
 
     try:
-        add_held_star(username, user_id, world, loc, tier)   #will not run if call syntax is incorrect
+        if (tier[0]=='t') | (tier[0]=='T'):
+            tier = tier[1]
         
-        #if True, can call
-        #if False, return
+        #will not run if call syntax is incorrect. if world_check returns TRUE, then the star is already
+        #in the JSON file!
+        world_check = add_held_star(username, user_id, world, loc, tier)   
+        
+        #if there is already a star registered in the .json file in 'world', cancel the request
+        if world_check:
+            await ctx.send(f'There is already a star being held for world {world}.\nCheck the list of backup stars with the $backups command.')
+            return
+        
+        #if call_flag = True, can call the star
+        #if call_flag = False, hold the star
         call_flag = check_wave_call(world,tier)   #will not run if call syntax is incorrect
+        if call_flag:
+            await ctx.send(f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}")
+            return
+                           
     except KeyError:
-        await ctx.send('Make sure your call syntax is correct! \n $hold f2p_world loc_shorthand tier \n e.g., $hold 308 akm 8')
+        await ctx.send('Missing or invalid arguments!\nSyntax: $hold f2p_world loc_shorthand tier_6789\nExample: $hold 308 akm 8')
         return
     
-    await ctx.send('Checking suggested call time...')
-    if not call_flag:
-        await ctx.send(f"⭐ Holding the following star:\nWorld: {world}\nLoc:{loc}\nTier: T{tier}")
+    await ctx.send(f"⭐ Holding the following star:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
     
     #schedule the checking job
     async def monitor_star():
+        
         #re-check the call eligibility
+        call_flag = check_wave_call(world,tier)
         
         if call_flag:
             #pull user id of person who set the backup star!
@@ -335,6 +349,43 @@ async def hold(ctx, world=None, loc=None, tier=None):
         scheduler.add_job(run_job, 'interval', minutes=1, id=job_id)
 
     #experiment with highlights and attractive hexcolors
+    
+
+############################################################
+#print list of current backup stars in an aesthetic textbox
+#use: 
+#   $backups
+############################################################    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+############################################################
+#manually remove backup star from the list
+#(doing so will also remove the scheduled 'ping' to call
+#use: 
+#   $remove f2p_world
+#e.g., 
+#   $remove 308
+############################################################        
+@bot.command
+async def remove(ctx, world=None):
+    
+    #remove star from .json
+    loc, tier = remove_held_star(world, 'held_stars.json', output_data=True)
+    #cancel the job once done
+    scheduler.remove_job(job_id)
+    
+    await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
+
+    
+    
+    
     
     
     

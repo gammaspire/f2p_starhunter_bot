@@ -33,11 +33,17 @@ python main.py
 
 * $hold f2p_world loc star_tier
     * will place into dynamic JSON file the name of user who used the call, the world, location (shorthand) and tier of the star to be held. When the wave time ~ the EOW call time for the star, the bot will @ the user and output the star that can now be called. If EOW doesn't exist, will default to calling at a wave time of 85 minutes.
+        * Example usage: $hold 308 akm 8
+        *                $hold 575 lse t7
+    
+* $remove f2p_world
+    * will remove any held backup star in the JSON file which corresponds to the world (which acts as a unique identifier, since there can only be one star per world).
+    
 
 ## Miscellaneous Commands List
 
 * $add encouraging_message
-    * will add an encouraging message to the list of options that the bot will select from (when it detects an "unhappy" word in a user's message)
+    * will add an encouraging message to the list of options that the bot will randomly select from (when it detects an "unhappy" word in a user's message)
 
 * $inspire
     * will pull from a random assortment of inspirational messages, taken from https://zenquotes.io/api/random
