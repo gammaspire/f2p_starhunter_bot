@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import random
 
 
 ############################################################
@@ -19,11 +20,20 @@ def load_tj_jokes():
         tj_jokes = ["Did you hear about the bacon that got sick? It was later cured!","Do you know the song 'acne'? It was a breakout hit."]
     return tj_jokes
 
+#will use this function twice for sending a ramdonly-chosen tj44 joke -- once for setting
+#up $start_jokes, and once when re-loading all scheduled jobs upon the code's restart!    
+async def send_joke(bot, channel_id):
+    #get the channel. then post, post, post.
+    channel = bot.get_channel(channel_id)
+    joke_list = load_tj_jokes()
+    chosen_joke = random.choice(joke_list)
+    await channel.send(chosen_joke)
+        
 ############################################################
 #If message includes any of the keywords, random greeting will print
 #use: 
-#   e.g., user types "hello"
-#   bot might respond with "uWu, {name}!"
+#   e.g., user types "hello bot"
+#   bot might respond with "Howdy, {name}!"
 ############################################################
 
 #storing heaps of keyword lists here...
@@ -159,16 +169,62 @@ def print_guide():
     return 'Check out out Scouting Guide Here: https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/'
 
 ############################################################
-#load json file which holds all scheduled jobs!
+#load json file which holds all scheduled jobs
+#save json file with updated scheduled jobs
+#from json file, grab IDs
 ############################################################
-def load_scheduled_jobs(job_file_name):
-    if os.path.exists(job_file_name):
-        with open(job_file_name, 'r') as f:
+def load_json_file(filename):
+    try:
+        with open(filename, 'r') as f:
             return json.load(f)
-    else:
+    except (json.JSONDecodeError, FileNotFoundError):
         return {}
 
-#this will write job to job_file_name, and create job_file_name if does not already exist
-def save_scheduled_jobs(data, job_file_name):
-    with open(job_file_name, 'w') as f:
+#this will write job to filename, and create filename if does not already exist
+def save_json_file(data, filename):
+    with open(filename, 'w') as f:
         json.dump(data, f)
+        
+#to reactivate any scheduled jobs, must first grab job IDs
+def grab_job_ids(job_info):            
+    channel_id = job_info['channel_id']
+    interval = job_info['interval']        
+    return channel_id, interval
+
+
+
+############################################################
+#hold star in held_stars.json file until time to release
+#use: 
+#   $hold world loc tier
+#e.g., 
+#   $hold 308 nc 8
+############################################################
+#using JSON file --> a convenient approach to storing dictionary keys. :-)
+def add_held_star(username,user_id,world,loc,tier,filename='held_stars.json'):
+    try:
+        with open(f'keyword_lists/{filename}','r') as f:
+            held_stars = json.load(f)
+    except FileNotFoundError:
+        held_stars = []
+    
+    if (tier[0]=='t') | (tier[0]=='T'):
+        tier = tier[1]
+    
+    held_stars.append({
+        "username": username,
+        "user_id": user_id,
+        "world": world,
+        "loc": loc,
+        "tier": tier
+    })
+    
+    with open(f'keyword_lists/{filename}','w') as f:
+        json.dump(held_stars, f, indent=4)   #indent indicates number of entries per array
+
+def remove_held_star(world,filename='held_stars.json'):
+    #remove star from the .json
+    all_held_stars = load_json_file(f'keyword_lists/{filename}')
+    #the WORLD is the only unique identifier for every entry -- remove entry corresponding to world!
+    updated_held_stars = [entry for entry in all_held_stars if entry["world"] != str(world)]
+    save_json_file(updated_held_stars, f'keyword_lists/{filename}')

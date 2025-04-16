@@ -7,7 +7,7 @@ import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from commands import *   #separate from the discord.ext hoohaw. this is my .py file.
-from pull_from_gsheet import *
+from pull_from_gs import *
 
 #load environment variables from 'token.env' file
 load_dotenv('token.env')
@@ -35,15 +35,12 @@ async def on_ready():
     print(f'Logged in as {bot.user}')
     scheduler.start()
     
-    #refresh held_stars.json...don't want old backup stars infiltrating the scene
-    with open('keyword_lists/held_stars.json', 'w') as f:
-        json.dump([], f)
-    
     #ALSO, we must load the .json file which contains the scheduled joke jobs!
-    joke_jobs = load_json_file('scheduled_joke_jobs.json')
+    joke_jobs = load_scheduled_jobs('scheduled_joke_jobs.json')
     for guild_id, job_info in joke_jobs.items():
         guild_id = int(guild_id)
-        channel_id, minutes = grab_job_ids(job_info)
+        channel_id = job_info['channel_id']
+        minutes = job_info['interval']
         scheduled_channel_ids_jokes[guild_id] = channel_id
         
         #define the RUN JOB function, now coupled with our global send_joke async function
@@ -244,12 +241,12 @@ async def start_jokes(ctx,minutes=60):
         scheduler.add_job(run_job, trigger='interval', minutes=minutes, id=job_id)    
     
     #save to JSON so it persists (i.e., not wiped from memory when main.py is terminated)
-    all_jobs = load_json_file('scheduled_joke_jobs.json')   #if .json already exists, load
+    all_jobs = load_scheduled_jobs('scheduled_joke_jobs.json')   #if .json already exists, load
     all_jobs[str(guild_id)] = {
         'channel_id': scheduled_channel_ids_jokes[guild_id],
         'interval': minutes
     }
-    save_json_file(all_jobs, 'scheduled_joke_jobs.json')
+    save_scheduled_jobs(all_jobs, 'scheduled_joke_jobs.json')
     
 ############################################################
 #In the same channel as above, type command and bot will cease typing
@@ -278,64 +275,10 @@ async def stop_jokes(ctx):
     #if guild_id not found, the "None" ensures there is no output error message in terminal
     scheduled_channel_ids_jokes.pop(guild_id, None)
     #load all jobs .json file
-    all_jobs = load_json_file('scheduled_joke_jobs.json')
+    all_jobs = load_scheduled_jobs('scheduled_joke_jobs.json')
     #remove the job associated with the server!
     all_jobs.pop(str(guild_id), None)
     #re-write .json file
-    save_json_file(all_jobs, 'scheduled_joke_jobs.json')
-
-############################################################
-#hold star in held_stars.json file until time to release
-#use: 
-#   $hold world loc tier
-#e.g., 
-#   $hold 308 nc 8
-############################################################
-@bot.command()
-async def hold(ctx, world=None, loc=None, tier=None):
-    username = ctx.author.name
-    user_id = ctx.author.id
-
-    try:
-        add_held_star(username, user_id, world, loc, tier)   #will not run if call syntax is incorrect
-        
-        #if True, can call
-        #if False, return
-        call_flag = check_wave_call(world,tier)   #will not run if call syntax is incorrect
-    except KeyError:
-        await ctx.send('Make sure your call syntax is correct! \n $hold f2p_world loc_shorthand tier \n e.g., $hold 308 akm 8')
-        return
-    
-    await ctx.send('Checking suggested call time...')
-    if not call_flag:
-        await ctx.send(f"⭐ Holding the following star:\nWorld: {world}\nLoc:{loc}\nTier: T{tier}")
-    
-    #schedule the checking job
-    async def monitor_star():
-        #re-check the call eligibility
-        
-        if call_flag:
-            #pull user id of person who set the backup star!
-            user = await bot.fetch_user(user_id)
-            await ctx.send(f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}")
-            
-            #remove star from .json
-            remove_held_star(world, 'held_stars.json')
-            #cancel the job once done
-            scheduler.remove_job(job_id)
-            
-    #non-async wrapper for the scheduler
-    def run_job():
-        asyncio.run_coroutine_threadsafe(monitor_star(), bot.loop)
-
-    #unique job ID (based on user + star details)
-    job_id = f"hold_{ctx.guild.id}_{ctx.author.id}_{world}_{loc}_{tier}"
-    
-    if not scheduler.get_job(job_id):
-        scheduler.add_job(run_job, 'interval', minutes=1, id=job_id)
-
-    #experiment with highlights and attractive hexcolors
-    
-    
+    save_scheduled_jobs(all_jobs, 'scheduled_joke_jobs.json')
     
 bot.run(os.getenv('TOKEN'))

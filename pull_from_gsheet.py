@@ -2,7 +2,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 import numpy as np
-
+import json
 
 
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
@@ -24,7 +24,6 @@ def open_spreadsheet():
     spreadsheet=gc.open_by_key('17rGbgylW_IPQHaHUW1WsJAhuWI7y2WhplQR79g-obqg')
     
     return spreadsheet
-
 
 
 #function that will pull the current wave time from dust.wiki
@@ -50,7 +49,6 @@ def create_wave_message():
         scout_string='You can lounge for a bit before scouting.'
 
     return f"Minutes into Wave: +{wave_time}\nMinutes Until End of Wave: +{92 - wave_time}\n{scout_string}"
-
 
 
 #read and parse list of f2p worlds in f2p_worlds.txt
@@ -106,9 +104,9 @@ def create_poof_message(world_string):
     
     except:
         return 'World unknown. Please retry using an F2P world.'
-    
 
     
+
 #from the appropriate cell for the appropriate world, pull the call time
 def get_call_time(world_string, tier_string):
     
@@ -143,7 +141,6 @@ def create_call_message(world_string, tier_string):
     #otherwise...prints call time for world and current wave time.
         
     try:
-                
         call_time = get_call_time(world_string,tier_string)
                 
         #if the call time is *85*, then we do not yet have poof data for that world
@@ -166,5 +163,22 @@ def create_call_message(world_string, tier_string):
     #otherwise...prints call time for world and current wave time.
     except:
         return f'World unknown. Please retry using an F2P world.'
+
     
+#check whether the star is callable; returns a bool flag!
+def check_wave_call(world,tier):
+    wave_time = int(get_wave_time())
+    call_time = get_call_time(world,tier)
     
+    #if poof time is unknown, default call time to +85 into the wave
+    if call_time=='*85*':
+        call_time=85
+    else:
+        call_time = int(call_time.replace('+',''))
+    
+    #if can call star, TRUE
+    if wave_time>call_time:
+        return True
+    #if can call star, FALSE
+    if wave_time<call_time:
+        return False

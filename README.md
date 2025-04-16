@@ -28,8 +28,11 @@ python main.py
 * $poof f2p_world
     * will output the poof time from dust.wiki for the inputted f2p world as well as the current wave time, for ease of comparison.
 
-* $hold f2p_world star_tier
+* $eow f2p_world star_tier
     * will output the suggested call time from dust.wiki of a held star given the world it spawned into and its tier. additionally, there will be a more explicit message stating whether or not the star is callable.
+
+* $hold f2p_world loc star_tier
+    * will place into dynamic JSON file the name of user who used the call, the world, location (shorthand) and tier of the star to be held. When the wave time ~ the EOW call time for the star, the bot will @ the user and output the star that can now be called. If EOW doesn't exist, will default to calling at a wave time of 85 minutes.
 
 ## Miscellaneous Commands List
 
