@@ -4,9 +4,10 @@ import os
 import random
 
 #remove any T prefixes 
-def remove_frontal_corTex(tier_string)
-if tier_string[0]=='t' | tier_string[0]=='T':
-    return tier_string[1]
+def remove_frontal_corTex(tier_string):
+    if (tier_string[0]=='t') | (tier_string[0]=='T'):
+        return tier_string[1]
+    return tier_string
 
 
 ############################################################
@@ -171,7 +172,7 @@ def print_loc_key(message):
 ############################################################
 
 def print_guide():
-    return 'Check out out Scouting Guide Here: https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/'
+    return 'Check out out Scouting Guide [Here!](https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/)'
 
 ############################################################
 #load json file which holds all scheduled jobs
@@ -205,19 +206,27 @@ def grab_job_ids(job_info):
 #e.g., 
 #   $hold 308 nc 8
 ############################################################
+
+def world_check_flag(world, filename):
+    
+    held_stars = load_json_file(f'keyword_lists/{filename}')
+
+    #if true, an entry with the given world is already registered in the .json file
+    world_check_flag = any(entry.get("world") == str(world) for entry in held_stars)
+
+    return world_check_flag
+    
+
 #using JSON file --> a convenient approach to storing dictionary keys. :-)
 def add_held_star(username,user_id,world,loc,tier,filename='held_stars.json'):
-    try:
-        with open(f'keyword_lists/{filename}','r') as f:
-            held_stars = json.load(f)
-    except FileNotFoundError:
-        held_stars = []
-    
+        
     #isolate the tier number in case someone entered t# or T#
     tier = remove_frontal_corTex(tier)
     
+    held_stars = load_json_file(f'keyword_lists/{filename}')
+    
     #if an entry with the same f2p world is not already in the .json file, add it!
-    world_check = any(entry.get("world") == str(world) for entry in held_stars)
+    world_check = world_check_flag(world, filename)
     
     if not world_check:    
         held_stars.append({
@@ -230,9 +239,6 @@ def add_held_star(username,user_id,world,loc,tier,filename='held_stars.json'):
     
     with open(f'keyword_lists/{filename}','w') as f:
         json.dump(held_stars, f, indent=5)   #indent indicates number of entries per array?
-    
-    #return the flag. will use to print a message if there is already a held star with this world registered
-    return world_check
 
 def remove_held_star(world,filename='held_stars.json',output_data=False):
     #remove star from the .json
@@ -241,13 +247,28 @@ def remove_held_star(world,filename='held_stars.json',output_data=False):
     #if output_data needed for the $remove command...
     if output_data:
         for n in all_held_stars:
-        if n['world']==world:
-            loc=n['loc']
-            tier=n['tier']
+            if n['world']==world:
+                loc=n['loc']
+                tier=n['tier']
     
     #the WORLD is the only unique identifier for every entry -- remove entry corresponding to world!
     updated_held_stars = [entry for entry in all_held_stars if entry["world"] != str(world)]
     
     save_json_file(updated_held_stars, f'keyword_lists/{filename}')
     
-    return loc,tier
+    if output_data:
+        return loc,tier
+    
+    
+def embed_backups(filename, embed):
+    
+    held_stars = load_json_file(f'keyword_lists/{filename}')
+    
+    for i,star in enumerate(held_stars):
+        embed.add_field(
+            name=f'⭐ Star {i} ⭐',
+            value=f'{star['world']} {star['loc']} tier {star['tier']} - {star['username']}',
+            inline=False
+        )
+        
+    return embed

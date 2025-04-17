@@ -1,4 +1,5 @@
-# Byte-compiled / optimized / DLL files
+#
+Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -178,7 +179,10 @@ cython_debug/
 
 # JSON hoohaw
 /animated-scope-456121-q8-5b10debc616d.json
-/scheduled_joke_jobs.json
+/keyword_lists/scheduled_joke_jobs.json
 
 # my notes
 /notes.txt
+
+#misc txtfiles
+/keyword_lists/tj_jokes.txt

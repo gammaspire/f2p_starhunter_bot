@@ -7,9 +7,10 @@ import numpy as np
 import json
 
 #remove any T prefixes 
-def remove_frontal_corTex(tier_string)
-if tier_string[0]=='t' | tier_string[0]=='T':
-    return tier_string[1]
+def remove_frontal_corTex(tier_string):
+    if (tier_string[0]=='t') | (tier_string[0]=='T'):
+        return tier_string[1]
+    return tier_string
 
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
 #star tier index for "Suggested EOW Call Times" sheet on dust.wiki

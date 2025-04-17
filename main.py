@@ -296,47 +296,55 @@ async def hold(ctx, world=None, loc=None, tier=None):
     username = ctx.author.name
     user_id = ctx.author.id
 
+    #remove 't' or 'T' from the tier string, if any
+    tier = remove_frontal_corTex(tier)
+
     try:
-        if (tier[0]=='t') | (tier[0]=='T'):
-            tier = tier[1]
         
-        #will not run if call syntax is incorrect. if world_check returns TRUE, then the star is already
-        #in the JSON file!
-        world_check = add_held_star(username, user_id, world, loc, tier)   
-        
+        #if world_check returns TRUE, then the star is already in the JSON file!        
+        world_check = world_check_flag(world,filename='held_stars.json')
+                
         #if there is already a star registered in the .json file in 'world', cancel the request
         if world_check:
             await ctx.send(f'There is already a star being held for world {world}.\nCheck the list of backup stars with the $backups command.')
             return
         
-        #if call_flag = True, can call the star
-        #if call_flag = False, hold the star
+        #now compare wave time and eow suggested call time for star
+        #if call_flag = True, can call the star now; if call_flag = False, add star to file and hold
         call_flag = check_wave_call(world,tier)   #will not run if call syntax is incorrect
         if call_flag:
-            await ctx.send(f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}")
+            await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}")
+            
+            #TODO: create separate code for add_held_star and world_check (see line 306...because they're coupled, world_check ADDS the held star!!)!!! this way I don't have to run remove_held_star here OR where there is a KeyError (see below ~line 324). world_check can also check that the world is f2p.
+            
+            remove_held_star(world, 'held_stars.json')
             return
                            
-    except KeyError:
+    except (KeyError, TypeError):
         await ctx.send('Missing or invalid arguments!\nSyntax: $hold f2p_world loc_shorthand tier_6789\nExample: $hold 308 akm 8')
+        remove_held_star(world, 'held_stars.json')
         return
     
+    #if not call flag, the command was typed correctly, AND there is not already an entry with the
+    #world included in the command, add the held star to list and HOLD
+    add_held_star(username, user_id, world, loc, tier)  
     await ctx.send(f"⭐ Holding the following star:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
     
     #schedule the checking job
     async def monitor_star():
-        
         #re-check the call eligibility
         call_flag = check_wave_call(world,tier)
-        
+
         if call_flag:
-            #pull user id of person who set the backup star!
-            user = await bot.fetch_user(user_id)
-            await ctx.send(f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}")
-            
+            await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}")
             #remove star from .json
             remove_held_star(world, 'held_stars.json')
+            #redefine the unique job_id
+            job_id = f"hold_{ctx.guild.id}_{ctx.author.id}_{world}_{loc}_{tier}"
             #cancel the job once done
             scheduler.remove_job(job_id)
+
+            
             
     #non-async wrapper for the scheduler
     def run_job():
@@ -356,13 +364,18 @@ async def hold(ctx, world=None, loc=None, tier=None):
 #use: 
 #   $backups
 ############################################################    
+@bot.command()
+async def backups(ctx):
+        
+    #create embed!
+    embed = discord.Embed(title='Backup Stars',
+                          description='List of held stars for current wave!',
+                         color=0x1ABC9C)
     
+    #populate the embed message with backup stars, if any
+    embed_filled = embed_backups('keyword_lists/held_stars.json', embed)
     
-    
-    
-    
-    
-    
+    await ctx.send(embed=embed_filled)
     
     
 ############################################################
@@ -373,18 +386,24 @@ async def hold(ctx, world=None, loc=None, tier=None):
 #e.g., 
 #   $remove 308
 ############################################################        
-@bot.command
+@bot.command()
 async def remove(ctx, world=None):
     
     #remove star from .json
     loc, tier = remove_held_star(world, 'held_stars.json', output_data=True)
+    
     #cancel the job once done
+    job_id = f"hold_{ctx.guild.id}_{ctx.author.id}_{world}_{loc}_{tier}"
     scheduler.remove_job(job_id)
     
     await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
 
-    
-    
+
+############################################################
+#print list of current active stars in an aesthetic textbox
+#use: 
+#   $active
+############################################################     
     
     
     

@@ -39,6 +39,9 @@ python main.py
 * $remove f2p_world
     * will remove any held backup star in the JSON file which corresponds to the world (which acts as a unique identifier, since there can only be one star per world).
     
+* $backups
+    * will print all current backup stars in the held_stars.json file
+    
 
 ## Miscellaneous Commands List
 
@@ -53,9 +56,10 @@ python main.py
 
 * $haha 
     * will print a random joke, pulling from a list written by our very own tj44
+    * this list is available upon request; otherwise will default to a list of two jokes
 
 * $start_jokes minutes
-    * will begin scheduled messages (with a frequency of every # minutes per user input) which print a random joke from the aforementioned list
+    * will begin scheduled messages (with a frequency of every # minutes per user input) which print a random joke from the aforementioned list (either the .txt file or that default list of two jokes)
     * messages will print in the same channel the command is sent to
     * example usage: $start_jokes 5
         * will print every 5 minutes
