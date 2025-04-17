@@ -6,7 +6,8 @@ from discord.ext import commands
 import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from commands import *   #separate from the discord.ext hoohaw. this is my .py file.
+from main_commands import *
+from misc_commands import *
 from pull_from_gsheet import *
 
 #load environment variables from 'token.env' file
@@ -295,7 +296,11 @@ async def stop_jokes(ctx):
 async def hold(ctx, world=None, loc=None, tier=None):
     username = ctx.author.name
     user_id = ctx.author.id
-
+    
+    #load our location shorthand dictionary
+    loc_dict = load_loc_dict()
+    
+    
     #remove 't' or 'T' from the tier string, if any
     tier = remove_frontal_corTex(tier)
 
@@ -313,11 +318,9 @@ async def hold(ctx, world=None, loc=None, tier=None):
         #if call_flag = True, can call the star now; if call_flag = False, add star to file and hold
         call_flag = check_wave_call(world,tier)   #will not run if call syntax is incorrect
         if call_flag:
+            
             await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}")
             
-            #TODO: create separate code for add_held_star and world_check (see line 306...because they're coupled, world_check ADDS the held star!!)!!! this way I don't have to run remove_held_star here OR where there is a KeyError (see below ~line 324). world_check can also check that the world is f2p.
-            
-            remove_held_star(world, 'held_stars.json')
             return
                            
     except (KeyError, TypeError):
@@ -373,7 +376,7 @@ async def backups(ctx):
                          color=0x1ABC9C)
     
     #populate the embed message with backup stars, if any
-    embed_filled = embed_backups('keyword_lists/held_stars.json', embed)
+    embed_filled = embed_backups('held_stars.json', embed)
     
     await ctx.send(embed=embed_filled)
     
