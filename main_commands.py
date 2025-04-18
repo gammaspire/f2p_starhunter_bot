@@ -146,7 +146,7 @@ def remove_held_star(world,filename='held_stars.json',output_data=False):
         return loc,tier
     
 ############################################################
-#hold star in held_stars.json file until time to release
+#print list of star backups being held in the current wave
 #use: 
 #   $backups
 ############################################################
@@ -164,7 +164,7 @@ def embed_backups(filename, embed):
         except:
             star_full_loc = star_loc
         embed.add_field(
-            name=f'⭐ Star {i} ⭐',
+            name=f'⭐ Star {i+1} ⭐',
             value=f'{star['world']} {star_full_loc} t{star['tier']} - {star['username']}',
             inline=False
         )

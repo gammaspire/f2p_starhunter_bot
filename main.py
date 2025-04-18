@@ -343,7 +343,7 @@ async def hold(ctx, world=None, loc=None, tier=None):
             #remove star from .json
             remove_held_star(world, 'held_stars.json')
             #redefine the unique job_id
-            job_id = f"hold_{ctx.guild.id}_{ctx.author.id}_{world}_{loc}_{tier}"
+            job_id = f"hold_{ctx.guild.id}_{world}_{loc}_{tier}"
             #cancel the job once done
             scheduler.remove_job(job_id)
 
@@ -354,7 +354,7 @@ async def hold(ctx, world=None, loc=None, tier=None):
         asyncio.run_coroutine_threadsafe(monitor_star(), bot.loop)
 
     #unique job ID (based on user + star details)
-    job_id = f"hold_{ctx.guild.id}_{ctx.author.id}_{world}_{loc}_{tier}"
+    job_id = f"hold_{ctx.guild.id}_{world}_{loc}_{tier}"
     
     if not scheduler.get_job(job_id):
         scheduler.add_job(run_job, 'interval', minutes=1, id=job_id)
@@ -396,7 +396,7 @@ async def remove(ctx, world=None):
     loc, tier = remove_held_star(world, 'held_stars.json', output_data=True)
     
     #cancel the job once done
-    job_id = f"hold_{ctx.guild.id}_{ctx.author.id}_{world}_{loc}_{tier}"
+    job_id = f"hold_{ctx.guild.id}_{world}_{loc}_{tier}"
     scheduler.remove_job(job_id)
     
     await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
