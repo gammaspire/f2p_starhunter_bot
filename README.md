@@ -23,7 +23,7 @@ python main.py
     * Will print a link to our Scouting Guide (courtesy of WoolyClammoth!)
 
 * $wave
-    * will output current wave time, the time until end-of-wave, and whether (according to our conventions) we can go scouting for stars.
+    * will output current wave time, the time until end-of-wave. the clock times are Unix Epoch values that Discord automatically converts according to the reader's timezone!
     
 * $poof f2p_world
     * will output the poof time from dust.wiki for the inputted f2p world as well as the current wave time, for ease of comparison.

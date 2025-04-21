@@ -5,6 +5,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import os
 import numpy as np
 import json
+import time
 
 #remove any T prefixes 
 def remove_frontal_corTex(tier_string):
@@ -45,7 +46,7 @@ def get_wave_time():
     
     return wave_time
 
-def create_wave_message():
+def create_wave_message_static():
     wave_time = int(get_wave_time())
     
     if wave_time>45.:
@@ -56,6 +57,25 @@ def create_wave_message():
         scout_string='You can lounge for a bit before scouting.'
 
     return f"Minutes into Wave: +{wave_time}\nMinutes Until End of Wave: +{92 - wave_time}\n{scout_string}"
+
+def create_wave_message(start_time, end_time):
+    
+    wave_start_time, wave_end_time = get_wave_start_end()
+    
+    return f"Wave started <t:{wave_start_time}:R> at <t:{wave_start_time}:t>.", f"Wave ends <t:{wave_end_time}:R> at <t:{wave_end_time}:t>."
+
+#returns Unix epoch-converted start and end wave times
+def get_wave_start_end():
+    wave_time = int(get_wave_time())*60  #minutes converted to seconds
+    current_time = time.time()           #Unix epoch time...number of seconds since 
+                                         #January 1, 1970 (midnight UTC/GMT)
+    
+    sec_until_eow = 92*60 - wave_time
+    
+    wave_start_time = int(current_time - wave_time)
+    wave_end_time = int(current_time + sec_until_eow)
+    
+    return wave_start_time, wave_end_time
 
 
 #read and parse list of f2p worlds in f2p_worlds.txt

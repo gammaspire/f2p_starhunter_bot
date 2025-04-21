@@ -181,8 +181,21 @@ async def guide(ctx):
 ############################################################    
 @bot.command()
 async def wave(ctx):
-    wave_message = create_wave_message()
-    await ctx.send(wave_message)
+    wave_start_time, wave_end_time = get_wave_start_end()
+    
+    embed = discord.Embed(title='Current Wave Timer',
+                         color=0x1ABC9C)
+    
+    embed.add_field(
+        name=' ',
+        value=(
+            f"⭐ **Start:** <t:{wave_start_time}:t> (<t:{wave_start_time}:R>)\n"
+            f"⭐ **End:** <t:{wave_end_time}:t> (<t:{wave_end_time}:R>)"
+        ),
+        inline=False
+    )
+        
+    await ctx.send(embed=embed)
 
 ############################################################
 #Print the current poof time estimate for a world!
@@ -407,6 +420,14 @@ async def remove(ctx, world=None):
 #use: 
 #   $active
 ############################################################     
+    
+    
+    
+
+    
+    
+    
+    
     
     
     
