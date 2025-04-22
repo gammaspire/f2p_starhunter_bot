@@ -42,6 +42,13 @@ python main.py
 * $backups
     * will print all current backup stars in the held_stars.json file
     
+* $active
+    * will print all current active stars in the active_stars.json file
+
+* $call f2p_world loc_shorthand star_tier
+    * calls star and places in active_stars.json file
+        * Example usage: $call 308 akm 8
+        *                $call 575 lse t7
 
 ## Miscellaneous Commands List
 

@@ -5,10 +5,13 @@ import random
 
 #remove any T prefixes 
 def remove_frontal_corTex(tier_string):
-    if (tier_string[0]=='t') | (tier_string[0]=='T'):
-        return tier_string[1]
-    return tier_string
-
+    try:
+        if (tier_string[0]=='t') | (tier_string[0]=='T'):
+            return tier_string[1]
+        return tier_string
+    except TypeError:
+        return None
+        
 ############################################################
 #Print the key to our shorthand for star spawning locations!
 #use: 
@@ -95,19 +98,19 @@ def world_check_flag(world, filename):
     
 
 #using JSON file --> a convenient approach to storing dictionary keys. :-)
-def add_held_star(username,user_id,world,loc,tier,filename='held_stars.json'):
+def add_star_to_list(username,user_id,world,loc,tier,filename='held_stars.json'):
         
     #isolate the tier number in case someone entered t# or T#
     tier = remove_frontal_corTex(tier)
     
-    held_stars = load_json_file(f'keyword_lists/{filename}')
+    stars_list = load_json_file(f'keyword_lists/{filename}')
     
     #if an entry with the same f2p world is not already in the .json file, add it!
     world_check = world_check_flag(world, filename)
     
     if not world_check:    
         
-        held_stars.append({
+        stars_list.append({
             "username": username,
             "user_id": user_id,
             "world": world,
@@ -116,8 +119,12 @@ def add_held_star(username,user_id,world,loc,tier,filename='held_stars.json'):
         })
     
     with open(f'keyword_lists/{filename}','w') as f:
-        json.dump(held_stars, f, indent=5)   #indent indicates number of entries per array?
+        json.dump(stars_list, f, indent=5)   #indent indicates number of entries per array?
 
+def print_error_message():
+    message = 'Missing or invalid arguments!\nSyntax: $hold world loc tier\nWorld should be F2P, loc must be one of our shorthand keys, and the tier must be 6-9\nExample: $hold 308 akm 8'
+    return message
+        
 ############################################################
 #remove star from held_stars.json
 #use: 
@@ -147,17 +154,19 @@ def remove_held_star(world,filename='held_stars.json',output_data=False):
     
 ############################################################
 #print list of star backups being held in the current wave
+#OR
+#print list of active stars this current wave
 #use: 
 #   $backups
 ############################################################
-def embed_backups(filename, embed):
+def embed_stars(filename, embed):
     
-    held_stars = load_json_file(f'keyword_lists/{filename}')
+    stars = load_json_file(f'keyword_lists/{filename}')
     
     #load location dictionary
     loc_dict = load_loc_dict()
     
-    for i,star in enumerate(held_stars):
+    for i,star in enumerate(stars):
         star_loc = star['loc']
         try:
             star_full_loc = loc_dict[star_loc]

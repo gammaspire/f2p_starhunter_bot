@@ -9,10 +9,13 @@ import time
 
 #remove any T prefixes 
 def remove_frontal_corTex(tier_string):
-    if (tier_string[0]=='t') | (tier_string[0]=='T'):
-        return tier_string[1]
-    return tier_string
-
+    try:
+        if (tier_string[0]=='t') | (tier_string[0]=='T'):
+            return tier_string[1]
+        return tier_string
+    except TypeError:
+        return None
+    
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
 #star tier index for "Suggested EOW Call Times" sheet on dust.wiki
 tier_dict = {'6':'B', '7':'C', '8':'D', '9':'E'}
@@ -58,12 +61,6 @@ def create_wave_message_static():
 
     return f"Minutes into Wave: +{wave_time}\nMinutes Until End of Wave: +{92 - wave_time}\n{scout_string}"
 
-def create_wave_message(start_time, end_time):
-    
-    wave_start_time, wave_end_time = get_wave_start_end()
-    
-    return f"Wave started <t:{wave_start_time}:R> at <t:{wave_start_time}:t>.", f"Wave ends <t:{wave_end_time}:R> at <t:{wave_end_time}:t>."
-
 #returns Unix epoch-converted start and end wave times
 def get_wave_start_end():
     wave_time = int(get_wave_time())*60  #minutes converted to seconds
@@ -74,8 +71,8 @@ def get_wave_start_end():
     
     wave_start_time = int(current_time - wave_time)
     wave_end_time = int(current_time + sec_until_eow)
-    
-    return wave_start_time, wave_end_time
+        
+    return wave_start_time, wave_end_time, int(wave_time/60)
 
 
 #read and parse list of f2p worlds in f2p_worlds.txt

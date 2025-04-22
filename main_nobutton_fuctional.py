@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 import random
 from discord.ext import commands
-from discord.ui import View, Button
 import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -30,39 +29,8 @@ scheduler = AsyncIOScheduler()
 #KEY = guild.id (server ID), value = channel.id
 scheduled_channel_ids_jokes = {}   #this one specifically is for the JOKES
 
-#I am going to create a class for Discord button (which I will use to remove stars from the held_stars.json and add stars to the active_stars.json lists.
-class CallStarButton(Button):
-    def __init__(self, username, user_id, world, loc, tier):
-        super().__init__(label='Call Star Now', style=discord.ButtonStyle.green)
-        self.world=world
-        self.loc=loc
-        self.tier=tier
-        self.username=username
-        self.user_id=user_id
-    
-    #when I click the button, the star will be removed from the held_stars.json list
-    async def callback(self, interaction: discord.Interaction):
-        remove_held_star(self.world, 'held_stars.json')
-        add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, 'active_stars.json')
-        
-        self.disabled = True
-        
-        self.style = discord.ButtonStyle.grey
-        
-        #edit message (that is, change the button and print the confirmation message.)
-        await interaction.response.edit_message(view=self.view)
-        await interaction.followup.send(f'Star moved to $active list!')
 
-#also create a class for the View, which will display the button in the Discord message
-class CallStarView(View):
-    def __init__(self, username, user_id, world, loc, tier, timeout=300):
-        super().__init__(timeout=timeout)
-        self.add_item(CallStarButton(username, user_id, world, loc, tier))
-
-################################################################################
-################################################################################
-
-#@bot.event is used to register an event
+#@bot.even is used to register an event
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}')
@@ -71,10 +39,6 @@ async def on_ready():
     #refresh held_stars.json...don't want old backup stars infiltrating the scene
     with open('keyword_lists/held_stars.json', 'w') as f:
         json.dump([], f)
-        
-    #refresh activestars.json...don't want old called stars infiltrating the scene, either    
-    with open('keyword_lists/active_stars.json','w') as f:
-        json.dump([],f)
     
     #ALSO, we must load the .json file which contains the scheduled joke jobs!
     joke_jobs = load_json_file('keyword_lists/scheduled_joke_jobs.json')
@@ -217,7 +181,7 @@ async def guide(ctx):
 ############################################################    
 @bot.command()
 async def wave(ctx):
-    wave_start_time, wave_end_time, wave_time = get_wave_start_end()
+    wave_start_time, wave_end_time = get_wave_start_end()
     
     embed = discord.Embed(title='Current Wave Timer',
                          color=0x1ABC9C)
@@ -227,9 +191,6 @@ async def wave(ctx):
         value=(
             f"⭐ **Start:** <t:{wave_start_time}:t> (<t:{wave_start_time}:R>)\n"
             f"⭐ **End:** <t:{wave_end_time}:t> (<t:{wave_end_time}:R>)"
-            "\n"
-            "\n"
-            f"⭐ **Wave Time When Message Was Sent:** +{wave_time}" 
         ),
         inline=False
     )
@@ -352,6 +313,7 @@ async def hold(ctx, world=None, loc=None, tier=None):
     #load our location shorthand dictionary
     loc_dict = load_loc_dict()
     
+    
     #remove 't' or 'T' from the tier string, if any
     tier = remove_frontal_corTex(tier)
 
@@ -369,36 +331,37 @@ async def hold(ctx, world=None, loc=None, tier=None):
         #if call_flag = True, can call the star now; if call_flag = False, add star to file and hold
         call_flag = check_wave_call(world,tier)   #will not run if call syntax is incorrect
         if call_flag:
-            #view is what enables the button
-            await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
-                           view=CallStarView(username, user_id, world, loc, tier))  #CallStarView is a class
+            
+            await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}")
+            
             return
-                    
-    #KeyError --> world is not in list of f2p worlds
-    #TypeError --> user omitted world, loc, and/or tier from command
+                           
     except (KeyError, TypeError):
-        await ctx.send(print_error_message())
+        await ctx.send('Missing or invalid arguments!\nSyntax: $hold f2p_world loc_shorthand tier_6789\nExample: $hold 308 akm 8')
+        remove_held_star(world, 'held_stars.json')
         return
     
     #if not call flag, the command was typed correctly, AND there is not already an entry with the
     #world included in the command, add the held star to list and HOLD
-    add_star_to_list(username, user_id, world, loc, tier, filename='held_stars.json')  
-    await ctx.send(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
+    add_held_star(username, user_id, world, loc, tier)  
+    await ctx.send(f"⭐ Holding the following star:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
     
-    #schedule the checking job; if star is ready to call, remove job!
+    #schedule the checking job
     async def monitor_star():
         #re-check the call eligibility
         call_flag = check_wave_call(world,tier)
 
         if call_flag:
-            #view is what enables the button; will remove held star from .json when clicked and add to $active
-            await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
-                           view=CallStarView(username, user_id, world, loc, tier))   #CallStarView is a class
+            await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}")
+            #remove star from .json
+            remove_held_star(world, 'held_stars.json')
             #redefine the unique job_id
             job_id = f"hold_{ctx.guild.id}_{world}_{loc}_{tier}"
-            #cancel the job
+            #cancel the job once done
             scheduler.remove_job(job_id)
-    
+
+            
+            
     #non-async wrapper for the scheduler
     def run_job():
         asyncio.run_coroutine_threadsafe(monitor_star(), bot.loop)
@@ -406,9 +369,10 @@ async def hold(ctx, world=None, loc=None, tier=None):
     #unique job ID (based on user + star details)
     job_id = f"hold_{ctx.guild.id}_{world}_{loc}_{tier}"
     
-    #will run run_job every one minute!
     if not scheduler.get_job(job_id):
         scheduler.add_job(run_job, 'interval', minutes=1, id=job_id)
+
+    #experiment with highlights and attractive hexcolors
     
 
 ############################################################
@@ -425,7 +389,7 @@ async def backups(ctx):
                          color=0x1ABC9C)
     
     #populate the embed message with backup stars, if any
-    embed_filled = embed_stars('held_stars.json', embed)
+    embed_filled = embed_backups('held_stars.json', embed)
     
     await ctx.send(embed=embed_filled)
     
@@ -449,47 +413,23 @@ async def remove(ctx, world=None):
     scheduler.remove_job(job_id)
     
     await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
-    
-    
+
+
 ############################################################
 #print list of current active stars in an aesthetic textbox
 #use: 
 #   $active
 ############################################################     
-@bot.command()
-async def active(ctx):
     
-    #print active stars from .json
     
-    #create embed!
-    embed = discord.Embed(title='Active Stars',
-                          description='List of active stars!',
-                         color=0x1ABC9C)
     
-    #populate the embed message with backup stars, if any
-    embed_filled = embed_stars('active_stars.json', embed)
+
     
-    await ctx.send(embed=embed_filled)
-
-
-############################################################
-#add active star to the .json list
-#use: 
-#   $call world loc tier
-#e.g., 
-#   $call 308 akm 8
-############################################################  
-@bot.command()
-async def call(ctx, world, loc, tier):
-    #assumes star finder is the individual who submitted the message...ah well.
-    username = ctx.author.name
-    user_id = ctx.author.id
-        
-    #add star to .json
-    add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
-
-    await ctx.send(f"⭐ Star moved to $active list!")
-        
-
+    
+    
+    
+    
+    
+    
     
 bot.run(os.getenv('TOKEN'))
