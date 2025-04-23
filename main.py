@@ -51,14 +51,15 @@ class CallStarButton(Button):
         
         #edit message (that is, change the button and print the confirmation message.)
         await interaction.response.edit_message(view=self.view)
-        await interaction.followup.send(f'Star moved to $active list!')
+        await interaction.followup.send(f'Star moved to $active list!\nWorld: {self.world}\nLoc: {self.loc}\nTier: T{self.tier}')
 
 #also create a class for the View, which will display the button in the Discord message
 class CallStarView(View):
-    def __init__(self, username, user_id, world, loc, tier, timeout=300):
+    def __init__(self, username, user_id, world, loc, tier, timeout=480):
         super().__init__(timeout=timeout)
         self.add_item(CallStarButton(username, user_id, world, loc, tier))
 
+################################################################################
 ################################################################################
 ################################################################################
 
@@ -432,7 +433,7 @@ async def backups(ctx):
     
 ############################################################
 #manually remove backup star from the list
-#(doing so will also remove the scheduled 'ping' to call
+#(doing so will also remove the scheduled 'ping' to call)
 #use: 
 #   $remove f2p_world
 #e.g., 
@@ -488,7 +489,7 @@ async def call(ctx, world, loc, tier):
     #add star to .json
     add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
 
-    await ctx.send(f"⭐ Star moved to $active list!")
+    await ctx.send(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
         
 
     
