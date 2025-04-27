@@ -44,11 +44,22 @@ python main.py
     
 * $active
     * will print all current active stars in the active_stars.json file
+    * Tiers will NOT update dynamically, though the "Dust time" will (ty Unix time)
 
 * $call f2p_world loc_shorthand star_tier
     * calls star and places in active_stars.json file
         * Example usage: $call 308 akm 8
         *                $call 575 lse t7
+        
+* $setup_active_loop minutes
+    * will begin scheduled messages (with a frequency of every # minutes per user input) which print the list of active stars for the current wave
+    * messages will print in the same channel the command is sent to
+    * example usage: $setup_active_loop 5
+        * will print every 5 minutes
+    * Tiers will NOT update dynamically, though the "Dust time" will (ty Unix time)
+
+* $stop_active_loop
+    * if sent to a channel in which $setup_active_loop is active, will terminate the scheduled messages
 
 ## Miscellaneous Commands List
 
@@ -64,15 +75,6 @@ python main.py
 * $haha 
     * will print a random joke, pulling from a list written by our very own tj44
     * this list is available upon request; otherwise will default to a list of two jokes
-
-* $start_jokes minutes
-    * will begin scheduled messages (with a frequency of every # minutes per user input) which print a random joke from the aforementioned list (either the .txt file or that default list of two jokes)
-    * messages will print in the same channel the command is sent to
-    * example usage: $start_jokes 5
-        * will print every 5 minutes
-
-* $stop_jokes 
-    * if sent to a channel in which $start_jokes is active, will terminate the scheduled messages
     
 
 ## Notes

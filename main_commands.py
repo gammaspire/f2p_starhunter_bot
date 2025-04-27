@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import random
+import time
 
 #remove any T prefixes 
 def remove_frontal_corTex(tier_string):
@@ -100,26 +101,31 @@ def world_check_flag(world, filename):
 #using JSON file --> a convenient approach to storing dictionary keys. :-)
 def add_star_to_list(username,user_id,world,loc,tier,filename='held_stars.json'):
         
-    #isolate the tier number in case someone entered t# or T#
-    tier = remove_frontal_corTex(tier)
-    
-    stars_list = load_json_file(f'keyword_lists/{filename}')
     
     #if an entry with the same f2p world is not already in the .json file, add it!
     world_check = world_check_flag(world, filename)
     
     if not world_check:    
         
+        #grab time at which star is CALLED --> will use to determine star tier later on
+        call_time = time.time()
+        
+        #isolate the tier number in case someone entered t# or T#
+        tier = remove_frontal_corTex(tier)
+
+        stars_list = load_json_file(f'keyword_lists/{filename}')
+        
         stars_list.append({
             "username": username,
             "user_id": user_id,
             "world": world,
             "loc": loc,
-            "tier": tier
+            "tier": tier,
+            "call_time": call_time
         })
     
     with open(f'keyword_lists/{filename}','w') as f:
-        json.dump(stars_list, f, indent=5)   #indent indicates number of entries per array?
+        json.dump(stars_list, f, indent=6)   #indent indicates number of entries per array?
 
 def print_error_message():
     message = 'Missing or invalid arguments!\nSyntax: $hold world loc tier\nWorld should be F2P, loc must be one of our shorthand keys, and the tier must be 6-9\nExample: $hold 308 akm 8'
@@ -158,24 +164,70 @@ def remove_held_star(world,filename='held_stars.json',output_data=False):
 #print list of active stars this current wave
 #use: 
 #   $backups
+#   $active
 ############################################################
-def embed_stars(filename, embed):
+def embed_stars(filename, embed, active=False, hold=False):
     
     stars = load_json_file(f'keyword_lists/{filename}')
+    
+    if active:
+        
+        #REMOVE STARS WITH TIER 0* (then re-save file)
+        updated_stars = [entry for entry in stars if int(get_current_tier(entry['call_time'],entry['tier'])) != 0]
+        save_json_file(updated_stars, f'keyword_lists/{filename}')
+    
+    else:
+        updated_stars=stars
     
     #load location dictionary
     loc_dict = load_loc_dict()
     
-    for i,star in enumerate(stars):
+    for i,star in enumerate(updated_stars):
+        
+        call_time = int(star['call_time'])
         star_loc = star['loc']
+        
         try:
             star_full_loc = loc_dict[star_loc]
         except:
             star_full_loc = star_loc
-        embed.add_field(
-            name=f'⭐ Star {i+1} ⭐',
-            value=f'{star['world']} {star_full_loc} t{star['tier']} - {star['username']}',
-            inline=False
-        )
-        
+    
+    #if this is the embed for active stars, then include world, loc, current tier when sent, time remaining, and scouter who called the star
+        if active:
+            #get time remaining (in seconds) for the star!
+            time_remaining = get_time_remaining(call_time, star['tier'])
+            
+            #get current tier for the star
+            current_tier = get_current_tier(call_time, star['tier'])
+            
+            embed.add_field(
+                    name=f'⭐ Star {i+1} ⭐',
+                    value=f'{star['world']} {star_full_loc} ({star_loc}) Tier {current_tier}*\nDust time: <t:{time_remaining}:R>\nCalled by: {star['username']}',
+                    inline=False
+                )
+        if hold:
+            embed.add_field(
+                name=f'⭐ Star {i+1} ⭐',
+                value=f'{star['world']} {star_full_loc} ({star_loc}) Tier {star['tier']} -- {star['username']}',
+                inline=False
+            )
     return embed
+
+def get_current_tier(call_time, original_tier):
+    #max(a,b) --> gives the larger of a and b. 
+    #returns current tier of the star, given the original call time (when set to $active)
+    original_tier = int(original_tier)   #ensuring integer, not string or float
+    current_tier = max(0, original_tier - int((time.time() - call_time) / (7 * 60)))
+    return current_tier
+
+#get time remaining (in seconds) for the star!
+def get_time_remaining(call_time, original_tier):
+    original_tier = int(original_tier)
+    time_since_call = time.time() - call_time
+    star_dust_time = int(original_tier)*7*60   #take original tier, convert to seconds expected to last
+    time_remaining = star_dust_time - time_since_call   #time remaining until star dusts
+    time_remaining = int(time.time() + time_remaining)   #convert to Unix time
+    
+    return time_remaining
+
+

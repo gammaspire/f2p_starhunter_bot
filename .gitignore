@@ -186,3 +186,6 @@ cython_debug/
 
 #misc txtfiles
 /keyword_lists/tj_jokes.txt
+
+#my "backup directory of functional code"
+/functional_versions

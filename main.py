@@ -21,18 +21,20 @@ intents.message_content = True
 #create bot instance (inherits from discord.Client)
 bot = commands.Bot(command_prefix="$", intents=intents)
 
-# Begin scheduler...need for $start_jokes command; will generate scheduled messages!
+# Begin scheduler... will generate scheduled messages!
 scheduler = AsyncIOScheduler()
 
 #create dictionary of all scheduled channel ids! otherwise, if I want 
-#to run $start_jokes in multiple channels, using the $start_jokes command
+#to run $set_active in multiple channels, using the $set_active command
 #in one channel will overwrite the other channel's id
 #KEY = guild.id (server ID), value = channel.id
-scheduled_channel_ids_jokes = {}   #this one specifically is for the JOKES
+scheduled_channel_ids_active = {}   #this one specifically is for the active star jobs
 
 #I am going to create a class for Discord button (which I will use to remove stars from the held_stars.json and add stars to the active_stars.json lists.
 class CallStarButton(Button):
     def __init__(self, username, user_id, world, loc, tier):
+        #super() inherits from discord.ui.Button class; calls the parent Button class's constructor
+        #if I did not call super(), the button would exist without a label or style...and code may even break
         super().__init__(label='Call Star Now', style=discord.ButtonStyle.green)
         self.world=world
         self.loc=loc
@@ -56,9 +58,30 @@ class CallStarButton(Button):
 #also create a class for the View, which will display the button in the Discord message
 class CallStarView(View):
     def __init__(self, username, user_id, world, loc, tier, timeout=480):
+        #super() here is inheriting from discord.ui.View, which is the class that handles buttons, 
+        #dropdowns, and other UI elements in discord.
         super().__init__(timeout=timeout)
         self.add_item(CallStarButton(username, user_id, world, loc, tier))
 
+        
+#will use for sending backup and active star embeds   
+async def send_embed(filename,destination,active=False,hold=False):
+    #print active stars from .json
+    #create embed!
+    
+    if active:
+        title='Active Stars'
+    else:
+        title='Backup Stars'
+    
+    embed = discord.Embed(title=title,
+                         color=0x1ABC9C)
+    
+    #populate the embed message with backup or active stars, if any
+    embed_filled = embed_stars(filename, embed, active=active, hold=hold)
+    await destination.send(embed=embed_filled)
+
+    
 ################################################################################
 ################################################################################
 ################################################################################
@@ -73,27 +96,28 @@ async def on_ready():
     with open('keyword_lists/held_stars.json', 'w') as f:
         json.dump([], f)
         
-    #refresh activestars.json...don't want old called stars infiltrating the scene, either    
+    #refresh active_stars.json...don't want old called stars infiltrating the scene, either    
     with open('keyword_lists/active_stars.json','w') as f:
         json.dump([],f)
     
-    #ALSO, we must load the .json file which contains the scheduled joke jobs!
-    joke_jobs = load_json_file('keyword_lists/scheduled_joke_jobs.json')
-    for guild_id, job_info in joke_jobs.items():
+    #ALSO, we must load the .json file which contains the scheduled active star jobs!
+    active_jobs = load_json_file('keyword_lists/scheduled_active_jobs.json')
+    
+    for guild_id, job_info in active_jobs.items():
         guild_id = int(guild_id)
         channel_id, minutes = grab_job_ids(job_info)
-        scheduled_channel_ids_jokes[guild_id] = channel_id
-        
-        #define the RUN JOB function, now coupled with our global send_joke async function
+        scheduled_channel_ids_active[guild_id] = channel_id
+
+        #define the RUN JOB function, now coupled with our global send_active_list async function
         def run_job(gid=guild_id,channel_id=channel_id):
-            asyncio.run_coroutine_threadsafe(send_joke(bot, channel_id), bot.loop)
-        
+            asyncio.run_coroutine_threadsafe(send_active_list(bot, channel_id), bot.loop)
+
         #define job id. if it is not in the scheduler, add and print success msg in terminal
-        job_id = f"scheduled_msg_{guild_id}"
+        job_id = f"scheduled_msg_active_{guild_id}"
         if not scheduler.get_job(job_id):
             scheduler.add_job(run_job, trigger='interval', minutes=minutes, id=job_id)
-            print(f"Restored scheduled jokes for guild {guild_id} every {minutes} minutes.")
-    
+            print(f"Restored scheduled active star messages for guild {guild_id} every {minutes} minutes.")
+
 @bot.event
 #the function is called when something happens (in this case, when the bot receives message)
 async def on_message(message):
@@ -121,7 +145,6 @@ async def on_message(message):
             chosen_greeting = "Get out"
         await message.channel.send(f"{chosen_greeting}, {name}!")
         return
-
     
     ############################################################
     #If message includes any of the keywords, random encouraging message will print
@@ -260,83 +283,7 @@ async def eow(ctx, world, tier):
     call_message = create_call_message(world, tier)
     await ctx.send(call_message)
     
-############################################################
-#In a channel of your choosing, type command and the bot will randomly post
-#a tj44 joke at the indicated time interval
-#use: 
-#   $start_jokes [hours]
-#e.g., '$start_jokes 1' will print a joke every 1 hour in the channel
-############################################################
-@bot.command()
 
-#registers this function as a bot command that is called when user types $start_jokes
-async def start_jokes(ctx,minutes=60):
-    
-    #unique identifier for a Discord SERVER
-    guild_id = ctx.guild.id
-    
-    #associates server ID with the channel ID
-    scheduled_channel_ids_jokes[guild_id] = ctx.channel.id
-    
-    #stores the ID of the channel where the command was called
-    scheduled_channel_id = ctx.channel.id
-    await ctx.send(f"I will post tj44's haha-funnies here every {minutes} minute(s)!")
-
-    #scheduler functions must be non-async functions)
-    #this function will schedule the async (send_message()) to run inside of the Discord bot's
-    #event loop, even if APScheduler triggers it from a different thread
-    def run_job():
-        asyncio.run_coroutine_threadsafe(send_joke(bot, scheduled_channel_id), bot.loop)
-
-    #creates job id given the server! this way, I can have multiple jobs for multiple servers :-)
-    job_id = f"scheduled_msg_{guild_id}"    
-        
-    #only add job if it hasn't been added yet
-    #this *actually* schedules the event!
-    if not scheduler.get_job(job_id):
-        #use scheduler that we defined at for on_ready()
-        scheduler.add_job(run_job, trigger='interval', minutes=minutes, id=job_id)    
-    
-    #save to JSON so it persists (i.e., not wiped from memory when main.py is terminated)
-    all_jobs = load_json_file('keyword_lists/scheduled_joke_jobs.json')   #if .json already exists, load
-    all_jobs[str(guild_id)] = {
-        'channel_id': scheduled_channel_ids_jokes[guild_id],
-        'interval': minutes
-    }
-    save_json_file(all_jobs, 'keyword_lists/scheduled_joke_jobs.json')
-    
-############################################################
-#In the same channel as above, type command and bot will cease typing
-#a tj44 joke at the indicated time interval
-#use: 
-#   $stop_jokes
-############################################################
-@bot.command()
-async def stop_jokes(ctx):
-    
-    #get server ID
-    guild_id = ctx.guild.id
-    
-    #pull the job id (again, given the server id)
-    job_id = f"scheduled_msg_{ctx.guild.id}"
-    
-    #if $stop_jokes, then remove the job if said job exists.
-    job = scheduler.get_job(job_id)
-    if job:
-        job.remove()
-        await ctx.send("The posting of haha-funnies has been terminated.")
-    else:
-        await ctx.send("There's no active scheduled message.")
-    
-    #remove job from the the dictionary! that is...clear from memory.
-    #if guild_id not found, the "None" ensures there is no output error message in terminal
-    scheduled_channel_ids_jokes.pop(guild_id, None)
-    #load all jobs .json file
-    all_jobs = load_json_file('keyword_lists/scheduled_joke_jobs.json')
-    #remove the job associated with the server!
-    all_jobs.pop(str(guild_id), None)
-    #re-write .json file
-    save_json_file(all_jobs, 'keyword_lists/scheduled_joke_jobs.json')
 
 ############################################################
 #hold star in held_stars.json file until time to release
@@ -418,17 +365,8 @@ async def hold(ctx, world=None, loc=None, tier=None):
 #   $backups
 ############################################################    
 @bot.command()
-async def backups(ctx):
-        
-    #create embed!
-    embed = discord.Embed(title='Backup Stars',
-                          description='List of held stars for current wave!',
-                         color=0x1ABC9C)
-    
-    #populate the embed message with backup stars, if any
-    embed_filled = embed_stars('held_stars.json', embed)
-    
-    await ctx.send(embed=embed_filled)
+async def backups(ctx):    
+    await send_embed('held_stars.json', ctx, hold=True)
     
     
 ############################################################
@@ -459,18 +397,7 @@ async def remove(ctx, world=None):
 ############################################################     
 @bot.command()
 async def active(ctx):
-    
-    #print active stars from .json
-    
-    #create embed!
-    embed = discord.Embed(title='Active Stars',
-                          description='List of active stars!',
-                         color=0x1ABC9C)
-    
-    #populate the embed message with backup stars, if any
-    embed_filled = embed_stars('active_stars.json', embed)
-    
-    await ctx.send(embed=embed_filled)
+    await send_embed('active_stars.json', ctx, active=True)
 
 
 ############################################################
@@ -491,6 +418,90 @@ async def call(ctx, world, loc, tier):
 
     await ctx.send(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
         
+    
+############################################################
+#In a channel of your choosing, type command and the bot will post
+#list of active stars every x minutes
+#use: 
+#   $setup_active_loop [minutes]
+#e.g., '$setup_active_loop 30' will print the list every 30 minutes in the channel
+############################################################
+@bot.command()
 
+#registers this function as a bot command that is called when user types $setup_active_loop
+async def setup_active_loop(ctx,minutes=60):
+    
+    #unique identifier for a Discord SERVER
+    guild_id = ctx.guild.id
+    
+    #associates server ID with the channel ID
+    scheduled_channel_ids_active[guild_id] = ctx.channel.id
+    
+    #stores the ID of the channel where the command was called
+    scheduled_channel_id = ctx.channel.id
+    await ctx.send(f"Active stars will be posted in this channel every {minutes} minute(s)!")
+    
+    #scheduler functions must be non-async functions)
+    #this function will schedule the async (send_message()) to run inside of the Discord bot's
+    #event loop, even if APScheduler triggers it from a different thread
+    def run_job():
+        embed_list = asyncio.run_coroutine_threadsafe(send_embed('active_stars.json',
+                                                    ctx,active=True,hold=False), bot.loop)
+    
+    #creates job id given the server! this way, I can have multiple jobs for multiple servers :-)
+    job_id = f"scheduled_msg_active_{guild_id}"    
+
+    #only add job if it hasn't been added yet
+    #this *actually* schedules the event!
+    if not scheduler.get_job(job_id):
+        #use scheduler that we defined at for on_ready()
+        scheduler.add_job(run_job, trigger='interval', minutes=minutes, id=job_id)    
+
+    #save to JSON so it persists (i.e., not wiped from memory when main.py is terminated)
+    all_jobs = load_json_file('keyword_lists/scheduled_active_jobs.json')   #if .json already exists, load
+    all_jobs[str(guild_id)] = {
+        'channel_id': scheduled_channel_ids_active[guild_id],
+        'interval': minutes
+    }
+    save_json_file(all_jobs, 'keyword_lists/scheduled_active_jobs.json')
+
+############################################################
+#In the same channel as above, type command and bot will cease typing
+#the list of active stars at the indicated time interval
+#use: 
+#   $stop_active_loop
+############################################################
+@bot.command()
+async def stop_active_loop(ctx):
+    
+    #get server ID
+    guild_id = ctx.guild.id
+    
+    #pull the job id (again, given the server id)
+    job_id = f"scheduled_msg_active_{ctx.guild.id}"
+    
+    #if $stop_active_loop, then remove the job if said job exists.
+    job = scheduler.get_job(job_id)
+    if job:
+        job.remove()
+        await ctx.send("The posting of active stars in this channel has been terminated.")
+    else:
+        await ctx.send("There's no active scheduled message.")
+    
+    #remove job from the the dictionary! that is...clear from memory.
+    #if guild_id not found, the "None" ensures there is no output error message in terminal
+    scheduled_channel_ids_active.pop(guild_id, None)
+    #load all jobs .json file
+    all_jobs = load_json_file('keyword_lists/scheduled_active_jobs.json')
+    #remove the job associated with the server!
+    all_jobs.pop(str(guild_id), None)
+    #re-write .json file
+    save_json_file(all_jobs, 'keyword_lists/scheduled_active_jobs.json')
+    
+    
+    
+    
+    
+    
     
 bot.run(os.getenv('TOKEN'))
