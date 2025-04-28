@@ -110,7 +110,8 @@ async def on_ready():
 
         #define the RUN JOB function, now coupled with our global send_active_list async function
         def run_job(gid=guild_id,channel_id=channel_id):
-            asyncio.run_coroutine_threadsafe(send_active_list(bot, channel_id), bot.loop)
+            asyncio.run_coroutine_threadsafe(send_embed('active_stars.json',
+                                                    ctx,active=True,hold=False), bot.loop)
 
         #define job id. if it is not in the scheduler, add and print success msg in terminal
         job_id = f"scheduled_msg_active_{guild_id}"
