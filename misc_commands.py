@@ -7,7 +7,7 @@ import random
 ############################################################
 #print a random joke, courtesy of our own tj44
 #use: 
-#   e.g., $haha
+#   e.g., $joke
 #   print randomly-generated TJ joke
 ############################################################
 
@@ -78,7 +78,7 @@ def get_zen_quote():
     return quote
 
 ################################################
-#pulls randomly-generated zen quote 
+#pulls randomly-generated random fact
 #result is JSON, so the json module ensures we can more easily work with the data
 ################################################
 
@@ -91,7 +91,7 @@ def get_random_quote():
 ################################################
 #add encouraging message to the list of options!
 #use: 
-#   $add [your encouraging message here]
+#   $add_inspo [your encouraging message here]
 ################################################
 
 def add_encouraging_message(message, keywords):

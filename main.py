@@ -19,7 +19,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 #create bot instance (inherits from discord.Client)
-bot = commands.Bot(command_prefix="$", intents=intents)
+bot = commands.Bot(command_prefix="$", intents=intents, help_command=None)   #I am creating my own help_command
 
 # Begin scheduler... will generate scheduled messages!
 scheduler = AsyncIOScheduler()
@@ -163,12 +163,20 @@ async def on_message(message):
     #pass to command processor if not matched above
     await bot.process_commands(message)
 
+
+#a nice filter net to collect all unauthorized attempts to use certain restricted commands (e.g., $backups)
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRole):
+        print(f'{ctx.author.name} ({ctx.author.display_name}) tried to use ${ctx.command}. Oops.')
+        return
+    
 ############################################################
 #Print random inspirational quote
 #use: 
 #   $inspire
 ############################################################
-@bot.command()
+@bot.command(help='Prints a random inspirational quote, taken from https://zenquotes.io/api/random.\nExample usage: $inspire')
 async def inspire(ctx):
     quote = get_zen_quote()
     #await ctx.send(f'You seem to be in need of scouting motivation, {ctx.author.display_name}. Here is a quote.')
@@ -179,7 +187,7 @@ async def inspire(ctx):
 #use: 
 #   $rand
 ############################################################
-@bot.command()
+@bot.command(help='Prints a random factoid, taken from https://uselessfacts.jsph.pl/.\nExample usage: $rand')
 async def rand(ctx):
     quote = get_random_quote()
     await ctx.send(quote)
@@ -187,11 +195,11 @@ async def rand(ctx):
 ############################################################
 #print a random joke, written by our own tj44
 #use: 
-#   e.g., $haha
+#   e.g., $joke
 #   print randomly-generated joke
 ############################################################
-@bot.command()
-async def haha(ctx):
+@bot.command(help='Prints a random punny joke, courtesy of OSRS user tj44.\nExample usage: $joke')
+async def joke(ctx):
     joke_list = load_tj_jokes()
     chosen_joke = random.choice(joke_list)
     await ctx.send(chosen_joke)
@@ -199,12 +207,12 @@ async def haha(ctx):
 ############################################################
 #add encouragements to the 'grab bag' list, only if phrase is unique and not already in the list
 #use: 
-#   $add encouraging_phrase_here
+#   $add_inspo encouraging_phrase_here
 ############################################################
-@bot.command()
-async def add(ctx, *, msg):   #fun little syntax note: the * means “capture the rest of the   
-                                   #user’s message as one single string called msg”
-                                   #So $add you are a wizard → msg = "you are a wizard"
+@bot.command(help='Adds an "inspiring" message to the .json file.\nExample usage: $add_inspo you are a wizard')
+async def add_inspo(ctx, *, msg):   #fun little syntax note: the * means “capture the rest of the   
+                                    #user’s message as one single string called msg”
+                                    #So $add_inspo you are a wizard → msg = "you are a wizard"
     
     encouragement = load_encouragement_keywords()
     flag = add_encouraging_message(ctx.message, encouragement)
@@ -220,18 +228,18 @@ async def add(ctx, *, msg):   #fun little syntax note: the * means “capture th
 #   $loc shorthand
 #e.g., '$loc nc' will output 'North Crandor'
 ############################################################
-@bot.command()
+@bot.command(help='Prints the full location corresponding to our scouting loc shorthand.\nExample usage: $loc apa')
 async def loc(ctx, shorthand):
     loc_shorthand, loc_key = print_loc_key(ctx.message)
     await ctx.send(f'{loc_shorthand} = {loc_key}')
-    await ctx.send('See https://locations.dust.wiki for exact location!')
+    await ctx.send('See https://locations.dust.wiki for the full map of exact locations!')
 
 ############################################################
 #print wave guide URL into the chat!
 #use:
 #    $guide
 ############################################################
-@bot.command()
+@bot.command(help='Prints link to our scouting guide, courtest of WoolyClamoth.\nExample usage: $guide')
 async def guide(ctx):
     await ctx.send(print_guide())
 
@@ -240,7 +248,7 @@ async def guide(ctx):
 #use:
 #    $wave
 ############################################################    
-@bot.command()
+@bot.command(help='Prints real-time message of current wave start time, end time, and the wave time at which the message was sent.\nExample usage: $wave')
 async def wave(ctx):
     wave_start_time, wave_end_time, wave_time = get_wave_start_end()
     
@@ -264,11 +272,11 @@ async def wave(ctx):
 ############################################################
 #Print the current poof time estimate for a world!
 #use: 
-#   $poof world
-#e.g., '$poof 308' will output '+30' if +30 is the poof time
+#   $poof_time world
+#e.g., '$poof_time 308' will output '+30' if +30 is the poof time
 ############################################################
-@bot.command()
-async def poof(ctx, world):
+@bot.command(help='Prints poof time for the entered world.\nExample usage: $poof_time 308')
+async def poof_time(ctx, world):
     poof_message = create_poof_message(world)
     await ctx.send(poof_message)
 
@@ -279,12 +287,10 @@ async def poof(ctx, world):
 #   $eow world tier
 #e.g., '$eow 308 7' (for a t7 star in world 308)
 ############################################################
-@bot.command()
+@bot.command(help='Prints suggested EOW call time for the entered world. If no poof time is recorded for that world, then defaults to +85. Tiers 6-9 only.\nExample usage: $eow 308 9')
 async def eow(ctx, world, tier):
     call_message = create_call_message(world, tier)
     await ctx.send(call_message)
-    
-
 
 ############################################################
 #hold star in held_stars.json file until time to release
@@ -293,7 +299,7 @@ async def eow(ctx, world, tier):
 #e.g., 
 #   $hold 308 nc 8
 ############################################################
-@bot.command()
+@bot.command(help='Records given world, loc, and tier into the $backups list.\nExample usage: $hold 308 akm 8')
 async def hold(ctx, world=None, loc=None, tier=None):
     username = ctx.author.name
     user_id = ctx.author.id
@@ -365,7 +371,8 @@ async def hold(ctx, world=None, loc=None, tier=None):
 #use: 
 #   $backups
 ############################################################    
-@bot.command()
+@bot.command(help='Prints list of backup worlds. Restricted to @Ranked role.\nExample usage: $backups')
+@commands.has_role('Ranked')
 async def backups(ctx):    
     await send_embed('held_stars.json', ctx, hold=True)
     
@@ -378,7 +385,8 @@ async def backups(ctx):
 #e.g., 
 #   $remove 308
 ############################################################        
-@bot.command()
+@bot.command(help='Manually removes star from $backups list. Restricted to @Ranked role.\nExample usage: $remove 308')
+@commands.has_role('Ranked')
 async def remove(ctx, world=None):
     
     #remove star from .json
@@ -396,7 +404,7 @@ async def remove(ctx, world=None):
 #use: 
 #   $active
 ############################################################     
-@bot.command()
+@bot.command(help='Prints list of active stars.\nExample usage: $active')
 async def active(ctx):
     await send_embed('active_stars.json', ctx, active=True)
 
@@ -408,7 +416,8 @@ async def active(ctx):
 #e.g., 
 #   $call 308 akm 8
 ############################################################  
-@bot.command()
+@bot.command(help='Calls star and moves to $active list. Restricted to @Ranked role.\nExample usage: $call 308 akm 8')
+@commands.has_role('Ranked')
 async def call(ctx, world, loc, tier):
     #assumes star finder is the individual who submitted the message...ah well.
     username = ctx.author.name
@@ -427,7 +436,8 @@ async def call(ctx, world, loc, tier):
 #   $setup_active_loop [minutes]
 #e.g., '$setup_active_loop 30' will print the list every 30 minutes in the channel
 ############################################################
-@bot.command()
+@bot.command(help='Sets up the bot to send $active list in the designated channel every x minutes. Restricted to @Mods role.\nExample usage: $setup_active_loop')
+@commands.has_role('Mods')
 
 #registers this function as a bot command that is called when user types $setup_active_loop
 async def setup_active_loop(ctx,minutes=60):
@@ -472,7 +482,8 @@ async def setup_active_loop(ctx,minutes=60):
 #use: 
 #   $stop_active_loop
 ############################################################
-@bot.command()
+@bot.command(help="Terminates the bot's sending of $active list in the designated channel every x minutes, if applicable. Restricted to @Mods role.\nExample usage: $stop_active_loop")
+@commands.has_role('Mods')
 async def stop_active_loop(ctx):
     
     #get server ID
@@ -499,10 +510,20 @@ async def stop_active_loop(ctx):
     #re-write .json file
     save_json_file(all_jobs, 'keyword_lists/scheduled_active_jobs.json')
     
-    
-    
-    
-    
+
+############################################################
+#Creating a $help command that is a little cleaner than the default
+#use: 
+#   $help
+############################################################   
+@bot.command(help='Prints this list of abridged help information.\nExample usage: $help')
+async def help(ctx):
+    embed = discord.Embed(title='F2P Starhunter Help Menu',description='Commands List:',color=0x1ABC9C)
+    for command in bot.commands:
+        embed.add_field(name=f'${command.name}',value=command.help,inline=False)
+      
+    await ctx.send(embed=embed)
+ 
     
     
 bot.run(os.getenv('TOKEN'))
