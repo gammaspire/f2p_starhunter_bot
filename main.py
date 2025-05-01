@@ -10,6 +10,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from main_commands import *
 from misc_commands import *
 from pull_from_gsheet import *
+from universal_functions import *
 
 #load environment variables from 'token.env' file
 load_dotenv('token.env')
@@ -45,6 +46,14 @@ class CallStarButton(Button):
     #when I click the button, the star will be removed from the held_stars.json list
     async def callback(self, interaction: discord.Interaction):
         remove_held_star(self.world, 'held_stars.json')
+        
+        #if an entry with the same f2p world is not already in the .json file, add it!
+        world_check = world_check_flag(self.world, 'active_stars.json')
+
+        if world_check:
+            await interaction.followup.send(f'A star for world {self.world} is already listed!')
+            return
+        
         add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, 'active_stars.json')
         
         self.disabled = True
@@ -130,22 +139,6 @@ async def on_message(message):
     #grab display name (name) and username of the message author
     name = message.author.display_name
     username = message.author.name
-
-    ############################################################
-    #If message includes any of the keywords, random greeting will print
-    #use: 
-    #   e.g., user types "hello"
-    #   bot might respond with "Howdy, {name}!"
-    ############################################################
-    greeting_keywords = pull_greeting_keywords()
-    if any(word in message.content for word in greeting_keywords):
-        common_greetings, wooly_dislike_list = greeting_response_keywords()
-        if (name not in wooly_dislike_list) & (username not in wooly_dislike_list):
-            chosen_greeting = random.choice(common_greetings)
-        else:
-            chosen_greeting = "Get out"
-        await message.channel.send(f"{chosen_greeting}, {name}!")
-        return
     
     ############################################################
     #If message includes any of the keywords, random encouraging message will print
@@ -176,7 +169,7 @@ async def on_command_error(ctx, error):
 #use: 
 #   $inspire
 ############################################################
-@bot.command(help='Prints a random inspirational quote, taken from https://zenquotes.io/api/random.\nExample usage: $inspire')
+@bot.command() #help='Prints a random inspirational quote, taken from https://zenquotes.io/api/random.\nExample usage: $inspire')
 async def inspire(ctx):
     quote = get_zen_quote()
     #await ctx.send(f'You seem to be in need of scouting motivation, {ctx.author.display_name}. Here is a quote.')
@@ -187,7 +180,7 @@ async def inspire(ctx):
 #use: 
 #   $rand
 ############################################################
-@bot.command(help='Prints a random factoid, taken from https://uselessfacts.jsph.pl/.\nExample usage: $rand')
+@bot.command() #help='Prints a random factoid, taken from https://uselessfacts.jsph.pl/.\nExample usage: $rand')
 async def rand(ctx):
     quote = get_random_quote()
     await ctx.send(quote)
@@ -198,7 +191,7 @@ async def rand(ctx):
 #   e.g., $joke
 #   print randomly-generated joke
 ############################################################
-@bot.command(help='Prints a random punny joke, courtesy of OSRS user tj44.\nExample usage: $joke')
+@bot.command() #help='Prints a random punny joke, courtesy of OSRS user tj44.\nExample usage: $joke')
 async def joke(ctx):
     joke_list = load_tj_jokes()
     chosen_joke = random.choice(joke_list)
@@ -209,7 +202,7 @@ async def joke(ctx):
 #use: 
 #   $add_inspo encouraging_phrase_here
 ############################################################
-@bot.command(help='Adds an "inspiring" message to the .json file.\nExample usage: $add_inspo you are a wizard')
+@bot.command() #help='Adds an "inspiring" message to the .json file.\nExample usage: $add_inspo you are a wizard')
 async def add_inspo(ctx, *, msg):   #fun little syntax note: the * means “capture the rest of the   
                                     #user’s message as one single string called msg”
                                     #So $add_inspo you are a wizard → msg = "you are a wizard"
@@ -239,7 +232,7 @@ async def loc(ctx, shorthand):
 #use:
 #    $guide
 ############################################################
-@bot.command(help='Prints link to our scouting guide, courtest of WoolyClamoth.\nExample usage: $guide')
+@bot.command(help='Prints link to our scouting guide, courtesy of WoolyClamoth.\nExample usage: $guide')
 async def guide(ctx):
     await ctx.send(print_guide())
 
@@ -338,7 +331,7 @@ async def hold(ctx, world=None, loc=None, tier=None):
     #if not call flag, the command was typed correctly, AND there is not already an entry with the
     #world included in the command, add the held star to list and HOLD
     add_star_to_list(username, user_id, world, loc, tier, filename='held_stars.json')  
-    await ctx.send(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
+    await ctx.send(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
     
     #schedule the checking job; if star is ready to call, remove job!
     async def monitor_star():
@@ -396,7 +389,7 @@ async def remove(ctx, world=None):
     job_id = f"hold_{ctx.guild.id}_{world}_{loc}_{tier}"
     scheduler.remove_job(job_id)
     
-    await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
+    await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
     
     
 ############################################################
@@ -419,14 +412,31 @@ async def active(ctx):
 @bot.command(help='Calls star and moves to $active list. Restricted to @Ranked role.\nExample usage: $call 308 akm 8')
 @commands.has_role('Ranked')
 async def call(ctx, world, loc, tier):
+    
+    #load list of f2p worlds
+    f2p_world_list = load_f2p_worlds()
+    
+    tier = remove_frontal_corTex(tier)
+    
+    #if an entry with the same f2p world is not already in the .json file, add it!
+    world_check = world_check_flag(world, 'active_stars.json')
+    
+    if world_check:
+        await ctx.send(f'A star for world {world} is already listed!')
+        return
+    
+    if (str(world) not in f2p_world_list) | (int(tier)>9) | (int(tier)<1):
+        await ctx.send(print_error_message())
+        return
+    
     #assumes star finder is the individual who submitted the message...ah well.
     username = ctx.author.name
     user_id = ctx.author.id
-        
+    
     #add star to .json
     add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
 
-    await ctx.send(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: T{tier}")
+    await ctx.send(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
         
     
 ############################################################
@@ -520,8 +530,8 @@ async def stop_active_loop(ctx):
 async def help(ctx):
     embed = discord.Embed(title='F2P Starhunter Help Menu',description='Commands List:',color=0x1ABC9C)
     for command in bot.commands:
-        embed.add_field(name=f'${command.name}',value=command.help,inline=False)
-      
+        if command.help!=None:
+            embed.add_field(name=f'${command.name}',value=command.help,inline=False)
     await ctx.send(embed=embed)
  
     

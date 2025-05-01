@@ -3,16 +3,11 @@ import json
 import os
 import random
 import time
+from pull_stars_from_SM import *
+from universal_functions import *
 
-#remove any T prefixes 
-def remove_frontal_corTex(tier_string):
-    try:
-        if (tier_string[0]=='t') | (tier_string[0]=='T'):
-            return tier_string[1]
-        return tier_string
-    except TypeError:
-        return None
-        
+
+
 ############################################################
 #Print the key to our shorthand for star spawning locations!
 #use: 
@@ -60,24 +55,12 @@ def print_guide():
 #save json file with updated scheduled jobs
 #from json file, grab IDs
 ############################################################
-def load_json_file(filename):
-    try:
-        with open(filename, 'r') as f:
-            return json.load(f)
-    except (json.JSONDecodeError, FileNotFoundError):
-        return {}
 
-#this will write job to filename, and create filename if does not already exist
-def save_json_file(data, filename):
-    with open(filename, 'w') as f:
-        json.dump(data, f)
-        
 #to reactivate any scheduled jobs, must first grab job IDs
 def grab_job_ids(job_info):            
     channel_id = job_info['channel_id']
     interval = job_info['interval']        
     return channel_id, interval
-
 
 
 ############################################################
@@ -88,47 +71,32 @@ def grab_job_ids(job_info):
 #   $hold 308 nc 8
 ############################################################
 
-def world_check_flag(world, filename):
-    
-    held_stars = load_json_file(f'keyword_lists/{filename}')
-
-    #if true, an entry with the given world is already registered in the .json file
-    world_check_flag = any(entry.get("world") == str(world) for entry in held_stars)
-
-    return world_check_flag
-    
-
 #using JSON file --> a convenient approach to storing dictionary keys. :-)
 def add_star_to_list(username,user_id,world,loc,tier,filename='held_stars.json'):
-        
     
-    #if an entry with the same f2p world is not already in the .json file, add it!
-    world_check = world_check_flag(world, filename)
-    
-    if not world_check:    
-        
-        #grab time at which star is CALLED --> will use to determine star tier later on
-        call_time = time.time()
-        
-        #isolate the tier number in case someone entered t# or T#
-        tier = remove_frontal_corTex(tier)
+    #grab time at which star is CALLED --> will use to determine star tier later on
+    call_time = time.time()
 
-        stars_list = load_json_file(f'keyword_lists/{filename}')
-        
-        stars_list.append({
-            "username": username,
-            "user_id": user_id,
-            "world": world,
-            "loc": loc,
-            "tier": tier,
-            "call_time": call_time
-        })
-    
+    #isolate the tier number in case someone entered t# or T#
+    tier = remove_frontal_corTex(tier)
+
+    stars_list = load_json_file(f'keyword_lists/{filename}')
+
+    stars_list.append({
+        "username": username,
+        "user_id": user_id,
+        "world": world,
+        "loc": loc,
+        "tier": tier,
+        "call_time": call_time
+    })
+
     with open(f'keyword_lists/{filename}','w') as f:
         json.dump(stars_list, f, indent=6)   #indent indicates number of entries per array?
 
+        
 def print_error_message():
-    message = 'Missing or invalid arguments!\nSyntax: $hold world loc tier\nWorld should be F2P, loc must be one of our shorthand keys, and the tier must be 6-9\nExample: $hold 308 akm 8'
+    message = 'Missing or invalid arguments!\nSyntax: $hold world loc tier\nWorld should be F2P, loc must be one of our shorthand keys, and the tier must be 6-9 for held star or 1-9 for active star.\nExample: $hold 308 akm 8'
     return message
         
 ############################################################
@@ -166,25 +134,44 @@ def remove_held_star(world,filename='held_stars.json',output_data=False):
 #   $backups
 #   $active
 ############################################################
+
+def remove_0tier_stars(star_list):
+    scrub_active_list = [entry for entry in star_list if int(get_current_tier(entry['call_time'],entry['tier'])) != 0]    
+    return scrub_active_list
+    
 def embed_stars(filename, embed, active=False, hold=False):
     
+    #load current list of backup or active stars
     stars = load_json_file(f'keyword_lists/{filename}')
     
+    #pull SM stars from server
+    SM_stars = get_SM_f2p_stars()
+    
     if active:
-        
-        #REMOVE STARS WITH TIER 0* (then re-save file)
-        updated_stars = [entry for entry in stars if int(get_current_tier(entry['call_time'],entry['tier'])) != 0]
+
+        #REMOVE STARS WITH TIER 0* and update with SM stars
+        updated_stars = remove_0tier_stars(stars)       
+
+        #add SM stars to list of active stars
+        updated_stars = add_SM_to_active(SM_stars, updated_stars)
+
+        #re-save file
         save_json_file(updated_stars, f'keyword_lists/{filename}')
     
     else:
+        #check if any SM active stars are in our backups list. if so, remove from $backups.
+        calibrate_backups(SM_stars, stars)
         updated_stars=stars
+        
+        #re-save file
+        save_json_file(updated_stars, f'keyword_lists/{filename}')
+        
     
     #load location dictionary
     loc_dict = load_loc_dict()
     
     for i,star in enumerate(updated_stars):
-        
-        call_time = int(star['call_time'])
+
         star_loc = star['loc']
         
         try:
@@ -195,6 +182,7 @@ def embed_stars(filename, embed, active=False, hold=False):
     #if this is the embed for active stars, then include world, loc, current tier when sent, time remaining, and scouter who called the star
         if active:
             #get time remaining (in seconds) for the star!
+            call_time = int(star['call_time'])
             time_remaining = get_time_remaining(call_time, star['tier'])
             
             #get current tier for the star

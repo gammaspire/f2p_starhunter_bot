@@ -18,7 +18,7 @@ python main.py
 ## Main Commands List
 
 * $help
-    * will print an abridged version of this README document.
+    * will print an abridged version of this README document (excluding Misc. commands).
 
 * $loc location_shorthand
     * will output what location our shorthand points to, along with a link to https://locations.dust.wiki that includes a more exact pointer to where the star spawns! 

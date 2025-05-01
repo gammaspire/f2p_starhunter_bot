@@ -28,43 +28,6 @@ async def send_joke(bot, channel_id):
     joke_list = load_tj_jokes()
     chosen_joke = random.choice(joke_list)
     await channel.send(chosen_joke)
-        
-############################################################
-#If message includes any of the keywords, random greeting will print
-#use: 
-#   e.g., user types "hello bot"
-#   bot might respond with "Howdy, {name}!"
-############################################################
-
-#storing heaps of keyword lists here...
-
-def pull_greeting_keywords():
-    try:
-        with open("keyword_lists/greeting_keywords.txt", "r") as f:
-            greeting_keywords = [line.strip() for line in f if line.strip()]
-    except FileNotFoundError:
-        print('keyword_lists/response_greetings.txt file not found; loading default list instead.')
-        greeting_keywords = ['hi bot','Hi bot','hello bot','Hello bot','yo bot','Yo bot']    
-    
-    return greeting_keywords
-
-def greeting_response_keywords():
-    
-    try:
-        with open("keyword_lists/response_greetings.txt", "r") as f:
-            common_greetings = [line.strip() for line in f if line.strip()]
-    except FileNotFoundError:
-        print('keyword_lists/response_greetings.txt file not found; loading default list instead.')
-        common_greetings = ['Salutations','Howdy-doo','Welcome']
-    
-    try:
-        with open("keyword_lists/wooly_dislike_list.txt", "r") as f:
-            wooly_dislike_list = [line.strip() for line in f if line.strip()] 
-    except FileNotFoundError:
-        print('keyword_lists/wooly_dislike_list.txt file not found; loading default list instead.')
-        wooly_dislike_list = []
-
-    return common_greetings, wooly_dislike_list
 
 ################################################
 #pulls randomly-generated zen quote 

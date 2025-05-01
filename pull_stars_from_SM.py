@@ -1,0 +1,91 @@
+#need to pull stars from SM and add to $active embed
+#most important is to check world
+#if world entry is already in $active, either ignore or replace with SM entry
+
+import requests
+from universal_functions import world_check_flag, load_json_file, save_json_file
+
+
+#extract list of Star Miners F2P active stars
+def get_SM_f2p_stars():
+    
+    #url where star data is stored
+    sm_url = 'https://map.starminers.site/data2'
+
+    #load list of F2P worlds
+    with open('keyword_lists/f2p_worlds.txt', 'r') as file:   #read in file
+        lines = file.readlines()                              #grab all lines (one world per line)
+    
+    #convert to list; if ttl world, then the length will be >3 characters; truncate to just
+    #3 characters so fits better with the syntax of the discord command I'm setting up
+    world_list = [line.strip()[0:3] for line in lines] 
+    
+    response = requests.get(sm_url)
+    data = response.json()
+    
+    #grab list of f2p stars from SM
+    f2p_stars = [entry for entry in data if str(entry['world']) in world_list]
+    
+    return f2p_stars
+
+
+#add Star Miners stars to our $active list
+def add_SM_to_active(SM_f2p_stars, our_active_stars):
+    
+    #our current stars list ($active)
+    stars_list = our_active_stars
+    
+    #for every star in f2p_stars, check if in active_stars.json. if not, add to stars_list
+    for star in SM_f2p_stars:
+        #SM DICTIONARY SYNTAX:
+        #world (integer)
+        #calledAt (time star is called)
+        #calledLocation (location)
+        #tier (current tier, also integer)
+        
+        #check whether world is already in $active list
+        world_flag = world_check_flag(star['world'], 'active_stars.json')
+        
+        if not world_check_flag(str(star['world']), 'active_stars.json'):
+            username = f"{star['calledBy']} (SM)"
+            user_id = 'None'
+            world = str(star['world'])
+            loc = star['calledLocation']
+            tier = str(star['tier'])  #current tier
+            call_time = int(star['calledAt'])
+            
+            stars_list.append({
+                "username": username,
+                "user_id": user_id,
+                "world": world,
+                "loc": loc,
+                "tier": tier,
+                "call_time": call_time
+            })
+            
+        else:
+            #SM star world is in stars_list
+            for active_star in stars_list:
+                #for the star with the same world as SM star, replace tier with SM tier
+                if int(active_star['world'])==int(star['world']):
+                    active_star['tier'] = str(star['tier'])
+        
+    return stars_list
+            
+            
+#check if SM star is in our $backups list. if so, remove from $backups.        
+def calibrate_backups(SM_f2p_stars, backup_stars):
+    #there are not too many f2p stars...not concerned about optimizing the comparisons here
+    
+    #create list of f2p worlds with active SM stars
+    SM_f2p_star_worlds = []
+    
+    for SM_star in SM_f2p_stars:
+        world = int(SM_star['world'])
+        SM_f2p_star_worlds.append(world)
+    
+    #update the backups stars
+    updated_backup_stars = [entry for entry in backup_stars if str(entry['world']) not in SM_f2p_star_worlds]
+    
+    return updated_backup_stars
+    
