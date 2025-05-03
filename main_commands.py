@@ -177,7 +177,7 @@ def embed_stars(filename, embed, active=False, hold=False):
         try:
             star_full_loc = loc_dict[star_loc]
         except:
-            star_full_loc = star_loc
+            star_full_loc = star_loc if len(star_loc)<6 else ''   #for SM stars, 
     
     #if this is the embed for active stars, then include world, loc, current tier when sent, time remaining, and scouter who called the star
         if active:
