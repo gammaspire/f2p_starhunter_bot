@@ -100,18 +100,20 @@ def print_error_message():
     return message
         
 ############################################################
-#remove star from held_stars.json
+#remove star from held_stars.json ($remove_held) OR active_stars.json ($poof)
 #use: 
-#   $remove world
+#   $remove_held world
+#   $poof world
 #e.g., 
-#   $remove 308
+#   $remove_held 308
+#   $poof 308
 ############################################################
         
-def remove_held_star(world,filename='held_stars.json',output_data=False):
+def remove_star(world,filename='held_stars.json',output_data=False):
     #remove star from the .json
     all_held_stars = load_json_file(f'keyword_lists/{filename}')
     
-    #if output_data needed for the $remove command...
+    #if output_data needed for the $remove command (meaning that the command returns the Loc and Tier associated with the star), grab that information and assign to variables
     if output_data:
         for n in all_held_stars:
             if n['world']==world:
@@ -124,7 +126,8 @@ def remove_held_star(world,filename='held_stars.json',output_data=False):
     save_json_file(updated_held_stars, f'keyword_lists/{filename}')
     
     if output_data:
-        return loc,tier
+        return loc,tier  
+      
     
 ############################################################
 #print list of star backups being held in the current wave

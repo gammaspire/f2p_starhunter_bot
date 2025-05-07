@@ -49,6 +49,8 @@ def get_wave_time():
     
     return wave_time
 
+#returns wave time message that does NOT dynamically change after being sent as a Discord message 
+#(i.e., Unix timestamps not used)
 def create_wave_message_static():
     wave_time = int(get_wave_time())
     

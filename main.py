@@ -45,7 +45,7 @@ class CallStarButton(Button):
     
     #when I click the button, the star will be removed from the held_stars.json list
     async def callback(self, interaction: discord.Interaction):
-        remove_held_star(self.world, 'held_stars.json')
+        remove_star(self.world, 'held_stars.json')
         
         #if an entry with the same f2p world is not already in the .json file, add it!
         world_check = world_check_flag(self.world, 'active_stars.json')
@@ -386,23 +386,41 @@ async def backups(ctx):
 #manually remove backup star from the list
 #(doing so will also remove the scheduled 'ping' to call)
 #use: 
-#   $remove f2p_world
+#   $remove_held f2p_world
 #e.g., 
-#   $remove 308
+#   $remove_held 308
 ############################################################        
-@bot.command(help='Manually removes star from $backups list. Restricted to @Ranked role.\nExample usage: $remove 308')
+@bot.command(help='Manually removes star from $backups list. Restricted to @Ranked role.\nExample usage: $remove_held 308')
 @commands.has_role('Ranked')
-async def remove(ctx, world=None):
+async def remove_held(ctx, world=None):
     
     #remove star from .json
-    loc, tier = remove_held_star(world, 'held_stars.json', output_data=True)
+    loc, tier = remove_star(world, 'held_stars.json', output_data=True)
     
     #cancel the job once done
     job_id = f"hold_{world}_{loc}_{tier}"
     scheduler.remove_job(job_id)
     
     await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
+
+
+############################################################
+#manually remove active star from the list
+#use: 
+#   $poof f2p_world
+#e.g., 
+#   $poof 308
+############################################################        
+@bot.command(help='Manually removes star from $active list (HOWEVER -- if star is still active on SM, it will not be removed). Restricted to @Ranked role.\nExample usage: $poof 308')
+@commands.has_role('Ranked')
+async def poof(ctx, world=None):
     
+    #remove star from .json
+    loc, tier = remove_star(world, 'active_stars.json', output_data=True)
+    
+    wave_time = get_wave_time()
+    
+    await ctx.send(f"⭐ Confirming poof of star \nWorld: {world}\nLoc: {loc}\nTier: {tier}\nThe current wave time is +{wave_time}")
     
 ############################################################
 #print list of current active stars in an aesthetic textbox
