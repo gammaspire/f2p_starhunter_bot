@@ -59,7 +59,7 @@ python main.py
         * Example usage: $call 308 akm 8
         *                $call 575 lse t7
         
-* $setup_active_loop minutes
+* $start_active_loop minutes
     * Use restricted to members with @Mods role
     * will begin scheduled messages (with a frequency of every # minutes per user input) which print the list of active stars for the current wave
     * messages will print in the same channel the command is sent to

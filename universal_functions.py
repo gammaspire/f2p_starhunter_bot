@@ -38,7 +38,9 @@ def world_check_flag(world, filename):
     stars = load_json_file(f'keyword_lists/{filename}')
 
     #if true, an entry with the given world is already registered in the .json file
-    world_flag = any(entry["world"] == str(world) for entry in stars)
+    #note that SM worlds are integers
+    world_flag = (any(entry["world"] == str(world) for entry in stars)) | \
+                 (any(entry["world"] == int(world) for entry in stars))
     
     return world_flag
 

@@ -116,11 +116,13 @@ async def on_ready():
         guild_id = int(guild_id)
         channel_id, minutes = grab_job_ids(job_info)
         scheduled_channel_ids_active[guild_id] = channel_id
-
+        
         #define the RUN JOB function, now coupled with our global send_active_list async function
         def run_job(gid=guild_id,channel_id=channel_id):
+            #channel is same as ctx, and both are not the same as channel_id (I guess). I need ctx.
+            channel = bot.get_channel(channel_id)
             asyncio.run_coroutine_threadsafe(send_embed('active_stars.json',
-                                                    ctx,active=True,hold=False), bot.loop)
+                                                    channel,active=True,hold=False), bot.loop)
 
         #define job id. if it is not in the scheduler, add and print success msg in terminal
         job_id = f"scheduled_msg_active_{guild_id}"
@@ -306,11 +308,17 @@ async def hold(ctx, world=None, loc=None, tier=None):
     try:
         
         #if world_check returns TRUE, then the star is already in the JSON file!        
-        world_check = world_check_flag(world,filename='held_stars.json')
+        world_check_held = world_check_flag(world,filename='held_stars.json')
                 
         #if there is already a star registered in the .json file in 'world', cancel the request
-        if world_check:
+        if world_check_held:
             await ctx.send(f'There is already a star being held for world {world}.\nCheck the list of backup stars with the $backups command.')
+            return
+        
+        world_check_active = world_check_flag(world, 'active_stars.json')
+        #if there is already a star registered in the .json file in 'world', cancel the request
+        if world_check_active:
+            await ctx.send(f'There is already an active star for world {world}.\nCheck the list of active stars with the $active command.')
             return
         
         #now compare wave time and eow suggested call time for star
@@ -339,11 +347,15 @@ async def hold(ctx, world=None, loc=None, tier=None):
         call_flag = check_wave_call(world,tier)
 
         if call_flag:
+            
+            #IF STAR IS IN ACTIVE (OR SM) AND REMOVED FROM BACKUPS BEFORE MANUALLY CALLED, REMOVE JOB.
+            #maybe print a message in Discord that star is already active? or ignore entirely. not sure.
+            
             #view is what enables the button; will remove held star from .json when clicked and add to $active
             await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
                            view=CallStarView(username, user_id, world, loc, tier))   #CallStarView is a class
             #redefine the unique job_id
-            job_id = f"hold_{ctx.guild.id}_{world}_{loc}_{tier}"
+            job_id = f"hold_{world}_{loc}_{tier}"
             #cancel the job
             scheduler.remove_job(job_id)
     
@@ -352,11 +364,11 @@ async def hold(ctx, world=None, loc=None, tier=None):
         asyncio.run_coroutine_threadsafe(monitor_star(), bot.loop)
 
     #unique job ID (based on user + star details)
-    job_id = f"hold_{ctx.guild.id}_{world}_{loc}_{tier}"
+    job_id = f"hold_{world}_{loc}_{tier}"
     
     #will run run_job every one minute!
     if not scheduler.get_job(job_id):
-        scheduler.add_job(run_job, 'interval', minutes=1, id=job_id)
+        scheduler.add_job(run_job, 'interval', minutes=2, id=job_id)
     
 
 ############################################################
@@ -386,7 +398,7 @@ async def remove(ctx, world=None):
     loc, tier = remove_held_star(world, 'held_stars.json', output_data=True)
     
     #cancel the job once done
-    job_id = f"hold_{ctx.guild.id}_{world}_{loc}_{tier}"
+    job_id = f"hold_{world}_{loc}_{tier}"
     scheduler.remove_job(job_id)
     
     await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
@@ -443,14 +455,14 @@ async def call(ctx, world, loc, tier):
 #In a channel of your choosing, type command and the bot will post
 #list of active stars every x minutes
 #use: 
-#   $setup_active_loop [minutes]
-#e.g., '$setup_active_loop 30' will print the list every 30 minutes in the channel
+#   $start_active_loop [minutes]
+#e.g., '$start_active_loop 30' will print the list every 30 minutes in the channel
 ############################################################
-@bot.command(help='Sets up the bot to send $active list in the designated channel every x minutes. Restricted to @Mods role.\nExample usage: $setup_active_loop')
+@bot.command(help='Sets up the bot to send $active list in the designated channel every x minutes. Restricted to @Mods role.\nExample usage: $start_active_loop')
 @commands.has_role('Mods')
 
-#registers this function as a bot command that is called when user types $setup_active_loop
-async def setup_active_loop(ctx,minutes=60):
+#registers this function as a bot command that is called when user types $start_active_loop
+async def start_active_loop(ctx,minutes=60):
     
     #unique identifier for a Discord SERVER
     guild_id = ctx.guild.id

@@ -80,11 +80,12 @@ def calibrate_backups(SM_f2p_stars, backup_stars):
     #create list of f2p worlds with active SM stars
     SM_f2p_star_worlds = []
     
+    #for every star, isolate str(world) and add to list
     for SM_star in SM_f2p_stars:
-        world = int(SM_star['world'])
+        world = str(SM_star['world'])
         SM_f2p_star_worlds.append(world)
     
-    #update the backups stars
+    #update the backups stars...only keep stars whose worlds are NOT in the SM_f2p_star_worlds list!
     updated_backup_stars = [entry for entry in backup_stars if str(entry['world']) not in SM_f2p_star_worlds]
     
     return updated_backup_stars

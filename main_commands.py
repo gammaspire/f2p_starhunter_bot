@@ -158,10 +158,12 @@ def embed_stars(filename, embed, active=False, hold=False):
         #re-save file
         save_json_file(updated_stars, f'keyword_lists/{filename}')
     
+    #if "hold," then remove ANY stars from $backups list if that star appears in the SM list of active stars
     else:
         #check if any SM active stars are in our backups list. if so, remove from $backups.
-        calibrate_backups(SM_stars, stars)
-        updated_stars=stars
+        updated_stars = calibrate_backups(SM_stars, stars)
+        
+        #I also need to 
         
         #re-save file
         save_json_file(updated_stars, f'keyword_lists/{filename}')
@@ -190,13 +192,13 @@ def embed_stars(filename, embed, active=False, hold=False):
             
             embed.add_field(
                     name=f'⭐ Star {i+1} ⭐',
-                    value=f'{star['world']} {star_full_loc} ({star_loc}) Tier {current_tier}*\nDust time: <t:{time_remaining}:R>\nCalled by: {star['username']}',
+                    value=f'{star['world']} {star_full_loc} [{star_loc}] Tier {current_tier}*\nDust time: <t:{time_remaining}:R>\nCalled by: {star['username']}',
                     inline=False
                 )
         if hold:
             embed.add_field(
                 name=f'⭐ Star {i+1} ⭐',
-                value=f'{star['world']} {star_full_loc} ({star_loc}) Tier {star['tier']} -- {star['username']}',
+                value=f'{star['world']} {star_full_loc} [{star_loc}] Tier {star['tier']} -- {star['username']}',
                 inline=False
             )
     return embed
