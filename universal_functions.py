@@ -39,8 +39,8 @@ def world_check_flag(world, filename):
 
     #if true, an entry with the given world is already registered in the .json file
     #note that SM worlds are integers
-    world_flag = (any(entry["world"] == str(world) for entry in stars)) | \
-                 (any(entry["world"] == int(world) for entry in stars))
+    world_flag = (any(str(entry["world"]) == str(world) for entry in stars)) | \
+                 (any(str(entry["world"]) == int(world) for entry in stars))
     
     return world_flag
 

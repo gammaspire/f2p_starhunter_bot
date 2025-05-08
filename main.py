@@ -463,6 +463,9 @@ async def call(ctx, world, loc, tier):
     username = ctx.author.name
     user_id = ctx.author.id
     
+    #remove star from the $backups list!
+    remove_star(world, 'held_stars.json')
+    
     #add star to .json
     add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
 

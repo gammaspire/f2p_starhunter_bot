@@ -64,11 +64,13 @@ def grab_job_ids(job_info):
 
 
 ############################################################
-#hold star in held_stars.json file until time to release
+#hold star in held_stars.json file OR add star to active_stars.json
 #use: 
 #   $hold world loc tier
+#   $call world loc tier
 #e.g., 
 #   $hold 308 nc 8
+#   $call 308 nc 8
 ############################################################
 
 #using JSON file --> a convenient approach to storing dictionary keys. :-)
@@ -115,6 +117,9 @@ def remove_star(world,filename='held_stars.json',output_data=False):
     
     #if output_data needed for the $remove command (meaning that the command returns the Loc and Tier associated with the star), grab that information and assign to variables
     if output_data:
+        #creating variable placeholders...just in case
+        loc=''
+        tier=''
         for n in all_held_stars:
             if n['world']==world:
                 loc=n['loc']
