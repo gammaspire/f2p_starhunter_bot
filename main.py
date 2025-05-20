@@ -217,6 +217,37 @@ async def add_inspo(ctx, *, msg):   #fun little syntax note: the * means “capt
     else:
         await ctx.send(f"This phrase is already in the list, {ctx.author.display_name}!")
 
+################################################
+#ask the magic conch shell to resolve your indecision.
+#use: 
+#   $conch [your question]
+################################################        
+@bot.command()
+async def conch(ctx):
+
+    await ctx.send("Type your yes/no question below.")
+
+    def check(user_message):
+        return (user_message.author == ctx.author) & (user_message.channel == ctx.channel)
+
+    try:
+        #bot waits for message sent by same author AND in same channel
+        question = await bot.wait_for("message", timeout=15.0, check=check)
+        
+        #the bot checks that the question ENDS in a question mark. if not, no response.
+        if not question.content.endswith("?"):
+            await ctx.send("Your grammar is abysmal. Wake me when you decide to use question marks.")
+            return
+        
+        #select and send response!
+        response = random.choice(load_conch_responses())
+        await ctx.send(f"🌀 {response} 🌀")
+    
+    #if user doesn't respond within 15 seconds, the bot.wait_for will return an error and this message will be sent...
+    except asyncio.TimeoutError:
+        await ctx.send("You took too long typing your query. The conch has gone back to sleep.")
+
+
 ############################################################
 #Print the key to our shorthand for star spawning locations!
 #use: 
@@ -447,7 +478,7 @@ async def call(ctx, world, loc, tier):
     f2p_world_list = load_f2p_worlds()
     
     tier = remove_frontal_corTex(tier)
-    
+
     #if an entry with the same f2p world is not already in the .json file, add it!
     world_check = world_check_flag(world, 'active_stars.json')
     
@@ -459,14 +490,20 @@ async def call(ctx, world, loc, tier):
         await ctx.send(print_error_message())
         return
     
-    #assumes star finder is the individual who submitted the message...ah well.
-    username = ctx.author.name
-    user_id = ctx.author.id
-    
     #remove star from the $backups list!
     remove_star(world, 'held_stars.json')
     
+    try:
+        #cancel the job once done
+        job_id = f"hold_{world}_{loc}_{tier}"
+        scheduler.remove_job(job_id)
+        print(f'Job ID {job_id} removed.')
+    except:
+        print(f'Called star in world {world} was not a backup; no job to remove.')
+    
     #add star to .json
+    username = ctx.author.name
+    user_id = ctx.author.id
     add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
 
     await ctx.send(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: {tier}")

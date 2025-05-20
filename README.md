@@ -56,6 +56,7 @@ python main.py
 * $call f2p_world loc_shorthand star_tier
     * Use restricted to members with @Ranked role
     * calls star and places in active_stars.json file
+    * note that if the star is called on SM, the tier will update to correspond to the SM tier for the star
         * Example usage: $call 308 akm 8
         *                $call 575 lse t7
         
@@ -85,6 +86,10 @@ python main.py
 * $joke 
     * will print a random joke, pulling from a list written by our very own tj44
     * this list is available upon request; otherwise will default to a list of two jokes
+    
+* $conch
+    * will prompt user to type a yes/no question within a 15 second timeframe
+    * if response is detected, code will pull randomly from list of possible responses
     
 
 ## Notes

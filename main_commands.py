@@ -75,7 +75,7 @@ def grab_job_ids(job_info):
 
 #using JSON file --> a convenient approach to storing dictionary keys. :-)
 def add_star_to_list(username,user_id,world,loc,tier,filename='held_stars.json'):
-    
+
     #grab time at which star is CALLED --> will use to determine star tier later on
     call_time = time.time()
 
@@ -96,7 +96,6 @@ def add_star_to_list(username,user_id,world,loc,tier,filename='held_stars.json')
     with open(f'keyword_lists/{filename}','w') as f:
         json.dump(stars_list, f, indent=6)   #indent indicates number of entries per array?
 
-        
 def print_error_message():
     message = 'Missing or invalid arguments!\nSyntax: $hold world loc tier\nWorld should be F2P, loc must be one of our shorthand keys, and the tier must be 6-9 for held star or 1-9 for active star.\nExample: $hold 308 akm 8'
     return message

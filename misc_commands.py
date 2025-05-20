@@ -89,3 +89,32 @@ def load_sad_keywords():
     except FileNotFoundError:
         print('keyword_lists/sad_keywords.txt file not found; loading default list instead.')
         return ['miserable','sad','unhappy','sadgams','angry','upset','depressed','infuriated','grumpy']
+
+################################################
+#ask the magic conch shell to resolve your indecision.
+#use: 
+#   $conch [your question]
+################################################
+
+def load_conch_responses():
+    
+    responses=['Yes.',
+               'No.',
+               'My sources say no [source: me].',
+               'Please try again later.',
+               'Possibly.',
+               'Perhaps not.',
+               'Indubitably yes.',
+               'It is a no from me, dawg.',
+               'Absolutely.',
+               'I am uncertain.',
+               'You woke me up for this? Sure, whatever.',
+               'Try asking again.',
+               'Nay.',
+               'Nope.',
+               'Negative.',
+               'Aye.',
+               "I don't know, what do you think?"
+               ]
+    return responses
+

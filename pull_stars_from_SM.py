@@ -68,6 +68,7 @@ def add_SM_to_active(SM_f2p_stars, our_active_stars):
             for active_star in stars_list:
                 #for the star with the same world as SM star, replace tier with SM tier
                 if int(active_star['world'])==int(star['world']):
+                    #print(f'Updating tier for world {active_star['world']} to match SM tier.')
                     active_star['tier'] = str(star['tier'])
         
     return stars_list
