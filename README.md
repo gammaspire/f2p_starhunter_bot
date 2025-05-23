@@ -63,6 +63,7 @@ python main.py
 * $start_active_loop minutes
     * Use restricted to members with @Mods role
     * will begin scheduled messages (with a frequency of every # minutes per user input) which print the list of active stars for the current wave
+        * bulletin board style -- one message updated every N minutes. activate in a channel that is preferably locked to 
     * messages will print in the same channel the command is sent to
     * example usage: $setup_active_loop 5
         * will print every 5 minutes

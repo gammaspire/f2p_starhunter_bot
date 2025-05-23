@@ -74,9 +74,8 @@ class CallStarView(View):
 
         
 #will use for sending backup and active star embeds   
-async def send_embed(filename,destination,active=False,hold=False):
-    #print active stars from .json
-    #create embed!
+#message_id only relevant for $start_active_loop. it will tell the function which embed message to modify like a bulletin board!
+async def send_embed(filename,destination,active=False,hold=False,message_id=None):
     
     if active:
         title='Active Stars'
@@ -88,7 +87,20 @@ async def send_embed(filename,destination,active=False,hold=False):
     
     #populate the embed message with backup or active stars, if any
     embed_filled = embed_stars(filename, embed, active=active, hold=hold)
-    await destination.send(embed=embed_filled)
+    
+    if message_id:
+        try:
+            message = await destination.fetch_message(message_id)
+            await message.edit(embed=embed_filled)
+            return message.id
+        
+        except discord.NotFound:
+            # If the message doesn't exist anymore, fallback to sending a new one
+            message = await destination.send(embed=embed_filled)
+            return message.id
+    else:
+        message = await destination.send(embed=embed_filled)
+        #don't use return message.id here -- need message_id to be None and $active and $backups commands
 
     
 ################################################################################
@@ -520,24 +532,31 @@ async def call(ctx, world, loc, tier):
 @commands.has_role('Mods')
 
 #registers this function as a bot command that is called when user types $start_active_loop
-async def start_active_loop(ctx,minutes=60):
+async def start_active_loop(ctx,minutes=10):
     
     #unique identifier for a Discord SERVER
     guild_id = ctx.guild.id
+    #unique identifier for a Discord CHANNEL
+    channel_id = ctx.channel.id
     
     #associates server ID with the channel ID
-    scheduled_channel_ids_active[guild_id] = ctx.channel.id
-    
-    #stores the ID of the channel where the command was called
-    scheduled_channel_id = ctx.channel.id
+    scheduled_channel_ids_active[guild_id] = channel_id
+
     await ctx.send(f"Active stars will be posted in this channel every {minutes} minute(s)!")
     
+    #NOTE: message_id=123 is a PLACEHOLDER. If I do not define it at all, the default is message_id=None and the
+    #code will not output a message_id (which I need for $start_active_loop)
+    message_id = await send_embed('active_stars.json', ctx.channel, active=True, hold=False, message_id=123)    
+        
     #scheduler functions must be non-async functions)
     #this function will schedule the async (send_message()) to run inside of the Discord bot's
     #event loop, even if APScheduler triggers it from a different thread
     def run_job():
         embed_list = asyncio.run_coroutine_threadsafe(send_embed('active_stars.json',
-                                                    ctx,active=True,hold=False), bot.loop)
+                                                                 bot.get_channel(channel_id),
+                                                                 active=True,hold=False,
+                                                                 message_id=message_id),
+                                                      bot.loop)
     
     #creates job id given the server! this way, I can have multiple jobs for multiple servers :-)
     job_id = f"scheduled_msg_active_{guild_id}"    
@@ -550,10 +569,14 @@ async def start_active_loop(ctx,minutes=60):
 
     #save to JSON so it persists (i.e., not wiped from memory when main.py is terminated)
     all_jobs = load_json_file('keyword_lists/scheduled_active_jobs.json')   #if .json already exists, load
+    
+    #write the new job (corresponding to guild_id) and save channel_id, interval, message_id)
     all_jobs[str(guild_id)] = {
         'channel_id': scheduled_channel_ids_active[guild_id],
-        'interval': minutes
+        'interval': minutes,
+        'message_id': message_id
     }
+        
     save_json_file(all_jobs, 'keyword_lists/scheduled_active_jobs.json')
 
 ############################################################
