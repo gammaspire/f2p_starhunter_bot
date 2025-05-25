@@ -127,14 +127,18 @@ async def on_ready():
     for guild_id, job_info in active_jobs.items():
         guild_id = int(guild_id)
         channel_id, minutes = grab_job_ids(job_info)
+        message_id = job_info.get("message_id")   #will tell the code which message to update
+        
         scheduled_channel_ids_active[guild_id] = channel_id
         
         #define the RUN JOB function, now coupled with our global send_active_list async function
-        def run_job(gid=guild_id,channel_id=channel_id):
-            #channel is same as ctx, and both are not the same as channel_id (I guess). I need ctx.
+        def run_job(gid=guild_id,channel_id=channel_id,message_id=message_id):
+            #channel is same as ctx (sort of), and both are not the same as channel_id (I guess).
             channel = bot.get_channel(channel_id)
             asyncio.run_coroutine_threadsafe(send_embed('active_stars.json',
-                                                    channel,active=True,hold=False), bot.loop)
+                                                        channel,active=True,hold=False,
+                                                        message_id=message_id), 
+                                             bot.loop)
 
         #define job id. if it is not in the scheduler, add and print success msg in terminal
         job_id = f"scheduled_msg_active_{guild_id}"
@@ -244,7 +248,7 @@ async def conch(ctx):
 
     try:
         #bot waits for message sent by same author AND in same channel
-        question = await bot.wait_for("message", timeout=15.0, check=check)
+        question = await bot.wait_for("message", timeout=20.0, check=check)
         
         #the bot checks that the question ENDS in a question mark. if not, no response.
         if not question.content.endswith("?"):
@@ -255,9 +259,9 @@ async def conch(ctx):
         response = random.choice(load_conch_responses())
         await ctx.send(f"🌀 {response} 🌀")
     
-    #if user doesn't respond within 15 seconds, the bot.wait_for will return an error and this message will be sent...
+    #if user doesn't respond within 20 seconds, the bot.wait_for will return an error and this message will be sent...
     except asyncio.TimeoutError:
-        await ctx.send("You took too long typing your query. The conch has gone back to sleep.")
+        await ctx.send("🌀 You took too long typing your query. The conch has gone back to sleep. 🌀")
 
 
 ############################################################

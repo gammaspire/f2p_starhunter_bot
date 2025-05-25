@@ -98,36 +98,12 @@ def load_sad_keywords():
 
 def load_conch_responses():
     
-    responses=['Yes.',
-               'No.',
-               'My sources say no [source: me].',
-               'Possibly.',
-               'Perhaps not.',
-               'Indubitably yes.',
-               'It is a no from me, dog.',
-               'Absolutely.',
-               'I am uncertain.',
-               'You woke me up for this? Sure, whatever.',
-               'Try asking again.',
-               'Nay.',
-               'Nope.',
-               'Negative.',
-               'Aye.',
-               "I don't know, what do you think?",
-               "Yes. No. Maybe. It’s complicated.",
-               "Oh, sweetie. No.",
-               "Signs point to ¯\_(ツ)_/¯",
-               "Ask again later. I'm currently overwhelmed for you.",
-               "No, but great enthusiasm. I love that for you.",
-               "Could go either way. Like your decision-making.",
-               "Yes. With all the certainty of a weather app.",
-               "Absolutely. Just ignore reality, it'll be fine.",
-               "Confirmed. Against my better judgment, mind you.",
-               "Affirmative. Try not to ruin it.",
-               "Maybe. But let’s not get ahead of ourselves, meatbag.",
-               "Yes. I’d roll my eyes, but I don’t have the luxury of eyelids.",
-               "Negative, but you really sold it with that confident tone.",
-               "No, but I’d love to hear how you spin it into a learning moment."
-               ]
+    try:
+        with open("keyword_lists/conch.txt", "r") as f:
+            return [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        print('keyword_lists/sad_keywords.txt file not found; loading default list instead.')
+        return ['Yes.','No.','Maybe.']
+
     return responses
 
