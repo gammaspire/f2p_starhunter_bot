@@ -78,9 +78,9 @@ def load_encouragement_keywords():
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         print('keyword_lists/response_encouragement.txt file not found; loading default list instead.')
-        return ['Keep doing your best','Just keep swimming','One moment at a time',
-                'Save those tears for your pillow','Cheer up','Absorb some sunshine',
-                'Any worthwhile endeavor will take time and patience']
+        return ['Keep doing your best.','Just keep swimming.','One moment at a time.',
+                'Save those tears for your pillow.','Cheer up.','Absorb some sunshine.',
+                'Any worthwhile endeavor will take time and patience.','sarcasm']
 
 def load_sad_keywords():
     try:
@@ -90,20 +90,39 @@ def load_sad_keywords():
         print('keyword_lists/sad_keywords.txt file not found; loading default list instead.')
         return ['miserable','sad','unhappy','sadgams','angry','upset','depressed','infuriated','grumpy']
 
+def sarcastify_word(word):
+    if word=='D:':
+        return word
+    string=''
+    for n in range(len(word)):
+        string+=word[n].lower() if n%2==0 else word[n].upper()
+    return string
+    
 ################################################
 #ask the magic conch shell to resolve your indecision.
 #use: 
-#   $conch [your question]
+#   $conch
 ################################################
-
 def load_conch_responses():
     
     try:
         with open("keyword_lists/conch.txt", "r") as f:
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
-        print('keyword_lists/sad_keywords.txt file not found; loading default list instead.')
+        print('keyword_lists/conch.txt file not found; loading default list instead.')
         return ['Yes.','No.','Maybe.']
 
-    return responses
-
+################################################
+#disagree? VOCALIZE YOUR DISAPPROVAL HERE!
+#use: 
+#   $protest
+################################################    
+def load_protests():
+    
+    try:
+        with open("keyword_lists/protest.txt", "r") as f:
+            return [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        print('keyword_lists/protest.txt file not found; loading default list instead.')
+        return ['No.','Ask somebody else!']
+    

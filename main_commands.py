@@ -143,23 +143,26 @@ def remove_star(world,filename='held_stars.json',output_data=False):
 ############################################################
 
 def remove_0tier_stars(star_list):
-    scrub_active_list = [entry for entry in star_list if int(get_current_tier(entry['call_time'],entry['tier'])) != 0]    
+    scrub_active_list = [entry for entry in star_list if int(approximate_current_tier(entry['call_time'],entry['tier'])) != 0]    
     return scrub_active_list
     
 def embed_stars(filename, embed, active=False, hold=False):
     
     #load current list of backup or active stars
     stars = load_json_file(f'keyword_lists/{filename}')
-    
+
     #pull SM stars from server
     SM_stars = get_SM_f2p_stars()
-    
+
+    #pull list of SM worlds (will need later)
+    SM_worlds = [int(sm_star['world']) for sm_star in SM_stars]
+
     if active:
 
         #REMOVE STARS WITH TIER 0* and update with SM stars
         updated_stars = remove_0tier_stars(stars)       
 
-        #add SM stars to list of active stars
+        #add SM stars to list of active stars. will also calibrate the tiers with the SM calls!
         updated_stars = add_SM_to_active(SM_stars, updated_stars)
 
         #re-save file
@@ -169,16 +172,13 @@ def embed_stars(filename, embed, active=False, hold=False):
     else:
         #check if any SM active stars are in our backups list. if so, remove from $backups.
         updated_stars = calibrate_backups(SM_stars, stars)
-        
-        #I also need to 
-        
+                
         #re-save file
         save_json_file(updated_stars, f'keyword_lists/{filename}')
-        
     
     #load location dictionary
     loc_dict = load_loc_dict()
-    
+
     for i,star in enumerate(updated_stars):
 
         star_loc = star['loc']
@@ -187,15 +187,20 @@ def embed_stars(filename, embed, active=False, hold=False):
             star_full_loc = loc_dict[star_loc]
         except:
             star_full_loc = star_loc if len(star_loc)<6 else ''   #for SM stars, 
-    
-    #if this is the embed for active stars, then include world, loc, current tier when sent, time remaining, and scouter who called the star
+
+        #if this is the embed for active stars, then include world, loc, current tier when sent, time remaining, and scouter who called the star
         if active:
             #get time remaining (in seconds) for the star!
             call_time = int(star['call_time'])
             time_remaining = get_time_remaining(call_time, star['tier'])
             
-            #get current tier for the star
-            current_tier = get_current_tier(call_time, star['tier'])
+            
+            #get current tier for the star.
+            #if star is in list of SM star worlds, determine tier from SM 
+            #if star is not in list of SM star worlds, use approximate_current_tier() -- gives approximate tier
+                #based on when user called star in Discord server and the 7-minute-per-tier timer
+            #REMINDER: star['tier'] was calibrated in add_SM_to_active() above if star in SM list!!            
+            current_tier = approximate_current_tier(call_time, star['tier']) if int(star['world']) not in SM_worlds else star['tier']
             
             embed.add_field(
                     name=f'⭐ Star {i+1} ⭐',
@@ -208,9 +213,14 @@ def embed_stars(filename, embed, active=False, hold=False):
                 value=f'{star['world']} {star_full_loc} [{star_loc}] Tier {star['tier']} -- {star['username']}',
                 inline=False
             )
+
+    #add 'Updated/posted [xx minutes ago]'
+    timestamp=int(time.time())
+    embed.add_field(name="\u200b", value=f"Posted/last updated <t:{timestamp}:R>", inline=False)
+            
     return embed
 
-def get_current_tier(call_time, original_tier):
+def approximate_current_tier(call_time, original_tier):
     #max(a,b) --> gives the larger of a and b. 
     #returns current tier of the star, given the original call time (when set to $active)
     original_tier = int(original_tier)   #ensuring integer, not string or float

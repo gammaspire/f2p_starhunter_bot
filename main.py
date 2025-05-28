@@ -162,13 +162,31 @@ async def on_message(message):
     #If message includes any of the keywords, random encouraging message will print
     #use: 
     #   e.g., user types "I am feeling upset"
-    #   bot might respond with "Smile, {name}."
+    #   bot might respond with "Absorb some sunshine."
     ############################################################
-    sad_keywords = load_sad_keywords()
+    sad_keywords = set(load_sad_keywords())
+    
     if any(word in message.content for word in sad_keywords):
         encouragement = load_encouragement_keywords()
         chosen_encouragement = random.choice(encouragement)
+        
+        #there is a secret response prompt -- "sarcasm"
+        #in this case, find the (or a) sad word in the user's message and *sArCaStiFy iT*
+        if chosen_encouragement=='sarcasm':
+            
+            #quickest approach computationally to finding the sad word is to convert both lists to a set, 
+            #then find the sad word that triggered this function
+            encouragement=set(encouragement)
+            
+            try:
+                word = list(encouragement.intersection(sad_keywords))[0]
+            except:
+                word = 'unhappy'
+            
+            chosen_encouragement = sarcastify_word(word)
+        
         await message.channel.send(chosen_encouragement)
+        
         return
 
     #pass to command processor if not matched above
@@ -263,6 +281,17 @@ async def conch(ctx):
     except asyncio.TimeoutError:
         await ctx.send("🌀 You took too long typing your query. The conch has gone back to sleep. 🌀")
 
+################################################
+#disagree? VOCALIZE YOUR DISAPPROVAL HERE!
+#use: 
+#   $protest
+################################################ 
+@bot.command()
+async def protest(ctx):
+    
+    protests = load_protests()
+    chosen_protest = random.choice(protests)
+    await ctx.send(chosen_protest)
 
 ############################################################
 #Print the key to our shorthand for star spawning locations!
