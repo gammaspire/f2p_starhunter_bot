@@ -43,10 +43,9 @@ def get_SM_f2p_stars():
 #add Star Miners stars to our $active list
 def add_SM_to_active(SM_f2p_stars, our_active_stars):
 
-    #our current stars list ($active)
-    stars_list = our_active_stars
-
-    #for every star in f2p_stars, check if in active_stars.json. if not, add to stars_list
+    #our_active_stars ==> our current stars list ($active)
+    
+    #for every star in f2p_stars, check if in active_stars.json. if not, add to our_active_stars
     for SM_star in SM_f2p_stars:
         #SM DICTIONARY SYNTAX:
         #world (integer)
@@ -54,9 +53,9 @@ def add_SM_to_active(SM_f2p_stars, our_active_stars):
         #calledLocation (location)
         #tier (current tier, also integer)
         #check whether world is already in $active list
-        world_flag = world_check_flag(SM_star['world'], 'active_stars.json')
+        world_flag = world_check_flag(SM_star['world'], active_stars=our_active_stars)
         
-        if not world_check_flag(str(SM_star['world']), 'active_stars.json'):
+        if not world_flag:
             username = f"{SM_star['calledBy']} (SM)"
             user_id = 'None'
             world = str(SM_star['world'])
@@ -64,7 +63,7 @@ def add_SM_to_active(SM_f2p_stars, our_active_stars):
             tier = str(SM_star['tier'])  #current tier
             call_time = int(SM_star['calledAt'])
 
-            stars_list.append({
+            our_active_stars.append({
                 "username": username,
                 "user_id": user_id,
                 "world": world,
@@ -76,16 +75,16 @@ def add_SM_to_active(SM_f2p_stars, our_active_stars):
         else:
                         
             #for every active star in our stars list (INCLUDING SM stars)...
-            for active_star in stars_list:
+            for active_star in our_active_stars:
 
                 #for the star with the same world as SM star, replace tier with SM tier
                 if int(active_star['world'])==int(SM_star['world']):
 
-                    print(f"Updating {active_star['world']} [{active_star['loc']}] from tier {active_star['tier']} to {SM_star['tier']}")
+                    #print(f"Updating {active_star['world']} [{active_star['loc']}] from tier {active_star['tier']} to {SM_star['tier']}")
                     
                     active_star['tier'] = str(SM_star['tier'])
 
-    return stars_list
+    return our_active_stars
             
             
 #check if SM star is in our $backups list. if so, remove from $backups.        

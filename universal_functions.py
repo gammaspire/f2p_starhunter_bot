@@ -34,9 +34,13 @@ def load_f2p_worlds():
     return world_list
 
 #check whether world is already in filename (either held_stars.json or active_stars.json)
-def world_check_flag(world, filename):
-    stars = load_json_file(f'keyword_lists/{filename}')
-
+def world_check_flag(world, filename=None, active_stars=None):
+    
+    if filename!=None:
+        stars = load_json_file(f'keyword_lists/{filename}')
+    else:
+        stars = active_stars
+    
     #if true, an entry with the given world is already registered in the .json file
     #note that SM worlds are integers
     world_flag = (any(str(entry["world"]) == str(world) for entry in stars)) | \

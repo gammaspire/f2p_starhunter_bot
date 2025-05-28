@@ -142,8 +142,15 @@ def remove_star(world,filename='held_stars.json',output_data=False):
 #   $active
 ############################################################
 
-def remove_0tier_stars(star_list):
-    scrub_active_list = [entry for entry in star_list if int(approximate_current_tier(entry['call_time'],entry['tier'])) != 0]    
+def remove_0tier_stars(star_list, SM_worlds):
+    
+    #remove stars from the list that have a t0 tier! I do not want these buggers lingering indefinitely!
+    star_list = [entry for entry in star_list if int(approximate_current_tier(entry['call_time'],entry['tier'])) != 0]    
+    #we also want to remove any stars that have, according to SM, poofed. We can remove those stars manually from our list; however, if we are instead automating the $active loop and have nobody actively removing poofed stars, I would like the list to cleanse itself -- like a cat.
+
+    #remove SM stars that are no longer in SM world list. :-)
+    scrub_active_list = [entry for entry in star_list if not ('(SM)' in entry['username'] and int(entry['world']) not in SM_worlds)]
+    
     return scrub_active_list
     
 def embed_stars(filename, embed, active=False, hold=False):
@@ -159,8 +166,9 @@ def embed_stars(filename, embed, active=False, hold=False):
 
     if active:
 
-        #REMOVE STARS WITH TIER 0* and update with SM stars
-        updated_stars = remove_0tier_stars(stars)       
+        #REMOVE STARS WITH TIER 0* OR WHICH ARE SM STARS (CHECK IF NAME HAS (SM)) BUT ARE NO LONGER ON SM LIST
+        #(I.E., THEY POOFED)
+        updated_stars = remove_0tier_stars(stars,SM_worlds)       
 
         #add SM stars to list of active stars. will also calibrate the tiers with the SM calls!
         updated_stars = add_SM_to_active(SM_stars, updated_stars)
