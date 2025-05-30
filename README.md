@@ -92,6 +92,9 @@ python main.py
     * will prompt user to type a yes/no question within a 15 second timeframe
     * if response is detected, code will pull randomly from list of possible responses
     
+* $protest
+    * TBD
+    
 
 ## Notes
 
