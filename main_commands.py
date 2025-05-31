@@ -142,11 +142,16 @@ def remove_star(world,filename='held_stars.json',output_data=False):
 #   $active
 ############################################################
 
-def remove_0tier_stars(star_list):
+def remove_0tier_stars(star_list, SM_worlds):
     
     #remove stars from the list that have a t0 tier! I do not want these buggers lingering indefinitely!
-    star_list = [entry for entry in star_list if int(approximate_current_tier(entry['call_time'],entry['tier'])) != 0]    
-    return star_list
+    active_list = [entry for entry in star_list if int(approximate_current_tier(entry['call_time'],entry['tier'])) != 0]    
+    #also must remove any stars that have, according to SM, poofed. we can remove those stars manually using $poof command; however, if we are instead automating the $active loop and have nobody actively removing poofed stars, I would like the list to cleanse itself -- like a cat.
+    
+    #if star in $active list has (SM) in the username variable name AND the star's world is not in the updated SM_worlds list, remove that star. Scrub-a-dub-dub
+    scrubbed_list = [entry for entry in active_list if not ('(SM)' in entry['username'] and int(entry['world']) not in SM_worlds)]
+    
+    return scrubbed_list
     
 def embed_stars(filename, embed, active=False, hold=False):
     
@@ -161,8 +166,8 @@ def embed_stars(filename, embed, active=False, hold=False):
 
     if active:
 
-        #REMOVE STARS WITH TIER 0*
-        updated_stars = remove_0tier_stars(stars)       
+        #REMOVE STARS WITH TIER 0* and poofed stars (i.e., stars in our $active list which are not in SM updated list)
+        updated_stars = remove_0tier_stars(stars, SM_worlds)       
 
         #add SM stars to list of active stars. will also calibrate the tiers with the SM calls!
         updated_stars = add_SM_to_active(updated_stars, SM_stars)
@@ -192,17 +197,19 @@ def embed_stars(filename, embed, active=False, hold=False):
 
         #if this is the embed for active stars, then include world, loc, current tier when sent, time remaining, and scouter who called the star
         if active:
-            #get time remaining (in seconds) for the star!
+            
+            #get time at which star was called
             call_time = int(star['call_time'])
-            time_remaining = get_time_remaining(call_time, star['tier'])
-            
-            
-            #get current tier for the star.
+
+            #get current tier for the star. the routine below will change if we ever create our own runelite plugin!
             #if star is in list of SM star worlds, determine tier from SM 
             #if star is not in list of SM star worlds, use approximate_current_tier() -- gives approximate tier
                 #based on when user called star in Discord server and the 7-minute-per-tier timer
             #REMINDER: star['tier'] was calibrated in add_SM_to_active() above if star in SM list!!            
             current_tier = approximate_current_tier(call_time, star['tier']) if int(star['world']) not in SM_worlds else star['tier']
+            
+            #get time remaining (in seconds) for the star! use the "current tier" above!
+            time_remaining = get_time_remaining(call_time, current_tier)
             
             embed.add_field(
                     name=f'⭐ Star {i+1} ⭐',
