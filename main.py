@@ -48,7 +48,7 @@ class CallStarButton(Button):
         remove_star(self.world, 'held_stars.json')
         
         #if an entry with the same f2p world is not already in the .json file, add it!
-        world_check = world_check_flag(self.world, 'active_stars.json')
+        world_check = world_check_flag(self.world, filename='active_stars.json')
 
         if world_check:
             await interaction.followup.send(f'A star for world {self.world} is already listed!')
@@ -391,7 +391,7 @@ async def hold(ctx, world=None, loc=None, tier=None):
             await ctx.send(f'There is already a star being held for world {world}.\nCheck the list of backup stars with the $backups command.')
             return
         
-        world_check_active = world_check_flag(world, 'active_stars.json')
+        world_check_active = world_check_flag(world, filename='active_stars.json')
         #if there is already a star registered in the .json file in 'world', cancel the request
         if world_check_active:
             await ctx.send(f'There is already an active star for world {world}.\nCheck the list of active stars with the $active command.')
@@ -525,7 +525,7 @@ async def call(ctx, world, loc, tier):
     tier = remove_frontal_corTex(tier)
 
     #if an entry with the same f2p world is not already in the .json file, add it!
-    world_check = world_check_flag(world, 'active_stars.json')
+    world_check = world_check_flag(world, filename='active_stars.json')
     
     if world_check:
         await ctx.send(f'A star for world {world} is already listed!')
