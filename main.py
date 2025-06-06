@@ -284,10 +284,10 @@ async def conch(ctx):
 ################################################
 #disagree? VOCALIZE YOUR DISAPPROVAL HERE!
 #use: 
-#   $protest
+#   $strike
 ################################################ 
 @bot.command()
-async def protest(ctx):
+async def strike(ctx):
     
     protests = load_protests()
     chosen_protest = random.choice(protests)

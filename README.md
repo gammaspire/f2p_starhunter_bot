@@ -39,8 +39,8 @@ python main.py
 * $hold f2p_world loc star_tier
     * Use restricted to members with @Ranked role
     * will place into dynamic JSON file the name of user who used the call, the world, location (shorthand) and tier of the star to be held. When the wave time ~ the EOW call time for the star, the bot will @ the user and output the star that can now be called. If EOW doesn't exist, will default to calling at a wave time of 85 minutes.
-        * Example usage: $hold 308 akm 8
-        *                $hold 575 lse t7
+        * Example usage: `$hold 308 akm 8`
+        *                `$hold 575 lse t7`
     
 * $remove f2p_world
     * will remove any held backup star in the JSON file which corresponds to the world (which acts as a unique identifier, since there can only be one star per world).
@@ -57,15 +57,15 @@ python main.py
     * Use restricted to members with @Ranked role
     * calls star and places in active_stars.json file
     * note that if the star is called on SM, the tier will update to correspond to the SM tier for the star
-        * Example usage: $call 308 akm 8
-        *                $call 575 lse t7
+        * Example usage: `$call 308 akm 8`
+        *                `$call 575 lse t7`
         
 * $start_active_loop minutes
     * Use restricted to members with @Mods role
     * will begin scheduled messages (with a frequency of every # minutes per user input) which print the list of active stars for the current wave
         * bulletin board style -- one message updated every N minutes. activate in a channel that is preferably locked to 
     * messages will print in the same channel the command is sent to
-    * example usage: $setup_active_loop 5
+    * example usage: `$setup_active_loop 5`
         * will print every 5 minutes
     * Tiers will NOT update dynamically, though the "Dust time" will (ty Unix time)
 
@@ -92,8 +92,8 @@ python main.py
     * will prompt user to type a yes/no question within a 15 second timeframe
     * if response is detected, code will pull randomly from list of possible responses
     
-* $protest
-    * TBD
+* $strike
+    * will print words of forceful "encouragement" to press our leaders into allowing the scouters to unionize
     
 
 ## Notes

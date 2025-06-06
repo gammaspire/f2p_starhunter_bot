@@ -115,13 +115,13 @@ def load_conch_responses():
 ################################################
 #disagree? VOCALIZE YOUR DISAPPROVAL HERE!
 #use: 
-#   $protest
+#   $strike
 ################################################    
 def load_protests():
     
     try:
-        with open("keyword_lists/protest.txt", "r") as f:
-            return [line.strip() for line in f if line.strip()]
+        with open("keyword_lists/strike.txt", "r") as f:
+            return [line.strip().replace("\\n", "\n") for line in f if line.strip()]
     except FileNotFoundError:
         print('keyword_lists/protest.txt file not found; loading default list instead.')
         return ['No.','Ask somebody else!']
