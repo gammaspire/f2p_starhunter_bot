@@ -42,8 +42,9 @@ python main.py
         * Example usage: `$hold 308 akm 8`
         *                `$hold 575 lse t7`
     
-* $remove f2p_world
+* $remove_held f2p_world
     * will remove any held backup star in the JSON file which corresponds to the world (which acts as a unique identifier, since there can only be one star per world).
+        * Example usage: `$remove_held 308`
     
 * $backups
     * Use restricted to members with @Ranked role
