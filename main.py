@@ -12,6 +12,12 @@ from misc_commands import *
 from pull_from_gsheet import *
 from universal_functions import *
 
+
+################################################################################
+################################################################################
+################################################################################
+
+
 #load environment variables from 'token.env' file
 load_dotenv('token.env')
 
@@ -30,6 +36,12 @@ scheduler = AsyncIOScheduler()
 #in one channel will overwrite the other channel's id
 #KEY = guild.id (server ID), value = channel.id
 scheduled_channel_ids_active = {}   #this one specifically is for the active star jobs
+
+
+################################################################################
+################################################################################
+################################################################################
+
 
 #I am going to create a class for Discord button (which I will use to remove stars from the held_stars.json and add stars to the active_stars.json lists.
 class CallStarButton(Button):
@@ -73,6 +85,11 @@ class CallStarView(View):
         self.add_item(CallStarButton(username, user_id, world, loc, tier))
 
         
+################################################################################
+################################################################################
+################################################################################        
+        
+        
 #will use for sending backup and active star embeds   
 #message_id only relevant for $start_active_loop. it will tell the function which embed message to modify like a bulletin board!
 async def send_embed(filename,destination,active=False,hold=False,message_id=None):
@@ -82,12 +99,14 @@ async def send_embed(filename,destination,active=False,hold=False,message_id=Non
     else:
         title='Backup Stars'
     
+    #define empty embed
     embed = discord.Embed(title=title,
                          color=0x1ABC9C)
     
     #populate the embed message with backup or active stars, if any
     embed_filled = embed_stars(filename, embed, active=active, hold=hold)
     
+    #if there is a message_id, then refresh the "bulletin board" attached to $start_active_loop
     if message_id:
         try:
             message = await destination.fetch_message(message_id)
@@ -100,12 +119,13 @@ async def send_embed(filename,destination,active=False,hold=False,message_id=Non
             return message.id
     else:
         message = await destination.send(embed=embed_filled)
-        #don't use return message.id here -- need message_id to be None and $active and $backups commands
+        #don't use return message.id here -- need message_id to be None for $active and $backups commands
 
     
 ################################################################################
 ################################################################################
 ################################################################################
+
 
 #@bot.event is used to register an event
 @bot.event
@@ -419,19 +439,25 @@ async def hold(ctx, world=None, loc=None, tier=None):
     
     #schedule the checking job; if star is ready to call, remove job!
     async def monitor_star():
-        #re-check the call eligibility
+        
+        #if the world is in the $active list, REMOVE THE SCHEDULED JOB.
+        if world_check_flag(world,filename='active_stars.json'):
+            #redefine the unique job_id
+            job_id = f"hold_{world}_{tier}"
+            #cancel the job
+            scheduler.remove_job(job_id)
+            await ctx.send(f"<⭐ Held star World {world}, {loc}, Tier {tier} is now in the $active list and has automatically been removed from $backups.")
+        
+        #if world is not in $active list, re-check the call eligibility
         call_flag = check_wave_call(world,tier)
 
         if call_flag:
-            
-            #IF STAR IS IN ACTIVE (OR SM) AND REMOVED FROM BACKUPS BEFORE MANUALLY CALLED, REMOVE JOB.
-            #maybe print a message in Discord that star is already active? or ignore entirely. not sure.
             
             #view is what enables the button; will remove held star from .json when clicked and add to $active
             await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
                            view=CallStarView(username, user_id, world, loc, tier))   #CallStarView is a class
             #redefine the unique job_id
-            job_id = f"hold_{world}_{loc}_{tier}"
+            job_id = f"hold_{world}_{tier}"
             #cancel the job
             scheduler.remove_job(job_id)
     
@@ -440,9 +466,9 @@ async def hold(ctx, world=None, loc=None, tier=None):
         asyncio.run_coroutine_threadsafe(monitor_star(), bot.loop)
 
     #unique job ID (based on user + star details)
-    job_id = f"hold_{world}_{loc}_{tier}"
+    job_id = f"hold_{world}_{tier}"
     
-    #will run run_job every one minute!
+    #will run run_job every two minutes!
     if not scheduler.get_job(job_id):
         scheduler.add_job(run_job, 'interval', minutes=2, id=job_id)
     
@@ -474,7 +500,7 @@ async def remove_held(ctx, world=None):
     loc, tier = remove_star(world, 'held_stars.json', output_data=True)
     
     #cancel the job once done
-    job_id = f"hold_{world}_{loc}_{tier}"
+    job_id = f"hold_{world}_{tier}"
     scheduler.remove_job(job_id)
     
     await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
@@ -540,7 +566,7 @@ async def call(ctx, world, loc, tier):
     
     try:
         #cancel the job once done
-        job_id = f"hold_{world}_{loc}_{tier}"
+        job_id = f"hold_{world}_{tier}"
         scheduler.remove_job(job_id)
         print(f'Job ID {job_id} removed.')
     except:
@@ -660,6 +686,10 @@ async def help(ctx):
             embed.add_field(name=f'${command.name}',value=command.help,inline=False)
     await ctx.send(embed=embed)
  
+    
+################################################################################
+################################################################################
+################################################################################    
     
     
 bot.run(os.getenv('TOKEN'))

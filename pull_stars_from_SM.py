@@ -43,30 +43,28 @@ def get_SM_f2p_stars():
 #add Star Miners stars to our $active list, replace stars called using $call with SM counterparts, if they exist
 def add_SM_to_active(our_active_stars, SM_stars):
 
-    #for every SM star, check if world is in our_active_stars. if yes, delete entry and update with SM star entry. otherwise, just append SM star.
-    
+    #convert list of our_active_stars to a dictionary {world: star}
+    active_by_world = {str(star['world']): star for star in our_active_stars}
+
     for SM_star in SM_stars:
         
-        world_flag = world_check_flag(SM_star['world'], active_stars=our_active_stars)
-        
-        if world_flag:
-            
-            #remove any existing star in our_active_stars with the same world as SM_star['world']
-            our_active_stars = [star for star in our_active_stars if str(star['world']) != str(SM_star['world'])]
-            
-        #replace entry with SM_star
-        our_active_stars.append({
+        #grab the world of the SM star
+        world_key = str(SM_star['world'])
+
+        #replace or add the SM star
+        active_by_world[world_key] = {
             "username": f"{SM_star['calledBy']} (SM)",
             "user_id": "None",
-            "world": str(SM_star['world']),
+            "world": world_key,
             "loc": SM_star['calledLocation'],
             "tier": str(SM_star['tier']),
             "call_time": int(SM_star['calledAt'])
-        })
-                        
-    return our_active_stars
+        }
+
+    #convert back to list of stars!
+    return list(active_by_world.values())
+
     
-            
 #check if SM star is in our $backups list. if so, remove from $backups.        
 def calibrate_backups(SM_f2p_stars, backup_stars):
     #there are not too many f2p stars...not concerned about optimizing the comparisons here

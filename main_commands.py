@@ -51,19 +51,6 @@ def print_guide():
     return 'Check out out Scouting Guide [Here!](https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/)'
 
 ############################################################
-#load json file which holds all scheduled jobs
-#save json file with updated scheduled jobs
-#from json file, grab IDs
-############################################################
-
-#to reactivate any scheduled jobs, must first grab job IDs
-def grab_job_ids(job_info):            
-    channel_id = job_info['channel_id']
-    interval = job_info['interval']        
-    return channel_id, interval
-
-
-############################################################
 #hold star in held_stars.json file OR add star to active_stars.json
 #use: 
 #   $hold world loc tier
@@ -186,6 +173,7 @@ def embed_stars(filename, embed, active=False, hold=False):
     #load location dictionary
     loc_dict = load_loc_dict()
 
+    #for every star in updated stars list, pull the loc and find (if available) its "long name" entry
     for i,star in enumerate(updated_stars):
 
         star_loc = star['loc']
@@ -206,6 +194,15 @@ def embed_stars(filename, embed, active=False, hold=False):
             #if star is not in list of SM star worlds, use approximate_current_tier() -- gives approximate tier
                 #based on when user called star in Discord server and the 7-minute-per-tier timer
             #REMINDER: star['tier'] was calibrated in add_SM_to_active() above if star in SM list!!            
+            
+            #just a quick check to monitor cases where tiers don't match the Star Miners plugin
+            #this will also indicate whether I should be using approx or star['world']
+            if int(star['world']) in SM_worlds:
+                sm_tier = int(star['tier'])
+                approx = approximate_current_tier(call_time, sm_tier)
+                if approx != sm_tier:
+                    print(f"📉 Tier shift detected: SM = {sm_tier}, now = {approx}, world = {star['world']}")
+            
             current_tier = approximate_current_tier(call_time, star['tier']) if int(star['world']) not in SM_worlds else star['tier']
             
             #get time remaining (in seconds) for the star! use the "current tier" above!

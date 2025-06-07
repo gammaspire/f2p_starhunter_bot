@@ -1,5 +1,11 @@
 import json
 
+#to reactivate any scheduled jobs, must first grab job IDs
+def grab_job_ids(job_info):            
+    channel_id = job_info['channel_id']
+    interval = job_info['interval']        
+    return channel_id, interval
+
 def load_json_file(filename):
     try:
         with open(filename, 'r') as f:
