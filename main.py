@@ -446,7 +446,7 @@ async def hold(ctx, world=None, loc=None, tier=None):
             job_id = f"hold_{world}_{tier}"
             #cancel the job
             scheduler.remove_job(job_id)
-            await ctx.send(f"<⭐ Held star World {world}, {loc}, Tier {tier} is now in the $active list and has automatically been removed from $backups.")
+            await ctx.send(f"⭐ HELD STAR World {world} {loc} t{tier} is now in the $active list and has automatically been removed from $backups.")
         
         #if world is not in $active list, re-check the call eligibility
         call_flag = check_wave_call(world,tier)

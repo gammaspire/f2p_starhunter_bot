@@ -47,7 +47,7 @@ def add_SM_to_active(our_active_stars, SM_stars):
     active_by_world = {str(star['world']): star for star in our_active_stars}
 
     for SM_star in SM_stars:
-        
+
         #grab the world of the SM star
         world_key = str(SM_star['world'])
 

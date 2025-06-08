@@ -185,23 +185,15 @@ def embed_stars(filename, embed, active=False, hold=False):
 
         #if this is the embed for active stars, then include world, loc, current tier when sent, time remaining, and scouter who called the star
         if active:
-            
+
             #get time at which star was called
             call_time = int(star['call_time'])
-
+            
             #get current tier for the star. the routine below will change if we ever create our own runelite plugin!
             #if star is in list of SM star worlds, determine tier from SM 
             #if star is not in list of SM star worlds, use approximate_current_tier() -- gives approximate tier
                 #based on when user called star in Discord server and the 7-minute-per-tier timer
             #REMINDER: star['tier'] was calibrated in add_SM_to_active() above if star in SM list!!            
-            
-            #just a quick check to monitor cases where tiers don't match the Star Miners plugin
-            #this will also indicate whether I should be using approx or star['world']
-            if int(star['world']) in SM_worlds:
-                sm_tier = int(star['tier'])
-                approx = approximate_current_tier(call_time, sm_tier)
-                if approx != sm_tier:
-                    print(f"📉 Tier shift detected: SM = {sm_tier}, now = {approx}, world = {star['world']}")
             
             current_tier = approximate_current_tier(call_time, star['tier']) if int(star['world']) not in SM_worlds else star['tier']
             
