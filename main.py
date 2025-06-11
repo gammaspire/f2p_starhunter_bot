@@ -280,6 +280,11 @@ async def add_inspo(ctx, *, msg):   #fun little syntax note: the * means “capt
 async def conch(ctx):
 
     await ctx.send("Type your yes/no question below.")
+    
+    #if user invoking the conch is tysen, react with poo emoji
+    if ctx.author.name=='deleted_user102727':
+        await ctx.message.add_reaction("💩")
+
 
     def check(user_message):
         return (user_message.author == ctx.author) & (user_message.channel == ctx.channel)
@@ -357,7 +362,8 @@ async def wave(ctx):
         ),
         inline=False
     )
-        
+    
+    await ctx.message.add_reaction("👋")
     await ctx.send(embed=embed)
 
 ############################################################
