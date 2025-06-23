@@ -225,11 +225,10 @@ async def on_command_error(ctx, error):
 #use: 
 #   $inspire
 ############################################################
-@bot.command() #help='Prints a random inspirational quote, taken from https://zenquotes.io/api/random.\nExample usage: $inspire')
+@bot.command() #help='Prints a random inspirational quote, taken from Dave Tarnowski's "Disappointing Affirmations.\nExample usage: $inspire')
 async def inspire(ctx):
-    quote = get_zen_quote()
-    #await ctx.send(f'You seem to be in need of scouting motivation, {ctx.author.display_name}. Here is a quote.')
-    await ctx.send(quote)
+    affirmations = load_affirmations()
+    await ctx.send(random.choice(affirmations))
 
 ############################################################
 #Print random factoid quote
@@ -284,7 +283,6 @@ async def conch(ctx):
     #if user invoking the conch is tysen, react with poo emoji
     if ctx.author.name=='deleted_user102727':
         await ctx.message.add_reaction("💩")
-
 
     def check(user_message):
         return (user_message.author == ctx.author) & (user_message.channel == ctx.channel)

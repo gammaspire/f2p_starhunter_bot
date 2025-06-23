@@ -13,7 +13,7 @@ import random
 
 def load_tj_jokes():
     try:
-        with open("keyword_lists/tj_jokes.txt", "r") as f:
+        with open("keyword_lists/tj_jokes.txt", "r", encoding="utf-8") as f:
             tj_jokes = [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         print('keyword_lists/tj_jokes.txt file not found; loading default list instead.')
@@ -30,15 +30,27 @@ async def send_joke(bot, channel_id):
     await channel.send(chosen_joke)
 
 ################################################
-#pulls randomly-generated zen quote 
-#result is JSON, so the json module ensures we can more easily work with the data
+#pulls randomly-generated quote from Dave Tamowski's "Disappointing Affirmations" 
 ################################################
 
+#if preferred, the following will pull a random quote from the indicated website
+#result is in json, so a little manipulating is necessary to recover readable text
 def get_zen_quote():
     response = requests.get("https://zenquotes.io/api/random")
     json_data = json.loads(response.text)   #converts API to JSON (I guess)
     quote = json_data[0]['q']+" -"+json_data[0]['a']   #format is from trial and error
     return quote
+    
+#load list of affirmations     
+def load_affirmations():
+    try:
+        with open("keyword_lists/affirmations.txt", "r") as f:
+            return [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        print('keyword_lists/affirmations.txt file not found; loading default list instead.')
+        return ['Keep doing your best.','Just keep swimming.','One moment at a time.',
+                'Save those tears for your pillow.','Cheer up.','Absorb some sunshine.',
+                'Any worthwhile endeavor will take time and patience.','sarcasm']    
 
 ################################################
 #pulls randomly-generated random fact
@@ -74,7 +86,7 @@ def save_encouragement_keywords(keywords):
 #load list of encouragement keywords        
 def load_encouragement_keywords():
     try:
-        with open("keyword_lists/response_encouragement.txt", "r") as f:
+        with open("keyword_lists/response_encouragement.txt", "r", encoding="utf-8") as f:
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         print('keyword_lists/response_encouragement.txt file not found; loading default list instead.')
@@ -84,7 +96,7 @@ def load_encouragement_keywords():
 
 def load_sad_keywords():
     try:
-        with open("keyword_lists/sad_keywords.txt", "r") as f:
+        with open("keyword_lists/sad_keywords.txt", "r", encoding="utf-8") as f:
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         print('keyword_lists/sad_keywords.txt file not found; loading default list instead.')
@@ -106,7 +118,7 @@ def sarcastify_word(word):
 def load_conch_responses():
     
     try:
-        with open("keyword_lists/conch.txt", "r") as f:
+        with open("keyword_lists/conch.txt", "r", encoding="utf-8") as f:
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         print('keyword_lists/conch.txt file not found; loading default list instead.')
@@ -120,7 +132,7 @@ def load_conch_responses():
 def load_protests():
     
     try:
-        with open("keyword_lists/strike.txt", "r") as f:
+        with open("keyword_lists/strike.txt", "r", encoding="utf-8") as f:
             return [line.strip().replace("\\n", "\n") for line in f if line.strip()]
     except FileNotFoundError:
         print('keyword_lists/protest.txt file not found; loading default list instead.')
