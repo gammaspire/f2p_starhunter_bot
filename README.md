@@ -82,7 +82,8 @@ python main.py
     * will add an encouraging message to the list of options that the bot will randomly select from (when it detects an "unhappy" word in a user's message)
 
 * $inspire
-    * will pull from a random assortment of inspirational messages, taken from https://zenquotes.io/api/random
+    * will pull a randomly-generated quote from Dave Tamowski's "Disappointing Affirmations" 
+
     
 * $rand
     * will print a random factoid for your amusement, taken from https://uselessfacts.jsph.pl/
