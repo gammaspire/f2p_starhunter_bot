@@ -678,6 +678,32 @@ async def stop_active_loop(ctx):
     
 
 ############################################################
+#Print list of worlds in order from early- to late-wave spawns
+#Will remove any worlds currently harboring stars, per $active
+#Outputs comma-separated list to paste into Runelite plugin
+#use: 
+#   $hoplist
+############################################################    
+@bot.command(help='Prints comma-separated world list in order of early- to late- wave spawns. Filters out $active worlds.\nExample usage: $hoplist')
+async def hoplist(ctx):
+    worlds = get_ordered_worlds()  
+    
+    #isolate active worlds
+    #in worlds string, worlds.replace($active_world,"")
+    stars = load_json_file(f'keyword_lists/active_stars.json')
+    for star in stars:
+        world = str(star['world'])
+        
+        #remove $active worlds along with their comma. if world is the last world in string, there is a leading comma.
+        worlds = worlds.replace(world+',','') if world!=worlds[-3:] else worlds.replace(','+world,'')
+        
+    #remove any starting/ending commas that may have regrettably been left behind. just in case.
+    worlds = worlds.strip(',')
+
+    await ctx.send(f'Here is a filtered list of worlds in order of early- to late-wave spawns. Copy-Paste directly into the World Cycle Runelite plugin!\n' + worlds)
+    
+    
+############################################################
 #Creating a $help command that is a little cleaner than the default
 #use: 
 #   $help

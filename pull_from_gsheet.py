@@ -6,20 +6,12 @@ import os
 import numpy as np
 import json
 import time
-
-#remove any T prefixes 
-def remove_frontal_corTex(tier_string):
-    try:
-        if (tier_string[0]=='t') | (tier_string[0]=='T'):
-            return tier_string[1]
-        return tier_string
-    except TypeError:
-        return None
+from universal_functions import remove_frontal_corTex
+    
     
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
 #star tier index for "Suggested EOW Call Times" sheet on dust.wiki
 tier_dict = {'6':'B', '7':'C', '8':'D', '9':'E'}
-
 
 
 #GET SPREADSHEET after inserting credentials
@@ -79,6 +71,7 @@ def get_wave_start_end():
 
 #read and parse list of f2p worlds in f2p_worlds.txt
 #NOTE: start and end indices are the first and last cell indices in the column
+#outputs a dictionary of worlds and their corresponding cell index in the Google Sheet
 def parse_world_list(start_index, end_index):
     #open txtfile
     with open('keyword_lists/f2p_worlds.txt', 'r') as file:   #read in file
@@ -211,3 +204,31 @@ def check_wave_call(world,tier):
     #if can call star, FALSE
     if wave_time<call_time:
         return False
+    
+
+#function to pull poof time for given F2P world from dust.wiki
+def get_ordered_worlds():
+    
+    spreadsheet = open_spreadsheet()
+    
+    #now...grab the list of cells
+
+    worksheet = spreadsheet.worksheet('Spawn Time Estimates')
+
+    #get cell list from indices corresponding to the world cells in the Spawn Time Estimates Google Sheet
+    cell_list = worksheet.get('K5:K64')
+
+    #convert to a comma-separated python list, the "if row" is a failsafe against potential empty cells
+    worlds = [int(row[0][:3]) for row in cell_list if row]
+    
+    #convert list into a full string
+    worlds = str(worlds)
+    
+    #replace the silly brackets
+    worlds = worlds.replace("[","")
+    worlds = worlds.replace("]","")
+    
+    #replace the silly spaces
+    worlds = worlds.replace(" ","")
+    
+    return worlds

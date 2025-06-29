@@ -25,10 +25,14 @@ python main.py
     * e.g., `$loc nc` will output 'nc = North Crandor'
 
 * $guide
-    * Will print a link to our Scouting Guide (courtesy of WoolyClammoth!)
+    * Will print a link to our F2P Starhunt Scouting Guide.
 
 * $wave
     * will output current wave time, the time until end-of-wave. the clock times are Unix Epoch values that Discord automatically converts according to the reader's timezone!
+
+* $hoplist
+    * will output a list of list of worlds, ordered from early- to late-wave spawns and with $active star worlds filtered out.
+    * this list is formatted such that users can directly copy+paste the output into the World Cycle Runelite plugin.
     
 * $poof_time f2p_world
     * will output the poof time from dust.wiki for the inputted f2p world as well as the current wave time, for ease of comparison.
@@ -84,7 +88,6 @@ python main.py
 * $inspire
     * will pull a randomly-generated quote from Dave Tamowski's "Disappointing Affirmations" 
 
-    
 * $rand
     * will print a random factoid for your amusement, taken from https://uselessfacts.jsph.pl/
 
