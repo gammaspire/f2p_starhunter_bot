@@ -81,4 +81,3 @@ def calibrate_backups(SM_f2p_stars, backup_stars):
     updated_backup_stars = [entry for entry in backup_stars if str(entry['world']) not in SM_f2p_star_worlds]
     
     return updated_backup_stars
-    

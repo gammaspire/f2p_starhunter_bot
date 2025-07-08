@@ -142,7 +142,7 @@ def remove_0tier_stars(star_list, SM_worlds):
     
 def embed_stars(filename, embed, active=False, hold=False):
     
-    #load current list of backup or active stars
+    #load current list of $backups (hold) or $active (active) stars
     stars = load_json_file(f'keyword_lists/{filename}')
 
     #pull SM stars from server
@@ -151,25 +151,32 @@ def embed_stars(filename, embed, active=False, hold=False):
     #pull list of SM worlds (will need later)
     SM_worlds = [int(sm_star['world']) for sm_star in SM_stars]
 
+    #if active, clean and update $active list...remove tier=0 stars, add SM stars
     if active:
-
-        #REMOVE STARS WITH TIER 0* and poofed stars (i.e., stars in our $active list which are not in SM updated list)
-        updated_stars = remove_0tier_stars(stars, SM_worlds)       
-
-        #add SM stars to list of active stars. will also calibrate the tiers with the SM calls!
+        updated_stars = remove_0tier_stars(stars, SM_worlds)
         updated_stars = add_SM_to_active(updated_stars, SM_stars)
 
-        #re-save active_stars.json file
+        #save updated active stars list
         save_json_file(updated_stars, f'keyword_lists/{filename}')
-    
-    #if "hold," then remove ANY stars from $backups list if that star appears in the SM list of active stars
+   
+    #if hold, use original stars list read from $backups
     else:
-        #check if any SM active stars are in our backups list. if so, remove from $backups.
-        updated_stars = calibrate_backups(SM_stars, stars)
-                
-        #re-save file
-        save_json_file(updated_stars, f'keyword_lists/{filename}')
+        updated_stars = stars
+
+    #the following will calibrate the list of backup stars with either the updated $active list or the current SM list
     
+    #load list of backup/held stars
+    backup_stars = load_json_file('keyword_lists/held_stars.json')
+    
+    #define list of active stars (just SM stars for hold=True and full $active list for active=True)
+    reference_stars = SM_stars + updated_stars if active else SM_stars
+    
+    #update list of backup stars; prune stars with worlds in either $active or just SM
+    updated_backups = calibrate_backups(reference_stars, backup_stars)
+    
+    #save. :-)
+    save_json_file(updated_backups, 'keyword_lists/held_stars.json')
+
     #load location dictionary
     loc_dict = load_loc_dict()
 
@@ -234,5 +241,3 @@ def get_time_remaining(call_time, original_tier):
     time_remaining = int(time.time() + time_remaining)   #convert to Unix time
     
     return time_remaining
-
-
