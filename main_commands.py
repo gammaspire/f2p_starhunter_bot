@@ -104,20 +104,22 @@ def remove_star(world,filename='held_stars.json',output_data=False):
     #if output_data needed for the $remove command (meaning that the command returns the Loc and Tier associated with the star), grab that information and assign to variables
     if output_data:
         #creating variable placeholders...just in case
-        loc=''
-        tier=''
+        loc=None
+        tier=None
         for n in all_held_stars:
-            if n['world']==world:
+            if str(n['world'])==str(world):
                 loc=n['loc']
                 tier=n['tier']
     
     #the WORLD is the only unique identifier for every entry -- remove entry corresponding to world!
-    updated_held_stars = [entry for entry in all_held_stars if entry["world"] != str(world)]
+    updated_held_stars = [entry for entry in all_held_stars if str(entry["world"]) != str(world)]
     
     save_json_file(updated_held_stars, f'keyword_lists/{filename}')
     
     if output_data:
-        return loc,tier  
+        if loc is None or tier is None:
+            return None
+        return loc, tier
       
     
 ############################################################

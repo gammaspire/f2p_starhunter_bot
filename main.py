@@ -500,12 +500,24 @@ async def backups(ctx):
 @commands.has_role('Ranked')
 async def remove_held(ctx, world=None):
     
-    #remove star from .json
-    loc, tier = remove_star(world, 'held_stars.json', output_data=True)
+    if (world==None) | (world not in load_f2p_worlds()):
+        await ctx.send('Please input a valid f2p world!')
     
-    #cancel the job once done
+    #remove star from .json
+    output = remove_star(world, 'held_stars.json', output_data=True)
+    
+    if result is None:
+        await ctx.send(f"World {world} not found in backups list.")
+        return
+    
+    loc, tier = result
     job_id = f"hold_{world}_{tier}"
-    scheduler.remove_job(job_id)
+
+    #cancel job, if it exists
+    try:
+        scheduler.remove_job(job_id)
+    except Exception as e:
+        print(f"[Warning] Could not remove job '{job_id}': {e}")
     
     await ctx.send(f"⭐ Removing the following star from backups list:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
 
