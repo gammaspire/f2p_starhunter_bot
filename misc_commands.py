@@ -44,13 +44,13 @@ def get_zen_quote():
 #load list of affirmations     
 def load_affirmations():
     try:
-        with open("keyword_lists/affirmations.txt", "r") as f:
+        with open("keyword_lists/affirmations.txt", "r", encoding="utf-8") as f:
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         print('keyword_lists/affirmations.txt file not found; loading default list instead.')
         return ['Keep doing your best.','Just keep swimming.','One moment at a time.',
                 'Save those tears for your pillow.','Cheer up.','Absorb some sunshine.',
-                'Any worthwhile endeavor will take time and patience.','sarcasm']    
+                'Any worthwhile endeavor will take time and patience.']    
 
 ################################################
 #pulls randomly-generated random fact
