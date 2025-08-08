@@ -105,4 +105,5 @@ python main.py
 
 ## Notes
 
+* Be sure to monitor the omit_worlds.txt file to ensure the list of temporary f2p-turned-p2p worlds, if any, is up to date!
 * The base of this code originated from https://www.freecodecamp.org/news/create-a-discord-bot-with-python/.
