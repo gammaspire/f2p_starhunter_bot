@@ -23,6 +23,7 @@ load_dotenv('token.env')
 
 #define intents; required to read message content in on_message
 intents = discord.Intents.default()
+intents.members = True   #need to detect when new members join :-)
 intents.message_content = True
 
 #create bot instance (inherits from discord.Client)
@@ -78,7 +79,7 @@ class CallStarButton(Button):
 
 #also create a class for the View, which will display the button in the Discord message
 class CallStarView(View):
-    def __init__(self, username, user_id, world, loc, tier, timeout=480):
+    def __init__(self, username, user_id, world, loc, tier, timeout=600):
         #super() here is inheriting from discord.ui.View, which is the class that handles buttons, 
         #dropdowns, and other UI elements in discord.
         super().__init__(timeout=timeout)
@@ -88,7 +89,6 @@ class CallStarView(View):
 ################################################################################
 ################################################################################
 ################################################################################        
-        
         
 #will use for sending backup and active star embeds   
 #message_id only relevant for $start_active_loop. it will tell the function which embed message to modify like a bulletin board!
@@ -130,6 +130,7 @@ async def send_embed(filename,destination,active=False,hold=False,message_id=Non
 #@bot.event is used to register an event
 @bot.event
 async def on_ready():
+
     print(f'Logged in as {bot.user}')
     scheduler.start()
     
@@ -166,6 +167,51 @@ async def on_ready():
             scheduler.add_job(run_job, trigger='interval', minutes=minutes, id=job_id)
             print(f"Restored scheduled active star messages for guild {guild_id} every {minutes} minutes.")
 
+            
+#@bot.event is used to register an event
+#create a welcome message that is DM'd to the user!
+@bot.event
+async def on_member_join(member):
+    
+    #I only want new members joining F2P StarHunt to trigger this welcome message!
+    starhunt_server_id = int(os.getenv("STARHUNT_GUILD_ID"))
+    
+    if member.guild.id != starhunt_server_id:
+        return  #ignoreeeeeeee members joining other servers
+    
+    channel = None #initialize the variable, in case the first "except" is not triggered
+    
+    #create the embed message (nice formatting, 10/10)
+    embed_message = prep_welcome_message(member)
+    
+    try:
+        await member.send(embed=embed_message)
+        print(f'Successfully sent DM welcome message to {member.name}!')
+    
+    #if user has discord DM privacy settings enabled, just send the message into the channel
+    except discord.Forbidden:
+        
+        print(f"Could not send DM to {member.name}. Trying #general channel...")  
+        
+        channel_id = int(os.getenv("WELCOME_CHANNEL_ID"))
+        channel = member.guild.get_channel(channel_id)
+        await channel.send(embed=embed_message)
+        
+        print('Success!')
+
+    except Exception as e:
+        print(f"Non-Forbidden error sending DM welcome message to {member.name}: {e}")
+        print("Trying #general channel...")
+        
+        if channel:
+            await channel.send(embed=embed_message)
+            print('Success!')
+            return
+        
+        print('Error sending message, well, anywhere.')
+            
+            
+            
 @bot.event
 #the function is called when something happens (in this case, when the bot receives message)
 async def on_message(message):
@@ -372,6 +418,10 @@ async def wave(ctx):
 ############################################################
 @bot.command(help='Prints poof time for the entered world.\nExample usage: $poof_time 308')
 async def poof_time(ctx, world):
+    
+    #load list of f2p worlds
+    f2p_world_list = load_f2p_worlds()
+
     poof_message = create_poof_message(world)
     await ctx.send(poof_message)
 
@@ -384,7 +434,7 @@ async def poof_time(ctx, world):
 ############################################################
 @bot.command(help='Prints suggested EOW call time for the entered world. If no poof time is recorded for that world, then defaults to +85. Tiers 6-9 only.\nExample usage: $eow 308 9')
 async def eow(ctx, world, tier):
-    call_message = create_call_message(world, tier)
+    call_message = create_eow_message(world, tier)
     await ctx.send(call_message)
 
 ############################################################
@@ -398,6 +448,11 @@ async def eow(ctx, world, tier):
 async def hold(ctx, world=None, loc=None, tier=None):
     username = ctx.author.name
     user_id = ctx.author.id
+    
+    #checks if world is f2p star; if not, goodbye.
+    if str(world) not in load_f2p_worlds():
+        await ctx.send(print_error_message(command='hold'))
+        return
     
     #load our location shorthand dictionary
     loc_dict = load_loc_dict()
@@ -430,10 +485,9 @@ async def hold(ctx, world=None, loc=None, tier=None):
                            view=CallStarView(username, user_id, world, loc, tier))  #CallStarView is a class
             return
                     
-    #KeyError --> world is not in list of f2p worlds
     #TypeError --> user omitted world, loc, and/or tier from command
-    except (KeyError, TypeError):
-        await ctx.send(print_error_message())
+    except TypeError:
+        await ctx.send(print_error_message(command='hold'))
         return
     
     #if not call flag, the command was typed correctly, AND there is not already an entry with the
@@ -533,8 +587,16 @@ async def remove_held(ctx, world=None):
 @commands.has_role('Ranked')
 async def poof(ctx, world=None):
     
+    if str(world) not in load_f2p_worlds():
+        await ctx.send('Please enter a valid F2P world!')
+        return
+    
     #remove star from .json
     loc, tier = remove_star(world, 'active_stars.json', output_data=True)
+    
+    if loc is None:
+        await ctx.send(f'Either an unexpected error has occurred OR there was no active world listed for {world}!')
+        return
     
     wave_time = get_wave_time()
     
@@ -560,11 +622,15 @@ async def active(ctx):
 @bot.command(help='Calls star and moves to $active list. Restricted to @Ranked role.\nExample usage: $call 308 akm 8')
 @commands.has_role('Ranked')
 async def call(ctx, world, loc, tier):
-    
+
+    tier = remove_frontal_corTex(tier)
+
     #load list of f2p worlds
     f2p_world_list = load_f2p_worlds()
     
-    tier = remove_frontal_corTex(tier)
+    if (str(world) not in f2p_world_list) | (int(tier)>9) | (int(tier)<1):
+        await ctx.send(print_error_message(command='call'))
+        return
 
     #if an entry with the same f2p world is not already in the .json file, add it!
     world_check = world_check_flag(world, filename='active_stars.json')
@@ -572,11 +638,7 @@ async def call(ctx, world, loc, tier):
     if world_check:
         await ctx.send(f'A star for world {world} is already listed!')
         return
-    
-    if (str(world) not in f2p_world_list) | (int(tier)>9) | (int(tier)<1):
-        await ctx.send(print_error_message())
-        return
-    
+
     #remove star from the $backups list!
     remove_star(world, 'held_stars.json')
     
@@ -698,10 +760,11 @@ async def stop_active_loop(ctx):
 ############################################################    
 @bot.command(help='Prints comma-separated world list in order of early- to late- wave spawns. Filters out $active worlds.\nExample usage: $hoplist')
 async def hoplist(ctx):
+    
     worlds = get_ordered_worlds()  
     
     #isolate active worlds
-    #in worlds string, worlds.replace($active_world,"")
+    #in worlds string, worlds.replace($active world,"")
     stars = load_json_file(f'keyword_lists/active_stars.json')
     for star in stars:
         world = str(star['world'])
@@ -727,8 +790,8 @@ async def help(ctx):
         if command.help!=None:
             embed.add_field(name=f'${command.name}',value=command.help,inline=False)
     await ctx.send(embed=embed)
- 
     
+
 ################################################################################
 ################################################################################
 ################################################################################    

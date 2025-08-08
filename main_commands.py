@@ -7,7 +7,28 @@ from pull_stars_from_SM import *
 from universal_functions import *
 
 
+############################################################
+#prepares the "welcome" message (either DM or a ping in #general)
+#that is sent when a new user joins the server!
+############################################################
 
+def prep_welcome_message(new_member):
+    from discord import Embed
+    
+    with open("keyword_lists/welcome_message.txt", "r", encoding="utf-8") as f:
+            raw_message = f.read()
+            
+    #replace [new user] with actual member name or mention
+    personalized_message = raw_message.replace("[new user]", new_member.mention)
+
+    embed_message = Embed(
+        title="~From the F2P StarHunt Team~",
+        description=personalized_message,
+        color=0x1ABC9C
+    )
+    
+    return embed_message
+    
 ############################################################
 #Print the key to our shorthand for star spawning locations!
 #use: 
@@ -50,6 +71,7 @@ def print_loc_key(message):
 def print_guide():
     return 'Check out out Scouting Guide [Here!](https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/)'
 
+
 ############################################################
 #hold star in held_stars.json file OR add star to active_stars.json
 #use: 
@@ -83,8 +105,8 @@ def add_star_to_list(username,user_id,world,loc,tier,filename='held_stars.json')
     with open(f'keyword_lists/{filename}','w') as f:
         json.dump(stars_list, f, indent=6)   #indent indicates number of entries per array?
 
-def print_error_message():
-    message = 'Missing or invalid arguments!\nSyntax: $hold world loc tier\nWorld should be F2P, loc must be one of our shorthand keys, and the tier must be 6-9 for held star or 1-9 for active star.\nExample: $hold 308 akm 8'
+def print_error_message(command):
+    message = f"Missing or invalid arguments!\nSyntax: $hold world loc tier\nWorld should be F2P, loc must be one of our shorthand keys, and the tier must be 6-9 for held star or 1-9 for active star.\nExample: ${command} 308 akm 8"
     return message
         
 ############################################################
@@ -98,6 +120,7 @@ def print_error_message():
 ############################################################
         
 def remove_star(world,filename='held_stars.json',output_data=False):
+
     #remove star from the .json
     all_held_stars = load_json_file(f'keyword_lists/{filename}')
     
@@ -211,13 +234,13 @@ def embed_stars(filename, embed, active=False, hold=False):
             
             embed.add_field(
                     name=f'⭐ Star {i+1} ⭐',
-                    value=f'{star['world']} {star_full_loc} [{star_loc}] Tier {current_tier}*\nDust time: <t:{time_remaining}:R>\nCalled by: {star['username']}',
+                    value=f"{star['world']} {star_full_loc} [{star_loc}] Tier {current_tier}*\nDust time: <t:{time_remaining}:R>\nCalled by: {star['username']}",
                     inline=False
                 )
         if hold:
             embed.add_field(
                 name=f'⭐ Star {i+1} ⭐',
-                value=f'{star['world']} {star_full_loc} [{star_loc}] Tier {star['tier']} -- {star['username']}',
+                value=f"{star['world']} {star_full_loc} [{star_loc}] Tier {star['tier']} -- {star['username']}",
                 inline=False
             )
 

@@ -3,7 +3,7 @@
 #if world entry is already in $active, either ignore or replace with SM entry
 
 import requests
-from universal_functions import world_check_flag, load_json_file, save_json_file
+from universal_functions import world_check_flag, load_json_file, save_json_file, load_f2p_worlds
 
 
 #extract list of Star Miners F2P active stars
@@ -12,13 +12,8 @@ def get_SM_f2p_stars():
     #url where star data is stored
     sm_url = 'https://map.starminers.site/data2'
 
-    #load list of F2P worlds
-    with open('keyword_lists/f2p_worlds.txt', 'r') as file:   #read in file
-        lines = file.readlines()                              #grab all lines (one world per line)
-    
-    #convert to list; if ttl world, then the length will be >3 characters; truncate to just
-    #3 characters so fits better with the syntax of the discord command I'm setting up
-    world_list = [line.strip()[0:3] for line in lines] 
+    #load list of f2p worlds, excluding any in the omit_worlds.txt file
+    world_list = load_f2p_worlds()
     
     try:
         response = requests.get(sm_url,timeout=10)   #will time out after 10 seconds

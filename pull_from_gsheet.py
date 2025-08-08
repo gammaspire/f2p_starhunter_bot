@@ -6,7 +6,7 @@ import os
 import numpy as np
 import json
 import time
-from universal_functions import remove_frontal_corTex
+from universal_functions import remove_frontal_corTex, load_f2p_worlds
     
     
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
@@ -41,19 +41,6 @@ def get_wave_time():
     
     return wave_time
 
-#returns wave time message that does NOT dynamically change after being sent as a Discord message 
-#(i.e., Unix timestamps not used)
-def create_wave_message_static():
-    wave_time = int(get_wave_time())
-    
-    if wave_time>45.:
-        scout_string='All stars have spawned. Late wave scouting time!'
-    elif (wave_time >= 10.) & (wave_time <= 45.):
-        scout_string='Begin early-mid scouting now!'
-    else:
-        scout_string='You can lounge for a bit before scouting.'
-
-    return f"Minutes into Wave: +{wave_time}\nMinutes Until End of Wave: +{92 - wave_time}\n{scout_string}"
 
 #returns Unix epoch-converted start and end wave times
 def get_wave_start_end():
@@ -91,6 +78,10 @@ def parse_world_list(start_index, end_index):
 
 #function to pull poof time for given F2P world from dust.wiki
 def get_poof_time(world_string):
+    
+    if world_string not in load_f2p_worlds():
+        return 'World unknown. Please retry using an F2P world.'
+    
     world_dict = parse_world_list(5,65)
 
     cell_index = world_dict[world_string]
@@ -110,19 +101,19 @@ def get_poof_time(world_string):
 #otherwise, the print message will a default "World unknown", etc.
 def create_poof_message(world_string):
     
-    try:
-        poof_time = get_poof_time(world_string)
-        
-        #prints poof time for world and current wave time.
-        
-        if poof_time=='TBD':
-            return f'Poof time for {world_string} is {poof_time}!'
-        else:
-            wave_time = get_wave_time()
-            return f'Poof time for {world_string} is +{poof_time}. The current wave time is +{wave_time}.'
+    if world_string not in load_f2p_worlds():
+        return 'Error. Please retry using an F2P world.'
     
-    except:
-        return 'World unknown. Please retry using an F2P world.'
+    poof_time = get_poof_time(world_string)
+
+    #prints poof time for world and current wave time.
+
+    if poof_time=='TBD':
+        return f'Poof time for {world_string} is {poof_time}!'
+    else:
+        wave_time = get_wave_time()
+        return f'Poof time for {world_string} is +{poof_time}. The current wave time is +{wave_time}.'
+
 
     
 
@@ -150,7 +141,7 @@ def get_call_time(world_string, tier_string):
     
     return call_time
     
-def create_call_message(world_string, tier_string):
+def create_eow_message(world_string, tier_string):
     
     #remove any t or T prefix
     tier_string = remove_frontal_corTex(tier_string)
@@ -160,9 +151,15 @@ def create_call_message(world_string, tier_string):
     if int(tier_string) not in [6,7,8,9]:
         return 'Tier must be 6, 7, 8, or 9. Please and thank you.'
     
+    #also...if world not found, or f2p world is temporarily a p2p world, toss this error to the user
+    if world_string not in load_f2p_worlds():
+        return 'World unknown. Please retry using an F2P world.'
+    
+    
     #otherwise...prints call time for world and current wave time.
         
     try:
+        
         call_time = get_call_time(world_string,tier_string)
                 
         #if the call time is *85*, then we do not yet have poof data for that world
@@ -201,34 +198,41 @@ def check_wave_call(world,tier):
     #if can call star, TRUE
     if wave_time>call_time:
         return True
-    #if can call star, FALSE
+    #if can't call star, FALSE
     if wave_time<call_time:
         return False
     
 
-#function to pull poof time for given F2P world from dust.wiki
+#function to get the list of F2P worlds in order of early-to-late poof times. 
+#worlds with no poof times are defaulted to the end of the list
 def get_ordered_worlds():
-    
-    spreadsheet = open_spreadsheet()
-    
-    #now...grab the list of cells
 
+    spreadsheet = open_spreadsheet()
+
+    #now...grab the list of cells
     worksheet = spreadsheet.worksheet('Spawn Time Estimates')
 
     #get cell list from indices corresponding to the world cells in the Spawn Time Estimates Google Sheet
     cell_list = worksheet.get('K5:K64')
 
-    #convert to a comma-separated python list, the "if row" is a failsafe against potential empty cells
-    worlds = [int(row[0][:3]) for row in cell_list if row]
-    
+    #convert to a comma-separated python list of world strings, the "if row" is a failsafe against potential empty cells
+    worlds = [row[0][:3] for row in cell_list if row]
+
+    #pull list of f2p worlds, which factors in any worlds which may have been converted to p2p worlds
+    #note that this requires maintenance of omit_worlds.txt
+    f2p_worlds_list = load_f2p_worlds()
+
+    #finally, filter out any worlds which do not appear in the full f2p list!
+    worlds_updated = [int(world) for world in worlds if str(world) in f2p_worlds_list]
+
     #convert list into a full string
-    worlds = str(worlds)
+    worlds_updated = str(worlds_updated)
     
     #replace the silly brackets
-    worlds = worlds.replace("[","")
-    worlds = worlds.replace("]","")
+    worlds_updated = worlds_updated.replace("[", "")
+    worlds_updated = worlds_updated.replace("]", "")
     
     #replace the silly spaces
-    worlds = worlds.replace(" ","")
+    worlds_updated = worlds_updated.replace(" ", "")
     
-    return worlds
+    return worlds_updated

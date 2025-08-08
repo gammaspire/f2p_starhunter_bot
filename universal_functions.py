@@ -29,14 +29,22 @@ def remove_frontal_corTex(tier_string):
 
 #read in list of F2P Worlds
 def load_f2p_worlds():
-    
-    with open('keyword_lists/f2p_worlds.txt', 'r') as file:   #read in file
+
+    with open('keyword_lists/f2p_worlds.txt', 'r', encoding="utf-8") as file:   #read in file
         lines = file.readlines()                              #grab all lines (one world per line)
 
-    #convert to list; if ttl world, then the length will be >3 characters; truncate to just
-    #3 characters so fits better with the syntax of the discord command I'm setting up
-    world_list = [line.strip()[0:3] for line in lines] 
+    #also load the omit_worlds.txt file! 
+    #contains list of worlds to omit from the F2P list, either due to temporary server outages 
+    #or the (temporary..?) conversion of the world to P2P-only.
+    with open('keyword_lists/omit_worlds.txt', 'r', encoding="utf-8") as file:
+        lines_omit = file.readlines()                              #grab all lines (one world per line)
 
+    #convert to set; if ttl world, then the length will be >3 characters; truncate to just
+    #3 characters so fits better with the syntax of the discord command I'm setting up
+    omit_worlds = list(line.strip()[0:3] for line in lines_omit)
+        
+    world_list = [line.strip()[0:3] for line in lines if line.strip()[0:3] not in omit_worlds]
+    
     return world_list
 
 #check whether world is already in filename (either held_stars.json or active_stars.json)
