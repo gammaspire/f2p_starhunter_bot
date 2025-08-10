@@ -574,11 +574,11 @@ async def remove_held(ctx, world=None):
     #remove star from .json
     output = remove_star(world, 'held_stars.json', output_data=True)
     
-    if result is None:
+    if output == (None, None):
         await ctx.send(f"World {world} not found in backups list.")
         return
     
-    loc, tier = result
+    loc, tier = output
     job_id = f"hold_{world}_{tier}"
 
     #cancel job, if it exists
