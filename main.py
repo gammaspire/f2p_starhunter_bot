@@ -422,6 +422,10 @@ async def poof_time(ctx, world):
     #load list of f2p worlds
     f2p_world_list = load_f2p_worlds()
 
+    if world not in f2p_world_list:
+        await ctx.send('Are you kidding? USE A VALID F2P WORLD.')
+        return
+    
     poof_message = create_poof_message(world)
     await ctx.send(poof_message)
 
@@ -446,12 +450,14 @@ async def eow(ctx, world, tier):
 ############################################################
 @bot.command(help='Records given world, loc, and tier into the $backups list.\nExample usage: $hold 308 akm 8')
 async def hold(ctx, world=None, loc=None, tier=None):
+    
     username = ctx.author.name
     user_id = ctx.author.id
     
     #checks if world is f2p star; if not, goodbye.
     if str(world) not in load_f2p_worlds():
         await ctx.send(print_error_message(command='hold'))
+        await ctx.send('-# Use your noggin next time.')
         return
     
     #load our location shorthand dictionary
@@ -531,6 +537,14 @@ async def hold(ctx, world=None, loc=None, tier=None):
         scheduler.add_job(run_job, 'interval', minutes=2, id=job_id)
     
 
+@hold.error
+async def call_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(print_error_message(command='hold'))
+        await ctx.send('-# Use your noggin next time.')
+    else:
+        raise error
+    
 ############################################################
 #print list of current backup stars in an aesthetic textbox
 #use: 
@@ -555,7 +569,7 @@ async def backups(ctx):
 async def remove_held(ctx, world=None):
     
     if (world==None) | (world not in load_f2p_worlds()):
-        await ctx.send('Please input a valid f2p world!')
+        await ctx.send('Did you forget to use a valid F2P world? I suspected as much. Try again.')
     
     #remove star from .json
     output = remove_star(world, 'held_stars.json', output_data=True)
@@ -588,14 +602,14 @@ async def remove_held(ctx, world=None):
 async def poof(ctx, world=None):
     
     if str(world) not in load_f2p_worlds():
-        await ctx.send('Please enter a valid F2P world!')
+        await ctx.send('All I am asking for is for you to enter a valid F2P world. I beg you.')
         return
     
     #remove star from .json
     loc, tier = remove_star(world, 'active_stars.json', output_data=True)
     
     if loc is None:
-        await ctx.send(f'Either an unexpected error has occurred OR there was no active world listed for {world}!')
+        await ctx.send(f'Either an unexpected error has occurred OR there was no active world listed for {world}! The current wave time is +{get_wave_time()}.')
         return
     
     wave_time = get_wave_time()
@@ -622,7 +636,7 @@ async def active(ctx):
 @bot.command(help='Calls star and moves to $active list. Restricted to @Ranked role.\nExample usage: $call 308 akm 8')
 @commands.has_role('Ranked')
 async def call(ctx, world, loc, tier):
-
+    
     tier = remove_frontal_corTex(tier)
 
     #load list of f2p worlds
@@ -630,6 +644,7 @@ async def call(ctx, world, loc, tier):
     
     if (str(world) not in f2p_world_list) | (int(tier)>9) | (int(tier)<1):
         await ctx.send(print_error_message(command='call'))
+        await ctx.send('-# Please use your noggin next time.')
         return
 
     #if an entry with the same f2p world is not already in the .json file, add it!
@@ -657,7 +672,16 @@ async def call(ctx, world, loc, tier):
 
     await ctx.send(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
         
-    
+
+@call.error
+async def call_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(print_error_message(command='call'))
+        await ctx.send('-# Use your noggin next time.')
+    else:
+        raise error
+        
+        
 ############################################################
 #In a channel of your choosing, type command and the bot will post
 #list of active stars every x minutes

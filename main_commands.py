@@ -106,7 +106,7 @@ def add_star_to_list(username,user_id,world,loc,tier,filename='held_stars.json')
         json.dump(stars_list, f, indent=6)   #indent indicates number of entries per array?
 
 def print_error_message(command):
-    message = f"Missing or invalid arguments!\nSyntax: $hold world loc tier\nWorld should be F2P, loc must be one of our shorthand keys, and the tier must be 6-9 for held star or 1-9 for active star.\nExample: ${command} 308 akm 8"
+    message = f"Missing or invalid arguments!\n- Syntax: ${command} world loc tier\n- World should be F2P, loc must be one of our shorthand keys, and the tier must be 6-9 for held star or 1-9 for active star.\n- Example: ${command} 308 akm 8"
     return message
         
 ############################################################
@@ -126,7 +126,7 @@ def remove_star(world,filename='held_stars.json',output_data=False):
     
     #if output_data needed for the $remove command (meaning that the command returns the Loc and Tier associated with the star), grab that information and assign to variables
     if output_data:
-        #creating variable placeholders...just in case
+        #creating variable placeers...just in case
         loc=None
         tier=None
         for n in all_held_stars:
@@ -141,7 +141,7 @@ def remove_star(world,filename='held_stars.json',output_data=False):
     
     if output_data:
         if loc is None or tier is None:
-            return None
+            return None, None
         return loc, tier
       
     

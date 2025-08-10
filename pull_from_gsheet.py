@@ -80,7 +80,7 @@ def parse_world_list(start_index, end_index):
 def get_poof_time(world_string):
     
     if world_string not in load_f2p_worlds():
-        return 'World unknown. Please retry using an F2P world.'
+        return 'Try again, and maybe use a valid F2P world this time.'
     
     world_dict = parse_world_list(5,65)
 
@@ -102,7 +102,7 @@ def get_poof_time(world_string):
 def create_poof_message(world_string):
     
     if world_string not in load_f2p_worlds():
-        return 'Error. Please retry using an F2P world.'
+        return 'Error, likely because you are not using a valid F2P world. What a maroon.'
     
     poof_time = get_poof_time(world_string)
 
@@ -113,8 +113,6 @@ def create_poof_message(world_string):
     else:
         wave_time = get_wave_time()
         return f'Poof time for {world_string} is +{poof_time}. The current wave time is +{wave_time}.'
-
-
     
 
 #from the appropriate cell for the appropriate world, pull the call time
@@ -153,7 +151,7 @@ def create_eow_message(world_string, tier_string):
     
     #also...if world not found, or f2p world is temporarily a p2p world, toss this error to the user
     if world_string not in load_f2p_worlds():
-        return 'World unknown. Please retry using an F2P world.'
+        return 'Use a valid F2P world!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! It is not that difficult, I promise.'
     
     
     #otherwise...prints call time for world and current wave time.
@@ -181,7 +179,7 @@ def create_eow_message(world_string, tier_string):
     
     #otherwise...prints call time for world and current wave time.
     except:
-        return f'World unknown. Please retry using an F2P world.'
+        return f"For Pete's sake, PLEASE use a valid F2P world."
 
     
 #check whether the star is callable; returns a bool flag!
