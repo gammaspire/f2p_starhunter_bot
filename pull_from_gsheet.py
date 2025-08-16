@@ -6,7 +6,7 @@ import os
 import numpy as np
 import json
 import time
-from universal_functions import remove_frontal_corTex, load_f2p_worlds
+from universal_functions import remove_frontal_corTex, load_f2p_worlds, load_json_file
     
     
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
@@ -234,3 +234,24 @@ def get_ordered_worlds():
     worlds_updated = worlds_updated.replace(" ", "")
     
     return worlds_updated
+
+
+#generate the actual "hoplist" text for when I send the $hoplist message
+def generate_hoplist_text():
+    worlds = get_ordered_worlds()  
+    stars = load_json_file(f'keyword_lists/active_stars.json')
+    
+    #isolate active worlds
+    #in worlds string, worlds.replace($active world,"") -- that is, filter out the active worlds
+    for star in stars:
+        world = str(star['world'])
+        #remove $active worlds along with their comma. if world is the last world in string, there is a leading comma.
+        worlds = worlds.replace(world+',','') if world != worlds[-3:] else worlds.replace(','+world,'')
+    
+    #remove any starting/ending commas that may have regrettably been left behind. just in case.
+    worlds = worlds.strip(',')
+    
+    full_text = "Here is a filtered list of worlds in order of early- to late-wave spawns. The list is formatted so that you can directly Copy+Paste the text into the World Cycle Runelite plugin!\n\n" + worlds
+
+    
+    return full_text

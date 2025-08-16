@@ -29,7 +29,13 @@ intents.message_content = True
 #create bot instance (inherits from discord.Client)
 bot = commands.Bot(command_prefix="$", intents=intents, help_command=None)   #I am creating my own help_command
 
-# Begin scheduler... will generate scheduled messages!
+################################################################################
+################################################################################
+################################################################################
+
+#JOB SCHEDULING STUFF
+
+#begin scheduler... will generate scheduled messages!
 scheduler = AsyncIOScheduler()
 
 #create dictionary of all scheduled channel ids! otherwise, if I want 
@@ -37,59 +43,99 @@ scheduler = AsyncIOScheduler()
 #in one channel will overwrite the other channel's id
 #KEY = guild.id (server ID), value = channel.id
 scheduled_channel_ids_active = {}   #this one specifically is for the active star jobs
+scheduled_channel_ids_hoplist = {}  #and this one specifically is for the hoplist jobs
 
+
+#---FUNCTIONS FOR THE RE-ACTIVATION OF SCHEDULED JOBS UPON BOT RESTART---
+def run_active(bot, guild_id, channel_id, message_id):
+    channel = bot.get_channel(channel_id)
+    asyncio.run_coroutine_threadsafe(send_embed("keyword_lists/active_stars.json", channel, active=True, 
+                                                hold=False, message_id=message_id), bot.loop)
+
+def run_hoplist(bot, guild_id, channel_id, message_id):
+    channel = bot.get_channel(channel_id)
+    asyncio.run_coroutine_threadsafe(send_hoplist_message(channel, message_id), bot.loop)
 
 ################################################################################
 ################################################################################
 ################################################################################
 
+#CLASSES FOR THE CALL BUTTON
 
-#I am going to create a class for Discord button (which I will use to remove stars from the held_stars.json and add stars to the active_stars.json lists.
+#custom Discord button class that will allow users to move a star from 'held_stars.json' to 'active_stars.json'
 class CallStarButton(Button):
     def __init__(self, username, user_id, world, loc, tier):
+        
         #super() inherits from discord.ui.Button class; calls the parent Button class's constructor
-        #if I did not call super(), the button would exist without a label or style...and code may even break
+        #label='Call Star Now' -> text on the button
+        #style=green -> visually makes the button green
         super().__init__(label='Call Star Now', style=discord.ButtonStyle.green)
+        
         self.world=world
         self.loc=loc
         self.tier=tier
         self.username=username
         self.user_id=user_id
     
-    #when I click the button, the star will be removed from the held_stars.json list
+    
+    #disable the button :)
+    #helper function to disable and gray out the button
+    async def disable_button(self):
+        self.disabled=True
+        self.style=discord.ButtonStyle.grey
+        #if the view has a message (i.e., button has been sent), edit the message to update the button
+        if self.view and self.view.message:
+            await self.view.message.edit(view=self.view)
+    
+    
+    #this function is called immediately once a user clicks the button
     async def callback(self, interaction: discord.Interaction):
-        remove_star(self.world, 'held_stars.json')
+        #defer immediately so Discord knows we're handling it
+        await interaction.response.defer(ephemeral=True)
         
-        #if an entry with the same f2p world is not already in the .json file, add it!
-        world_check = world_check_flag(self.world, filename='active_stars.json')
-
-        if world_check:
-            await interaction.followup.send(f'A star for world {self.world} is already listed!')
+        #check if button is already disabled OR the star is already active
+        if self.disabled or world_check_flag(self.world, filename='active_stars.json'):
+            await interaction.followup.send(
+                "Womp womp, this button is no longer active. Check whether the star is in the $active list!",
+                ephemeral=True)
             return
         
-        add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, 'active_stars.json')
-        
-        self.disabled = True
-        
-        self.style = discord.ButtonStyle.grey
-        
-        #edit message (that is, change the button and print the confirmation message.)
-        await interaction.response.edit_message(view=self.view)
-        await interaction.followup.send(f'Star moved to $active list!\nWorld: {self.world}\nLoc: {self.loc}\nTier: T{self.tier}')
+        #remove star from held_stars.json
+        remove_star(self.world, 'held_stars.json')
 
+        #add star to active_stars.json
+        add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, 'active_stars.json')
+
+        #disable and gray out button
+        await self.disable_button()
+
+        #send confirmation
+        await interaction.followup.send(
+            f'Star moved to $active list!\nWorld: {self.world}\nLoc: {self.loc}\nTier: T{self.tier}')        
+            
 #also create a class for the View, which will display the button in the Discord message
 class CallStarView(View):
     def __init__(self, username, user_id, world, loc, tier, timeout=600):
         #super() here is inheriting from discord.ui.View, which is the class that handles buttons, 
         #dropdowns, and other UI elements in discord.
         super().__init__(timeout=timeout)
-        self.add_item(CallStarButton(username, user_id, world, loc, tier))
+        
+        #create the button and add it to the View
+        self.button = CallStarButton(username, user_id, world, loc, tier)
+        self.add_item(self.button)
+
+    #this function is automatically called when the View times out
+    async def on_timeout(self):
+        #disable the button and gray it out
+        await self.button.disable_button()
 
         
 ################################################################################
 ################################################################################
 ################################################################################        
         
+#ASYNC STUFF FOR GENERATING STAR EMBEDS AND HOPLIST MESSAGES
+    
 #will use for sending backup and active star embeds   
 #message_id only relevant for $start_active_loop. it will tell the function which embed message to modify like a bulletin board!
 async def send_embed(filename,destination,active=False,hold=False,message_id=None):
@@ -114,14 +160,27 @@ async def send_embed(filename,destination,active=False,hold=False,message_id=Non
             return message.id
         
         except discord.NotFound:
-            # If the message doesn't exist anymore, fallback to sending a new one
+            #if the message doesn't exist anymore, fallback to sending a new one
             message = await destination.send(embed=embed_filled)
             return message.id
     else:
         message = await destination.send(embed=embed_filled)
         #don't use return message.id here -- need message_id to be None for $active and $backups commands
 
-    
+
+#will use to generate (or update) the $start_hop_list message
+async def send_hoplist_message(channel, message_id):
+    """Fetches and edits the hoplist loop message; sends a new one if missing."""
+    text = generate_hoplist_text()
+    if channel is None:
+        print("Channel not found, skipping hoplist update.")
+        return
+    try:
+        msg = await channel.fetch_message(message_id)   #grab message id...
+        await msg.edit(content=text)                    #edit message content...
+    except discord.NotFound:
+        await channel.send(text)
+        
 ################################################################################
 ################################################################################
 ################################################################################
@@ -142,32 +201,51 @@ async def on_ready():
     with open('keyword_lists/active_stars.json','w') as f:
         json.dump([],f)
     
-    #ALSO, we must load the .json file which contains the scheduled active star jobs!
-    active_jobs = load_json_file('keyword_lists/scheduled_active_jobs.json')
-    
+    # --- Restore ACTIVE jobs ---
+    active_jobs = load_json_file('keyword_lists/scheduled_active_jobs.json')   #load active jobs .json file
+    #for every active job in the file, if any -- define guild id, grab channel_id (where message is), the number of minutes
+    #between each message refresh, and the id of the message to be refreshed
+    #then, add the active job to the local active guild-channel dictionary
     for guild_id, job_info in active_jobs.items():
         guild_id = int(guild_id)
         channel_id, minutes = grab_job_ids(job_info)
-        message_id = job_info.get("message_id")   #will tell the code which message to update
-        
-        scheduled_channel_ids_active[guild_id] = channel_id
-        
-        #define the RUN JOB function, now coupled with our global send_active_list async function
-        def run_job(gid=guild_id,channel_id=channel_id,message_id=message_id):
-            #channel is same as ctx (sort of), and both are not the same as channel_id (I guess).
-            channel = bot.get_channel(channel_id)
-            asyncio.run_coroutine_threadsafe(send_embed('active_stars.json',
-                                                        channel,active=True,hold=False,
-                                                        message_id=message_id), 
-                                             bot.loop)
+        message_id = job_info.get("message_id")
 
-        #define job id. if it is not in the scheduler, add and print success msg in terminal
+        scheduled_channel_ids_active[guild_id] = channel_id
+
+        #re-define the job id
         job_id = f"scheduled_msg_active_{guild_id}"
+        #if the job is not yet active...activate it.
         if not scheduler.get_job(job_id):
-            scheduler.add_job(run_job, trigger='interval', minutes=minutes, id=job_id)
+            scheduler.add_job(run_active, trigger='interval', minutes=minutes, id=job_id,
+                args=[bot, guild_id, channel_id, message_id]  #pass arguments here for run_active!
+            )
+            #confirmation message.
             print(f"Restored scheduled active star messages for guild {guild_id} every {minutes} minutes.")
 
+    # --- Restore HOPLIST jobs ---
+    hoplist_jobs = load_json_file('keyword_lists/scheduled_hoplist_jobs.json')
+    for guild_id, job_info in hoplist_jobs.items():
+        guild_id = int(guild_id)
+        channel_id = job_info["channel_id"]
+        minutes = job_info["interval"]
+        message_id = job_info.get("message_id")
+
+        scheduled_channel_ids_hoplist[guild_id] = channel_id
+
+        job_id = f"scheduled_msg_hoplist_{guild_id}"
+        if not scheduler.get_job(job_id):
+            scheduler.add_job(run_hoplist, trigger='interval', minutes=minutes, id=job_id,
+                args=[bot, guild_id, channel_id, message_id]  #arguments for run_hoplist!
+            )
+            print(f"Restored scheduled hoplist messages for guild {guild_id} every {minutes} minutes.")
+
             
+################################################################################
+################################################################################
+################################################################################ 
+
+
 #@bot.event is used to register an event
 #create a welcome message that is DM'd to the user!
 @bot.event
@@ -265,6 +343,12 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRole):
         print(f'{ctx.author.name} ({ctx.author.display_name}) tried to use ${ctx.command}. Oops.')
         return
+
+
+################################################################################
+################################################################################
+################################################################################
+
     
 ############################################################
 #Print random inspirational quote
@@ -462,8 +546,7 @@ async def hold(ctx, world=None, loc=None, tier=None):
     
     #now check if the world is f2p; if not, goodbye.
     if str(world) not in load_f2p_worlds():
-        await ctx.send(print_error_message(command='hold'))
-        await ctx.send('-# Use your noggin next time.')
+        await ctx.send(print_error_message(command='hold')+'\n'+'-# Use your noggin next time.')
         return
     
     #parse the tier...which must be between 6 and 9
@@ -639,8 +722,7 @@ async def call(ctx, world, loc, tier):
     f2p_world_list = load_f2p_worlds()
     
     if (str(world) not in f2p_world_list) | (int(tier)>9) | (int(tier)<1):
-        await ctx.send(print_error_message(command='call'))
-        await ctx.send('-# Please use your noggin next time.')
+        await ctx.send(print_error_message(command='call')+'\n'+'-# Use your noggin next time.')
         return
 
     #if an entry with the same f2p world is not already in the .json file, add it!
@@ -672,8 +754,7 @@ async def call(ctx, world, loc, tier):
 @call.error
 async def call_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(print_error_message(command='call'))
-        await ctx.send('-# Use your noggin next time.')
+        await ctx.send(print_error_message(command='call')+'\n'+'-# Use your noggin next time.')
     else:
         raise error
         
@@ -685,7 +766,7 @@ async def call_error(ctx, error):
 #   $start_active_loop [minutes]
 #e.g., '$start_active_loop 30' will print the list every 30 minutes in the channel
 ############################################################
-@bot.command(help='Sets up the bot to send $active list in the designated channel every x minutes. Restricted to @Mods role.\nExample usage: $start_active_loop')
+@bot.command(help='Sets up the bot to send $active list in the designated channel every N minutes, where N is an integer. Restricted to @Mods role.\nExample usage: $start_active_loop N')
 @commands.has_role('Mods')
 
 #registers this function as a bot command that is called when user types $start_active_loop
@@ -742,7 +823,7 @@ async def start_active_loop(ctx,minutes=10):
 #use: 
 #   $stop_active_loop
 ############################################################
-@bot.command(help="Terminates the bot's sending of $active list in the designated channel every x minutes, if applicable. Restricted to @Mods role.\nExample usage: $stop_active_loop")
+@bot.command(help="Terminates the bot's sending of $active list in the designated channel every N minutes, if applicable. Restricted to @Mods role.\nExample usage: $stop_active_loop")
 @commands.has_role('Mods')
 async def stop_active_loop(ctx):
     
@@ -780,23 +861,111 @@ async def stop_active_loop(ctx):
 ############################################################    
 @bot.command(help='Prints comma-separated world list in order of early- to late- wave spawns. Filters out $active worlds.\nExample usage: $hoplist')
 async def hoplist(ctx):
-    
-    worlds = get_ordered_worlds()  
-    
-    #isolate active worlds
-    #in worlds string, worlds.replace($active world,"")
-    stars = load_json_file(f'keyword_lists/active_stars.json')
-    for star in stars:
-        world = str(star['world'])
-        
-        #remove $active worlds along with their comma. if world is the last world in string, there is a leading comma.
-        worlds = worlds.replace(world+',','') if world!=worlds[-3:] else worlds.replace(','+world,'')
-        
-    #remove any starting/ending commas that may have regrettably been left behind. just in case.
-    worlds = worlds.strip(',')
+    hoplist_text = generate_hoplist_text()
+    await ctx.send(hoplist_text)
+    #ezpz!
 
-    await ctx.send(f'Here is a filtered list of worlds in order of early- to late-wave spawns. Copy-Paste directly into the World Cycle Runelite plugin!\n' + worlds)
+############################################################
+#In a channel of your choosing, type command and the bot will post
+#list of filtered f2p worlds in order of early-to-late-to-no poof time
+#use: 
+#   $start_hop_loop [minutes]
+#e.g., '$start_hop_loop 30' will print the list every 30 minutes in the channel
+############################################################    
+@bot.command(help='Sets up the bot to send a filtered list of f2p worlds, in order of early-to-late-to-no poof time, in the designated channel every N minutes (where N is an integer). Restricted to @Mods role.\nExample usage: $start_hop_loop N')
+@commands.has_role('Mods')
+
+#registers this function as a bot command that is called when user types $start_hop_loop
+async def start_hop_loop(ctx,minutes=10):
     
+    #unique identifier for a Discord SERVER
+    guild_id = ctx.guild.id
+    #unique identifier for a Discord CHANNEL
+    channel_id = ctx.channel.id
+    
+    #associates server ID with the channel ID
+    scheduled_channel_ids_hoplist[guild_id] = channel_id
+
+    #post a fun little confirmation message. wouldn't want the laddies and lassies to think nothing happened.
+    await ctx.send(f"The Hop List post below will be updated in this channel every {minutes} minute(s)!")
+    
+    #initialize the loop message...and define the unique message id to ensure the same message is edited every time
+    loop_message = await ctx.send(generate_hoplist_text())
+    message_id = loop_message.id
+    
+    async def send_message(channel, message_id):
+        text = generate_hoplist_text()
+        try:
+            msg = await channel.fetch_message(message_id)
+            await msg.edit(content=text)
+        except discord.NotFound:
+            await channel.send(text)
+
+    
+    #define the job function to schedule...
+    def run_job():
+        #schedule coroutine safely inside the bot loop
+        asyncio.run_coroutine_threadsafe(
+            send_hoplist_message(bot.get_channel(channel_id), message_id),
+            bot.loop
+        )
+    
+    #creates job id given the server! this way, I can have multiple jobs for multiple servers :-)
+    job_id = f"scheduled_msg_hoplist_{guild_id}"    
+
+    #only add job if it hasn't been added yet
+    #this *actually* schedules the event!
+    if not scheduler.get_job(job_id):
+        #use scheduler that we defined at for on_ready()
+        scheduler.add_job(run_job, trigger='interval', minutes=minutes, id=job_id)    
+
+    #save to JSON so it persists (i.e., not wiped from memory when main.py is terminated)
+    all_jobs = load_json_file('keyword_lists/scheduled_hoplist_jobs.json')   #if .json already exists, load
+    
+    #write the new job (corresponding to guild_id) and save channel_id, interval, message_id)
+    all_jobs[str(guild_id)] = {
+        'channel_id': scheduled_channel_ids_hoplist[guild_id],
+        'interval': minutes,
+        'message_id': message_id
+    }
+        
+    save_json_file(all_jobs, 'keyword_lists/scheduled_hoplist_jobs.json')    
+    
+    
+############################################################
+#In the same channel as above, type command and bot will cease typing
+#the f2p world hoplist at the indicated time interval
+#use: 
+#   $stop_hop_loop
+############################################################
+@bot.command(help="Terminates the bot's sending of $hoplist in the designated channel every N minutes, if applicable. Restricted to @Mods role.\nExample usage: $stop_hop_loop")
+@commands.has_role('Mods')
+async def stop_hop_loop(ctx):
+    
+    #get server ID
+    guild_id = ctx.guild.id
+    
+    #pull the job id (again, given the server id)
+    job_id = f"scheduled_msg_hoplist_{ctx.guild.id}"
+    
+    #if $stop_hop_loop, then remove the job if said job exists.
+    job = scheduler.get_job(job_id)
+    if job:
+        job.remove()
+        await ctx.send("The posting of the hoplist in this channel has been terminated.")
+    else:
+        await ctx.send("There's no hoplist scheduled message.")
+    
+    #remove job from the the dictionary! that is...clear from memory.
+    #if guild_id not found, the "None" ensures there is no output error message in terminal
+    scheduled_channel_ids_hoplist.pop(guild_id, None)
+    #load all jobs .json file
+    all_jobs = load_json_file('keyword_lists/scheduled_hoplist_jobs.json')
+    #remove the job associated with the server!
+    all_jobs.pop(str(guild_id), None)
+    #re-write .json file
+    save_json_file(all_jobs, 'keyword_lists/scheduled_hoplist_jobs.json')    
+
     
 ############################################################
 #Creating a $help command that is a little cleaner than the default
