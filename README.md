@@ -70,15 +70,29 @@ python main.py
 * $start_active_loop minutes
     * Use restricted to members with @Mods role
     * will begin scheduled messages (with a frequency of every # minutes per user input) which print the list of active stars for the current wave
-        * bulletin board style -- one message updated every N minutes. activate in a channel that is preferably locked to 
+        * bulletin board style -- one message updated every N minutes. activate in a channel that is preferably locked to any non-mod messages
     * messages will print in the same channel the command is sent to
-    * example usage: `$setup_active_loop 5`
+    * example usage: `$start_active_loop 5`
         * will print every 5 minutes
     * Tiers will NOT update dynamically, though the "Dust time" will (ty Unix time)
 
 * $stop_active_loop
     * Use restricted to members with @Mods role
-    * if sent to a channel in which $setup_active_loop is active, will terminate the scheduled messages
+    * if sent to a channel in which $start_active_loop is active, will terminate the scheduled messages
+
+* $start_hop_loop
+    * Use restricted to members with @Mods role
+    * will begin scheduled messages (with a frequency of every # minutes per user input) which print a filtered list of f2p stars
+        * this filtered list REMOVES any worlds in which there is an $active star
+        * bulletin board style -- one message updated every N minutes. activate in a channel that is preferably locked to any non-mod messages
+    * messages will print in the same channel the command is sent to
+    * example usage: `$start_hop_loop 5`
+        * will print every 5 minutes
+        
+* $stop_hop_loop
+    * Use restricted to members with @Mods role
+    * if sent to a channel in which $start_hop_loop is active, will terminate the scheduled messages
+    
 
 ## Miscellaneous Commands List
 
@@ -107,3 +121,4 @@ python main.py
 
 * Be sure to monitor the omit_worlds.txt file to ensure the list of temporary f2p-turned-p2p worlds, if any, is up to date!
 * The base of this code originated from https://www.freecodecamp.org/news/create-a-discord-bot-with-python/.
+* Buyer beware: this tool may be afflicted by the spaghetti plague.
