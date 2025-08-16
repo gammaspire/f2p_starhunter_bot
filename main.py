@@ -60,74 +60,51 @@ def run_hoplist(bot, guild_id, channel_id, message_id):
 ################################################################################
 ################################################################################
 
-#CLASSES FOR THE CALL BUTTON
+#EMBED CLASS STUFF
 
 #custom Discord button class that will allow users to move a star from 'held_stars.json' to 'active_stars.json'
 class CallStarButton(Button):
     def __init__(self, username, user_id, world, loc, tier):
-        
         #super() inherits from discord.ui.Button class; calls the parent Button class's constructor
-        #label='Call Star Now' -> text on the button
-        #style=green -> visually makes the button green
+        #if I did not call super(), the button would exist without a label or style...and code may even break
         super().__init__(label='Call Star Now', style=discord.ButtonStyle.green)
-        
         self.world=world
         self.loc=loc
         self.tier=tier
         self.username=username
         self.user_id=user_id
     
-    
-    #disable the button :)
-    #helper function to disable and gray out the button
-    async def disable_button(self):
-        self.disabled=True
-        self.style=discord.ButtonStyle.grey
-        #if the view has a message (i.e., button has been sent), edit the message to update the button
-        if self.view and self.view.message:
-            await self.view.message.edit(view=self.view)
-    
-    
-    #this function is called immediately once a user clicks the button
+    #when I click the button, the star will be removed from the held_stars.json list
     async def callback(self, interaction: discord.Interaction):
-        #defer immediately so Discord knows we're handling it
-        await interaction.response.defer(ephemeral=True)
+        remove_star(self.world, 'held_stars.json')
         
-        #check if button is already disabled OR the star is already active
-        if self.disabled or world_check_flag(self.world, filename='active_stars.json'):
-            await interaction.followup.send(
-                "Womp womp, this button is no longer active. Check whether the star is in the $active list!",
-                ephemeral=True)
+        #if an entry with the same f2p world is not already in the .json file, add it!
+        world_check = world_check_flag(self.world, filename='active_stars.json')
+
+        if world_check:
+            await interaction.followup.send(f'A star for world {self.world} is already listed!')
             return
         
-        #remove star from held_stars.json
-        remove_star(self.world, 'held_stars.json')
-
-        #add star to active_stars.json
         add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, 'active_stars.json')
+        
+        self.disabled = True
+        
+        self.style = discord.ButtonStyle.grey
+        
+        #edit message (that is, change the button and print the confirmation message.)
+        await interaction.response.edit_message(view=self.view)
+        await interaction.followup.send(f'Star moved to $active list!\nWorld: {self.world}\nLoc: {self.loc}\nTier: T{self.tier}')
 
-        #disable and gray out button
-        await self.disable_button()
 
-        #send confirmation
-        await interaction.followup.send(
-            f'Star moved to $active list!\nWorld: {self.world}\nLoc: {self.loc}\nTier: T{self.tier}')        
-            
-#also create a class for the View, which will display the button in the Discord message
+#-----------------------------
+#custom View class that holds the button
+#-----------------------------
 class CallStarView(View):
     def __init__(self, username, user_id, world, loc, tier, timeout=600):
         #super() here is inheriting from discord.ui.View, which is the class that handles buttons, 
         #dropdowns, and other UI elements in discord.
         super().__init__(timeout=timeout)
-        
-        #create the button and add it to the View
-        self.button = CallStarButton(username, user_id, world, loc, tier)
-        self.add_item(self.button)
-
-    #this function is automatically called when the View times out
-    async def on_timeout(self):
-        #disable the button and gray it out
-        await self.button.disable_button()
+        self.add_item(CallStarButton(username, user_id, world, loc, tier))
 
         
 ################################################################################
@@ -537,22 +514,23 @@ async def hold(ctx, world=None, loc=None, tier=None):
     
     username = ctx.author.name
     user_id = ctx.author.id
-    
+
     #check if user remembered to include world, loc, and tier arguments
     if not world or not loc or not tier:
         await ctx.send(print_error_message(command='hold'))
         await ctx.send('-# Come on, now. You should know better.')
         return
-    
+
     #now check if the world is f2p; if not, goodbye.
     if str(world) not in load_f2p_worlds():
         await ctx.send(print_error_message(command='hold')+'\n'+'-# Use your noggin next time.')
         return
+
+    tier = remove_frontal_corTex(tier)
     
     #parse the tier...which must be between 6 and 9
     try:
-        tier = int(remove_frontal_corTex(tier))
-        if not (6 <= tier <= 9):
+        if not (6 <= int(tier) <= 9):
             await ctx.send('Please make sure you are holding a star with a tier of at least 6.')
             await ctx.send(f'-# You really wanted to hold a t{tier} star? Good heavens.')
             return
@@ -568,10 +546,10 @@ async def hold(ctx, world=None, loc=None, tier=None):
     if world_check_flag(world, filename='active_stars.json'):
         await ctx.send(f'There is already an active star for world {world}.')
         return
-    
+
     #load our location shorthand dictionary
     loc_dict = load_loc_dict()
-    
+
     #if it is indeed time to call the star, CALL THE STAR
     #compares wave time and eow suggested call time for star
     #if check_wave_call = True, can call the star now; if call_flag = False, add star to file and hold
@@ -579,7 +557,7 @@ async def hold(ctx, world=None, loc=None, tier=None):
         await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
                        view=CallStarView(username, user_id, world, loc, tier))   #CallStarView is a class
         return
-    
+
     #lastly...if none of the above catches terminated the function, hold the star~
     #...and then proceed to the scheduler functions below
     try:
@@ -587,10 +565,10 @@ async def hold(ctx, world=None, loc=None, tier=None):
         await ctx.send(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
     except Exception as e:
         await ctx.send(f"Failed to hold star due to the following error: {e}")
-    
+
     #schedule the checking job; if star is ready to call, remove job!
     async def monitor_star():
-        
+
         #if the world is in the $active list, REMOVE THE SCHEDULED JOB.
         if world_check_flag(world,filename='active_stars.json'):
             #redefine the unique job_id
@@ -598,20 +576,24 @@ async def hold(ctx, world=None, loc=None, tier=None):
             #cancel the job
             scheduler.remove_job(job_id)
             await ctx.send(f"⭐ HELD STAR World {world} {loc} t{tier} is now in the $active list and has automatically been removed from $backups.")
-        
+
         #if world is not in $active list, re-check the call eligibility
         call_flag = check_wave_call(world,tier)
 
         if call_flag:
-            
+
             #view is what enables the button; will remove held star from .json when clicked and add to $active
-            await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
-                           view=CallStarView(username, user_id, world, loc, tier))   #CallStarView is a class
+            try:
+                await ctx.send(f"<⭐ {ctx.author.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
+                               view=CallStarView(username, user_id, world, loc, tier))   #CallStarView is a class
+            except Exception as e:
+                print(e)
+
             #redefine the unique job_id
             job_id = f"hold_{world}_{tier}"
             #cancel the job
             scheduler.remove_job(job_id)
-    
+
     #non-async wrapper for the scheduler
     def run_job():
         asyncio.run_coroutine_threadsafe(monitor_star(), bot.loop)
@@ -619,10 +601,11 @@ async def hold(ctx, world=None, loc=None, tier=None):
     #THE FUNCTIONS DEFINED ABOVE WILL RUN WITH THE LAST FEW LINES
     #unique job ID (based on user + star details)
     job_id = f"hold_{world}_{tier}"
-    
+
     #will run run_job every two minutes!
     if not scheduler.get_job(job_id):
         scheduler.add_job(run_job, 'interval', minutes=2, id=job_id)
+
 
 ############################################################
 #print list of current backup stars in an aesthetic textbox

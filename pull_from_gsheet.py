@@ -124,7 +124,7 @@ def get_call_time(world_string, tier_string):
     #this dictionary will connect world numbers with their cell index
     world_dict = parse_world_list(3,63)
     
-    column_index = tier_dict[tier_string]
+    column_index = tier_dict[str(tier_string)]
         
     world_index = world_dict[world_string]
     
