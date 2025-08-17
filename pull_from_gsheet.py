@@ -254,7 +254,7 @@ def generate_hoplist_text():
     #grab the time...
     timestamp = int(time.time())
     
-    full_text = "Here is a filtered list of worlds in order of early- to late-wave spawns. The list is formatted so that you can directly Copy+Paste the text into the World Cycle Runelite plugin!\n\n" + worlds + '\n\n' + f'-# Posted/last updated <t:{timestamp}:R>'
+    full_text = "Here is a filtered list of worlds in order of early- to late-wave spawns. The list is formatted so that you can directly Copy+Paste the text into the World Cycle Runelite plugin!\n\n```" + worlds + "```\n\n" + f"-# Posted/last updated <t:{timestamp}:R>"
     
               
     return full_text

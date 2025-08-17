@@ -49,7 +49,7 @@ scheduled_channel_ids_hoplist = {}  #and this one specifically is for the hoplis
 #---FUNCTIONS FOR THE RE-ACTIVATION OF SCHEDULED JOBS UPON BOT RESTART---
 def run_active(bot, guild_id, channel_id, message_id):
     channel = bot.get_channel(channel_id)
-    asyncio.run_coroutine_threadsafe(send_embed("keyword_lists/active_stars.json", channel, active=True, 
+    asyncio.run_coroutine_threadsafe(send_embed("active_stars.json", channel, active=True, 
                                                 hold=False, message_id=message_id), bot.loop)
 
 def run_hoplist(bot, guild_id, channel_id, message_id):
@@ -96,9 +96,7 @@ class CallStarButton(Button):
         await interaction.followup.send(f'Star moved to $active list!\nWorld: {self.world}\nLoc: {self.loc}\nTier: T{self.tier}')
 
 
-#-----------------------------
 #custom View class that holds the button
-#-----------------------------
 class CallStarView(View):
     def __init__(self, username, user_id, world, loc, tier, timeout=600):
         #super() here is inheriting from discord.ui.View, which is the class that handles buttons, 
@@ -127,6 +125,7 @@ async def send_embed(filename,destination,active=False,hold=False,message_id=Non
                          color=0x1ABC9C)
     
     #populate the embed message with backup or active stars, if any
+    #include filename ONLY, *NOT* the path to filename
     embed_filled = embed_stars(filename, embed, active=active, hold=hold)
     
     #if there is a message_id, then refresh the "bulletin board" attached to $start_active_loop
@@ -143,7 +142,7 @@ async def send_embed(filename,destination,active=False,hold=False,message_id=Non
     else:
         message = await destination.send(embed=embed_filled)
         #don't use return message.id here -- need message_id to be None for $active and $backups commands
-
+        return message
 
 #will use to generate (or update) the $start_hop_list message
 async def send_hoplist_message(channel, message_id):
@@ -185,8 +184,7 @@ async def on_ready():
     #then, add the active job to the local active guild-channel dictionary
     for guild_id, job_info in active_jobs.items():
         guild_id = int(guild_id)
-        channel_id, minutes = grab_job_ids(job_info)
-        message_id = job_info.get("message_id")
+        channel_id, minutes, message_id = grab_job_ids(job_info)
 
         scheduled_channel_ids_active[guild_id] = channel_id
 
@@ -204,9 +202,7 @@ async def on_ready():
     hoplist_jobs = load_json_file('keyword_lists/scheduled_hoplist_jobs.json')
     for guild_id, job_info in hoplist_jobs.items():
         guild_id = int(guild_id)
-        channel_id = job_info["channel_id"]
-        minutes = job_info["interval"]
-        message_id = job_info.get("message_id")
+        channel_id, minutes, message_id = grab_job_ids(job_info)
 
         scheduled_channel_ids_hoplist[guild_id] = channel_id
 
@@ -765,9 +761,9 @@ async def start_active_loop(ctx,minutes=10):
 
     await ctx.send(f"The Active Stars post will be updated in this channel every {minutes} minute(s)!")
     
-    #NOTE: message_id=123 is a PLACEHOLDER. If I do not define it at all, the default is message_id=None and the
-    #code will not output a message_id (which I need for $start_active_loop)
-    message_id = await send_embed('active_stars.json', ctx.channel, active=True, hold=False, message_id=123)    
+    #message id indicates which message to edit!
+    embed_msg = await send_embed('active_stars.json', ctx.channel, active=True, hold=False)
+    message_id = embed_msg.id   
         
     #scheduler functions must be non-async functions)
     #this function will schedule the async (send_message()) to run inside of the Discord bot's

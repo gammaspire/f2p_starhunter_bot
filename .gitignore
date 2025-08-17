@@ -189,3 +189,6 @@ cython_debug/
 
 #my "backup directory of functional code"
 /functional_versions
+
+#my TESTING ZONE for code -- used for Tester Bot
+/testing_zone
