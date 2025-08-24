@@ -1,4 +1,5 @@
 import json
+import os
 
 #to reactivate any scheduled jobs, must first grab job IDs
 def grab_job_ids(job_info):            
@@ -28,25 +29,40 @@ def remove_frontal_corTex(tier_string):
     except TypeError:
         return None
 
-#read in list of F2P Worlds
-def load_f2p_worlds():
-
-    with open('keyword_lists/f2p_worlds.txt', 'r', encoding="utf-8") as file:   #read in file
-        lines = file.readlines()                              #grab all lines (one world per line)
+#read in list of currently active F2P Worlds
+def load_f2p_worlds(output_omitted_worlds = False, output_all_worlds = False):
+    
+    active_path = os.path.join('keyword_lists', 'active_f2p_worlds.txt')
+    all_path = os.path.join('keyword_lists', 'all_f2p_worlds.txt')
+    
+    #contains list of active worlds which may be < all_f2p_worlds.txt, either due to temporary server outages 
+    #or the (temporary..?) conversion of the world to P2P-only.
+    with open(active_path, 'r', encoding="utf-8") as file:   #read in file
+        lines_active = file.readlines()                              #grab all lines (one world per line)
 
     #also load the omit_worlds.txt file! 
     #contains list of worlds to omit from the F2P list, either due to temporary server outages 
     #or the (temporary..?) conversion of the world to P2P-only.
-    with open('keyword_lists/omit_worlds.txt', 'r', encoding="utf-8") as file:
-        lines_omit = file.readlines()                              #grab all lines (one world per line)
+    with open(all_path, 'r', encoding="utf-8") as file:   #read in file
+        lines_all = file.readlines()                              #grab all lines (one world per line)
 
-    #convert to set; if ttl world, then the length will be >3 characters; truncate to just
+    #if ttl world, then the length will be >3 characters; truncate to just
     #3 characters so fits better with the syntax of the discord command I'm setting up
-    omit_worlds = list(line.strip()[0:3] for line in lines_omit)
-        
-    world_list = [line.strip()[0:3] for line in lines if line.strip()[0:3] not in omit_worlds]
+    active_worlds = list(str(line.strip()[0:3]) for line in lines_active)
+
+    if output_all_worlds:
+        all_worlds = [line.strip()[0:3] for line in lines_all]
+        return active_worlds, all_worlds
     
-    return world_list
+    if output_omitted_worlds:
+        omitted_worlds = [line.strip()[0:3] for line in lines_all if str(line.strip()[0:3]) not in active_worlds]
+        
+        print('List of current ex-F2P worlds:')
+        print(omitted_worlds)
+        
+        return active_worlds, omitted_worlds
+    
+    return active_worlds
 
 #check whether world is already in filename (either held_stars.json or active_stars.json)
 def world_check_flag(world, filename=None, active_stars=None):

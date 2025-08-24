@@ -6,7 +6,8 @@ import os
 import numpy as np
 import json
 import time
-from universal_functions import remove_frontal_corTex, load_f2p_worlds, load_json_file
+
+from universal_utils import remove_frontal_corTex, load_f2p_worlds, load_json_file
     
     
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
@@ -56,17 +57,12 @@ def get_wave_start_end():
     return wave_start_time, wave_end_time, int(wave_time/60)
 
 
-#read and parse list of f2p worlds in f2p_worlds.txt
+#read and parse list of f2p worlds in all_f2p_worlds.txt
 #NOTE: start and end indices are the first and last cell indices in the column
 #outputs a dictionary of worlds and their corresponding cell index in the Google Sheet
 def parse_world_list(start_index, end_index):
-    #open txtfile
-    with open('keyword_lists/f2p_worlds.txt', 'r') as file:   #read in file
-        lines = file.readlines()                              #grab all lines (one world per line)
-    
-    #convert to list; if ttl world, then the length will be >3 characters; truncate to just
-    #3 characters so fits better with the syntax of the discord command I'm setting up
-    world_list = [line.strip()[0:3] for line in lines] 
+
+    _, world_list = load_f2p_worlds(output_all_worlds=True)
     
     #poof times on dust.wiki are in cells B5:65 ('Spawn Time Estimates')
     possible_cells = np.arange(start_index,end_index+1,1)   #add 1 to end_index because *python*
@@ -75,6 +71,7 @@ def parse_world_list(start_index, end_index):
     world_dict = dict(zip(world_list,possible_cells))
     
     return world_dict
+
 
 #function to pull poof time for given F2P world from dust.wiki
 def get_poof_time(world_string):
@@ -95,24 +92,6 @@ def get_poof_time(world_string):
         poof_time = 'TBD'
     
     return poof_time
-    
-#pull wave time and poof time for world. if world is recognized in the f2p world list, then
-#print the poof time for the world, the current wave time, and whether the star is callable.
-#otherwise, the print message will a default "World unknown", etc.
-def create_poof_message(world_string):
-    
-    if world_string not in load_f2p_worlds():
-        return 'Error, likely because you are not using a valid F2P world. What a maroon.'
-    
-    poof_time = get_poof_time(world_string)
-
-    #prints poof time for world and current wave time.
-
-    if poof_time=='TBD':
-        return f'Poof time for {world_string} is {poof_time}!'
-    else:
-        wave_time = get_wave_time()
-        return f'Poof time for {world_string} is +{poof_time}. The current wave time is +{wave_time}.'
     
 
 #from the appropriate cell for the appropriate world, pull the call time
@@ -138,48 +117,6 @@ def get_call_time(world_string, tier_string):
         call_time = '*85*'    
     
     return call_time
-    
-def create_eow_message(world_string, tier_string):
-    
-    #remove any t or T prefix
-    tier_string = remove_frontal_corTex(tier_string)
-    
-    #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E        
-    #if tier is not one of the default 4, wir haben einen Problem. 
-    if int(tier_string) not in [6,7,8,9]:
-        return 'Tier must be 6, 7, 8, or 9. Please and thank you.'
-    
-    #also...if world not found, or f2p world is temporarily a p2p world, toss this error to the user
-    if world_string not in load_f2p_worlds():
-        return 'Use a valid F2P world!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! It is not that difficult, I promise.'
-    
-    
-    #otherwise...prints call time for world and current wave time.
-        
-    try:
-        
-        call_time = get_call_time(world_string,tier_string)
-                
-        #if the call time is *85*, then we do not yet have poof data for that world
-        #for the purposes of collecting poof data, hold star until +85 unless backup is needed immediately
-        if call_time=='*85*':
-            return f'Poof data for {world_string} is TBD. Please default to holding until +85 into the wave.' 
-        else:
-            wave_time = get_wave_time()
-            
-            #call_time in the cell is +xx, so remove + to convert to integer
-            #otherwise...please hold the star. :-)  
-            if int(wave_time)<int(call_time.replace('+','')):
-                call_notice = f'Please hold for {int(call_time.replace('+',''))-int(wave_time)} minutes.'
-            #if the wave time is larger than the call time, then I can call the star! 
-            else:
-                call_notice = f'You can call the star now!'
-
-            return f'The suggested call time for {world_string} T{tier_string} is {call_time}. The current wave time is +{wave_time}. {call_notice}'
-    
-    #otherwise...prints call time for world and current wave time.
-    except:
-        return f"For Pete's sake, PLEASE use a valid F2P world."
 
     
 #check whether the star is callable; returns a bool flag!
@@ -234,27 +171,3 @@ def get_ordered_worlds():
     worlds_updated = worlds_updated.replace(" ", "")
     
     return worlds_updated
-
-
-#generate the actual "hoplist" text for when I send the $hoplist message
-def generate_hoplist_text():
-    worlds = get_ordered_worlds()  
-    stars = load_json_file(f'keyword_lists/active_stars.json')
-    
-    #isolate active worlds
-    #in worlds string, worlds.replace($active world,"") -- that is, filter out the active worlds
-    for star in stars:
-        world = str(star['world'])
-        #remove $active worlds along with their comma. if world is the last world in string, there is a leading comma.
-        worlds = worlds.replace(world+',','') if world != worlds[-3:] else worlds.replace(','+world,'')
-    
-    #remove any starting/ending commas that may have regrettably been left behind. just in case.
-    worlds = worlds.strip(',')
-    
-    #grab the time...
-    timestamp = int(time.time())
-    
-    full_text = "Here is a filtered list of worlds in order of early- to late-wave spawns. The list is formatted so that you can directly Copy+Paste the text into the World Cycle Runelite plugin!\n\n```" + worlds + "```\n\n" + f"-# Posted/last updated <t:{timestamp}:R>"
-    
-              
-    return full_text

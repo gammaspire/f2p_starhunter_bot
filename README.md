@@ -1,19 +1,31 @@
 # Welcome to the F2P Starhunter Discord Bot!
-This python-based bot is intended to facilitate the tracking and calling of crashed stars for the free-to-play star-hunting community (and beyond!) in Old School RuneScape. 
+This python-based bot is intended to facilitate the tracking and calling of crashed stars for the free-to-play star-hunting community (and beyond!) in Old School RuneScape (OSRS). 
 
-See our website, <dust.wiki>, for current wave times, star data, and our scouting guide!
+See our website, <dust.wiki>, for current wave times, star data, and our scouting guide! You can also find our link to the Discord server where the OG F2P Starhunter bot is happily executing commands at our will.
+
+Also check out *F2P Starhunt*, our in-game OSRS community chat channel.
 
 ## To host this bot locally:
-* Create environment discord and install requirements.txt packages. Then, in a terminal window (assuming conda anvironment):
+* If using Conda, create an environment called `discord` and install requirements.txt packages. Then, run the main script in a terminal window or whatever python editor or shell you use:
 ```
 conda create -n discord
 conda activate discord
 cd ~/github/f2p_starhunter_bot
 python main.py
 ```
+* There are a few *critical* requirements in order to prepare the directory correctly for your Discord bot to run. You should start with creating a file called `token.env` and put it in the parent directory (i.e., the same folder as `main.py`). You will then need to populate it with the following:
+    * TOKEN=your_discord_access_token
+        * your_discord_access_token is associated with the Discord bot or application you created for executing this code. If you have not already, you can begin that journey at <https://discord.com/developers/applications>.
+    * SHEET_ID=17rGbgylW_IPQHaHUW1WsJAhuWI7y2WhplQR79g-obqg
+        * this uncanny string of characters is the Google Sheets ID of <dust.wiki>. Because this is publicly available, I paste it here for convenience.
+    * STARHUNT_GUILD_ID=starhunt_guild_id
+        * starhunt_guild_id is the Discord server ID where the bot will be active. You can find this by right-clicking the server icon on the Desktop app and clicking "Copy Server ID" at the bottom of the popup menu.
+    * WELCOME_CHANNEL_ID=welcome_channel_id
+        * this one is optional, depending on whether you want to spam a new member to your server with a welcome message. The bot defaults to a DM, but if that user has DM privacy settings enabled it will instead send the message to the welcome_channel_id. You can find this ID the same way as you found the guild ID, but by instead right-clicking the desired channel in your server.
 
-  * Note that you will require the appropriate Discord access token in a token.env file in the same directory as main.py in order to run successfully. You are welcome to contact me directly (assuming we are collaborating on the same project!) or generate your own.
-  * Additionally, you will need an API key in order to pull from the dust.wiki Dashboard (and other Google Sheets). The name of the .json file from which my key is read is found in `pull_from_gs.py`. You will likely have to create a service account on Google Cloud in order to generate your own API key, and once you do so the .json file you need will automatically download. In lieu of an API key, a workaround might involve repeatedly saving the desired sheet as a .csv file and reading the cell data from there.
+* Additionally, you will need an API key in order to pull from the dust.wiki Dashboard (and other Google Sheets). The name of the .json file from which my key is read is found in `/utils/googlesheet_utils.py`. You will likely have to create a service account on Google Cloud in order to generate your own API key, and once you do so the .json file you need will automatically download. In lieu of an API key, a workaround might involve repeatedly saving the desired sheet as a .csv file and reading the cell data from there. The code is not set up for this, so you will have to fiddle around with some of the scripts in /utils. :-)
+
+* And, lastly...you may notice that a few files are missing from /keyword_lists. That is okay! There files are not integral to the basic functioning of the code and largely are for the miscellaneous commands (see below). You have full creative license to create your own!
 
 ## Main Commands List
 
@@ -48,24 +60,29 @@ python main.py
         * Example usage: `$hold 308 akm 8`
         *                `$hold 575 lse t7`
     
-* $remove_held f2p_world
+* $remove f2p_world
     * will remove any held backup star in the JSON file which corresponds to the world (which acts as a unique identifier, since there can only be one star per world).
-        * Example usage: `$remove_held 308`
+        * Example usage: `$remove 308`
     
 * $backups
     * Use restricted to members with @Ranked role
     * will print all current backup stars in the held_stars.json file
+        * Example usage: `$backups`
     
 * $active
     * will print all current active stars in the active_stars.json file
     * Tiers will NOT update dynamically, though the "Dust time" will (ty Unix time)
+        * Example usage: `$active`
+
+* $lost_worlds
+    * will print any currently inactive F2P worlds that still linger on the dust.wiki spreadsheet
+        * Example usage: `$lost_worlds`
 
 * $call f2p_world loc_shorthand star_tier
     * Use restricted to members with @Ranked role
     * calls star and places in active_stars.json file
     * note that if the star is called on SM, the tier will update to correspond to the SM tier for the star
         * Example usage: `$call 308 akm 8`
-        *                `$call 575 lse t7`
         
 * $start_active_loop minutes
     * Use restricted to members with @Mods role
@@ -97,7 +114,8 @@ python main.py
 ## Miscellaneous Commands List
 
 * $add_inspo encouraging_message
-    * will add an encouraging message to the list of options that the bot will randomly select from (when it detects an "unhappy" word in a user's message)
+    * will add an "encouraging" message to the list of options that the bot will randomly select from when it detects an "unhappy" word in a user's message
+    * Example Usage: $add_inspo Have you considered that maybe you should stop feeling that way?
 
 * $inspire
     * will pull a randomly-generated quote from Dave Tamowski's "Disappointing Affirmations" 
@@ -119,6 +137,5 @@ python main.py
 
 ## Notes
 
-* Be sure to monitor the omit_worlds.txt file to ensure the list of temporary f2p-turned-p2p worlds, if any, is up to date!
 * The base of this code originated from https://www.freecodecamp.org/news/create-a-discord-bot-with-python/.
-* Buyer beware: this tool may be afflicted by the spaghetti plague.
+* Buyer beware: this tool may be afflicted by the spaghetti plague. I claim all responsibility for this.

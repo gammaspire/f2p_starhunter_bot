@@ -3,7 +3,8 @@
 #if world entry is already in $active, either ignore or replace with SM entry
 
 import requests
-from universal_functions import world_check_flag, load_json_file, save_json_file, load_f2p_worlds
+
+from universal_utils import world_check_flag, load_json_file, save_json_file, load_f2p_worlds
 
 
 #extract list of Star Miners F2P active stars

@@ -179,16 +179,21 @@ cython_debug/
 
 # JSON hoohaw
 /animated-scope-456121-q8-5b10debc616d.json
-/keyword_lists/scheduled_joke_jobs.json
+/keyword_lists/active_stars.json
+/keyword_lists/held_stars.json
+/scheduled_jobs/
 
 # my notes
 /notes.txt
 
-#misc txtfiles
+# misc txtfiles
 /keyword_lists/tj_jokes.txt
+/keyword_lists/response_encouragement.txt
+/keyword_lists/strike.txt
+/keyword_lists/conch.txt
 
-#my "backup directory of functional code"
-/functional_versions
+# my "backup directory of functional code. does not include notes.txt, requirements.txt, or README.md. bewareeeee."
+/functional_version
 
-#my TESTING ZONE for code -- used for Tester Bot
+# my TESTING ZONE for code -- used for Tester Bot
 /testing_zone
