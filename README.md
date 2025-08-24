@@ -58,7 +58,6 @@ python main.py
     * Use restricted to members with @Ranked role
     * will place into dynamic JSON file the name of user who used the call, the world, location (shorthand) and tier of the star to be held. When the wave time ~ the EOW call time for the star, the bot will @ the user and output the star that can now be called. If EOW doesn't exist, will default to calling at a wave time of 85 minutes.
         * Example usage: `$hold 308 akm 8`
-        *                `$hold 575 lse t7`
     
 * $remove f2p_world
     * will remove any held backup star in the JSON file which corresponds to the world (which acts as a unique identifier, since there can only be one star per world).

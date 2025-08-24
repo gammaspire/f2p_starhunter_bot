@@ -1,0 +1,9 @@
+#files to ignore!
+active_stars.json
+held_stars.json
+ 
+# misc txtfiles
+tj_jokes.txt
+response_encouragement.txt
+strike.txt
+conch.txt
