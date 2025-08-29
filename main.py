@@ -78,7 +78,7 @@ async def on_ready():
     #note: Global commands can take up to an hour to propagate.  
     try:
         synced = await bot.tree.sync(guild=guild)
-        print(f"TESTING MODE INITIATED. Synced {len(synced)} slash commands.")
+        print(f"Synced {len(synced)} slash commands.")
     except Exception as e:
         print(f"Error syncing commands: {e}")
 

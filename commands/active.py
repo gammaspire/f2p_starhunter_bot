@@ -31,7 +31,6 @@ class Active(commands.Cog):
     #slash command: /active
     ############################################################ 
     @app_commands.command(name="active", description="Prints list of active stars")  
-    @app_commands.guilds(GUILD)  #optional: restrict to testing guild for instant visibility
     async def active_slash(self, interaction: Interaction):
         await send_embed('active_stars.json', interaction, active=True)
 
