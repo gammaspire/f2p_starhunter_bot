@@ -7,6 +7,7 @@
 ############################################################        
 
 from discord.ext import commands
+from discord import app_commands, Interaction
 import sys
 
 sys.path.insert(0, '../utils')
@@ -15,31 +16,65 @@ from universal_utils import load_f2p_worlds
 from googlesheet_utils import get_wave_time
 from star_utils import add_star_to_list, remove_star
 
+sys.path.insert(0, '../config')
+from config import GUILD
+
 
 class Poof(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(help='Manually removes star from $active list (HOWEVER -- if star is still active on SM, it will not be removed). Restricted to @Ranked role.\nExample usage: $poof 308')
-    @commands.has_role('Ranked')
-    async def poof(self, ctx, world=None):
-
+    #shared logic for poofing a star
+    #the _ just indicates that this is a helper function to be used only within the class
+    async def _poof_logic(self, world, send_func):
+        if world is None:
+            await send_func('I cannot poof anything if you do not tell me a world.')
+            return
+        
         if str(world) not in load_f2p_worlds():
-            await ctx.send('All I am asking for is for you to enter a valid F2P world. I beg you.')
+            await send_func('All I am asking for is for you to enter a valid F2P world. I beg you.')
             return
 
         #remove star from .json
         loc, tier = remove_star(world, 'active_stars.json', output_data=True)
 
         if loc is None:
-            await ctx.send(f'Either an unexpected error has occurred OR there was no active world listed for {world}! The current wave time is +{get_wave_time()}.')
+            current_wave = await get_wave_time()
+            await send_func(f'Either an unexpected error has occurred OR there was no active world listed for {world}! The current wave time is +{current_wave}.')
             return
 
-        wave_time = get_wave_time()
+        wave_time = await get_wave_time()
+        await send_func(f"⭐ Confirming poof of star \nWorld: {world}\nLoc: {loc}\nTier: {tier}\nThe current wave time is +{wave_time}")
 
-        await ctx.send(f"⭐ Confirming poof of star \nWorld: {world}\nLoc: {loc}\nTier: {tier}\nThe current wave time is +{wave_time}")
+    
+    ############################################################
+    #prefix command: $poof
+    ############################################################
+    @commands.command(help='Manually removes star from active list (HOWEVER -- if star is still active on SM, it will not be removed). Restricted to @Ranked role.\nPrefix example: $poof 308')
+    @commands.has_role('Ranked')
+    async def poof(self, ctx, world=None):
+        await self._poof_logic(world, ctx.send)
+
+
+    ############################################################
+    #slash command: /poof
+    ############################################################
+    @app_commands.command(name='poof', description='Manually removes star from active list, but only if not still active on SM.')
+    async def poof_slash(self, interaction: Interaction, world: str):
+        #for slash commands, send_func uses interaction.response.send_message
+        async def send_func(message):
+            await interaction.response.send_message(message)
         
+        await self._poof_logic(world, send_func)
+
+#attaching a decorator to a function after the class is defined...
+#previously used @app_commands.guilds(GUILD)
+#occasionally, though, GUILD=None if not testing
+#in that case, cannot use @app_commands.guilds() decorator. returns an error!
+#instead, we 're-define' the slash command function in the class above
+if GUILD is not None:
+    Poof.poof_slash = app_commands.guilds(GUILD)(Poof.poof_slash)   
 
 async def setup(bot):
     await bot.add_cog(Poof(bot))

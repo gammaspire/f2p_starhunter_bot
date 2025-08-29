@@ -5,6 +5,11 @@
 ############################################################
 import random
 from discord.ext import commands
+from discord import app_commands, Interaction
+
+import sys
+sys.path.insert(0,'../config')
+from config import GUILD
 
 
 #load list of affirmations     
@@ -24,10 +29,29 @@ class Inspire(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    ############################################################
+    #prefix command: $inspire
+    ############################################################
     @commands.command()
     async def inspire(self, ctx):
         affirmations = load_affirmations()
         await ctx.send(random.choice(affirmations))
+    
+    ############################################################
+    #slash command: /inspire
+    ############################################################
+    @app_commands.command(name='inspire',description='Print an inspirational quote.')
+    async def inspire_slash(self, interaction: Interaction):
+        affirmations = load_affirmations()
+        await interaction.response.send_message(random.choice(affirmations))
+
+#attaching a decorator to a function after the class is defined...
+#previously used @app_commands.guilds(GUILD)
+#occasionally, though, GUILD=None if not testing
+#in that case, cannot use @app_commands.guilds() decorator. returns an error!
+#instead, we 're-define' the slash command function in the class above
+if GUILD is not None:
+    Inspire.inspire_slash = app_commands.guilds(GUILD)(Inspire.inspire_slash)
         
 async def setup(bot):
     await bot.add_cog(Inspire(bot))

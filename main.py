@@ -1,30 +1,23 @@
 import discord
 import os
-from dotenv import load_dotenv
 from discord.ext import commands
 import asyncio
 import sys
 
-#import sys
-#sys.path.append('/utils')
-#from ... import ...
-#etc.
+from pull_f2p_worlds import pull_f2p_worlds
 
 sys.path.append('utils')
 from scheduler_utils import scheduler, init_scheduler_jobs, reset_star_jsons
-from universal_utils import *
-from googlesheet_utils import *
-from star_utils import *
 
-from pull_f2p_worlds import pull_f2p_worlds
+sys.path.append('config')
+from config import TOKEN, GUILD
 
 
 ################################################################################
 ################################################################################
 ################################################################################
 
-#load environment variables from 'token.env' file
-load_dotenv('token.env')
+guild = GUILD
 
 #define intents; required to read message content in on_message() (see events/sad_ears.py)
 intents = discord.Intents.default()
@@ -75,10 +68,23 @@ async def on_ready():
     
     #add the Cogs!
     await load_cogs()
+    
+    #### Syncing slash commands
+    #this will sync the commands with Discord's API.
+    #it is recommended to do this only once or when you change commands.
+    #if you have a lot of commands, you might want to use `sync(guild_id=GUILD_ID)` to sync only for a specific guild.
+    #replace GUILD_ID with your actual guild ID if you want to limit the sync.
+    #for global commands, you can use `bot.tree.sync()` without any parameters.
+    #note: Global commands can take up to an hour to propagate.  
+    try:
+        synced = await bot.tree.sync(guild=guild)
+        print(f"TESTING MODE INITIATED. Synced {len(synced)} slash commands.")
+    except Exception as e:
+        print(f"Error syncing commands: {e}")
 
 ################################################################################
 ################################################################################
 ################################################################################    
     
     
-bot.run(os.getenv('TOKEN'))
+bot.run(TOKEN)

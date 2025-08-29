@@ -2,8 +2,6 @@
 AIM: pull list of active F2P worlds from OSRS and save them into a .txt file (one world per row).
 Note that each 'world' corresponds to Jagex' world ID. In order to convert this ID to an actual world, we need to calculate 
 World ID + 300. 
-
-NOTE: this function is sort of part utility, part standalone. As such, its home is currently in the parent directory, having been given the charmed "misfit" status as with discord_ui.py. I do plan to utilize this function further for a side-project involving the monitoring of worlds when certain (or all?) servers are down for temporary maintenance. The problem is that the bot would have to pull from the Jagex website every...couple of seconds...to check if there are dips in the player count from non-zero to zero to non-zero. So, who knows if I will actually pursue this? Certainly not me.
 '''
 
 def pull_f2p_worlds():

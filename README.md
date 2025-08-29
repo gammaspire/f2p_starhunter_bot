@@ -13,7 +13,7 @@ conda activate discord
 cd ~/github/f2p_starhunter_bot
 python main.py
 ```
-* There are a few *critical* requirements in order to prepare the directory correctly for your Discord bot to run. You should start with creating a file called `token.env` and put it in the parent directory (i.e., the same folder as `main.py`). You will then need to populate it with the following:
+* There are a few *critical* requirements in order to prepare the directory correctly for your Discord bot to run. You should start with creating a file called `token.env` and put it in the /config directory. You will then need to populate it with the following:
     * TOKEN=your_discord_access_token
         * your_discord_access_token is associated with the Discord bot or application you created for executing this code. If you have not already, you can begin that journey at <https://discord.com/developers/applications>.
     * SHEET_ID=17rGbgylW_IPQHaHUW1WsJAhuWI7y2WhplQR79g-obqg
@@ -23,11 +23,14 @@ python main.py
     * WELCOME_CHANNEL_ID=welcome_channel_id
         * this one is optional, depending on whether you want to spam a new member to your server with a welcome message. The bot defaults to a DM, but if that user has DM privacy settings enabled it will instead send the message to the welcome_channel_id. You can find this ID the same way as you found the guild ID, but by instead right-clicking the desired channel in your server.
 
+* Be sure to update the config/configs.py file to check if you are loading the correct guild/channel variables from token.env into your bot! There are a few commented instructions in the .py file about what to do and why you might want to do it.
+
 * Additionally, you will need an API key in order to pull from the dust.wiki Dashboard (and other Google Sheets). The name of the .json file from which my key is read is found in `/utils/googlesheet_utils.py`. You will likely have to create a service account on Google Cloud in order to generate your own API key, and once you do so the .json file you need will automatically download. In lieu of an API key, a workaround might involve repeatedly saving the desired sheet as a .csv file and reading the cell data from there. The code is not set up for this, so you will have to fiddle around with some of the scripts in /utils. :-)
 
 * And, lastly...you may notice that a few files are missing from /keyword_lists. That is okay! There files are not integral to the basic functioning of the code and largely are for the miscellaneous commands (see below). You have full creative license to create your own!
 
 ## Main Commands List
+### Note that every prefix command listed below has a slash command variant! Just replace the $ with / in the Discord textbox.
 
 * $help
     * will print an abridged version of this README document (excluding Misc. commands).

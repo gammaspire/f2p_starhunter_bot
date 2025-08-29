@@ -1,34 +1,29 @@
-############################################################
-#In the same channel in which $start_active_loop was run, type this command and 
-#bot will cease typing the list of active stars at the indicated time interval
-#use: 
-#   $stop_active_loop
-############################################################
-
 from discord.ext import commands
+from discord import app_commands, Interaction
 import sys
 
 sys.path.insert(0, '../utils')
 from scheduler_utils import scheduler
 from universal_utils import load_json_file, save_json_file
 
+sys.path.insert(0, '../config')
+from config import GUILD
+
 class Stop_Active(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
 
+    ############################################################
+    # Prefix command
+    ############################################################
     @commands.command(help="Terminates the bot's sending of $active list in the designated channel every N minutes, if applicable. Restricted to @Mods role.\nExample usage: $stop_active_loop")
     @commands.has_role('Mods')
     async def stop_active_loop(self, ctx):
-
         try:
-            #get server ID
             guild_id = ctx.guild.id
+            job_id = f"scheduled_msg_active_{guild_id}"
 
-            #pull the job id (again, given the server id)
-            job_id = f"scheduled_msg_active_{ctx.guild.id}"
-
-            #if $stop_active_loop, then remove the job if said job exists.
             job = scheduler.get_job(job_id)
             if job:
                 job.remove()
@@ -36,18 +31,47 @@ class Stop_Active(commands.Cog):
             else:
                 await ctx.send("There's no active scheduled message.")
 
-            #load all jobs .json file
             all_jobs = load_json_file('scheduled_jobs/scheduled_active_jobs.json')
-            #remove the job associated with the server!
             all_jobs.pop(str(guild_id), None)
-            #re-write .json file
             save_json_file(all_jobs, 'scheduled_jobs/scheduled_active_jobs.json')
 
         except Exception as e:
-            # print full traceback if anything fails
             import traceback
-            traceback.print_exc()  
-          
-        
+            traceback.print_exc()
+
+    ############################################################
+    # Slash command
+    ############################################################
+    @app_commands.command(name="stop_active_loop", description="Terminates the bot's sending of active stars every N minutes. Restricted to @Mods.")
+    @app_commands.checks.has_role("Mods")
+    async def stop_active_loop_slash(self, interaction: Interaction):
+        try:
+            guild_id = interaction.guild_id
+            job_id = f"scheduled_msg_active_{guild_id}"
+
+            job = scheduler.get_job(job_id)
+            
+            if job:
+                job.remove()
+                await interaction.response.send_message("The posting of active stars in this channel has been terminated.")
+            else:
+                await interaction.response.send_message("There is no active scheduled message.")
+
+            all_jobs = load_json_file('scheduled_jobs/scheduled_active_jobs.json')
+            all_jobs.pop(str(guild_id), None)
+            save_json_file(all_jobs, 'scheduled_jobs/scheduled_active_jobs.json')
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+
+#attaching a decorator to a function after the class is defined...
+#previously used @app_commands.guilds(GUILD)
+#occasionally, though, GUILD=None if not testing
+#in that case, cannot use @app_commands.guilds() decorator. returns an error!
+#instead, we 're-define' the slash command function in the class above
+if GUILD is not None:
+    Stop_Active.stop_active_loop_slash = app_commands.guilds(GUILD)(Stop_Active.stop_active_loop_slash)   
+
 async def setup(bot):
     await bot.add_cog(Stop_Active(bot))

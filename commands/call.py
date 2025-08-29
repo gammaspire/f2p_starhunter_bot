@@ -7,7 +7,11 @@
 ############################################################  
 
 from discord.ext import commands
+from discord import app_commands, Interaction
 import sys
+
+sys.path.insert(0,'../config')
+from config import GUILD
 
 sys.path.insert(0, '../utils')
 from scheduler_utils import scheduler
@@ -15,31 +19,51 @@ from universal_utils import remove_frontal_corTex, load_f2p_worlds, world_check_
 from star_utils import print_error_message, add_star_to_list, remove_star
 
 
+def call_checks(world, loc, tier):
+    
+    if world is None or tier is None:
+        message = print_error_message(command='call')+'\n'+'-# Use your noggin next time.'
+        return [True, message]
+    
+    #load list of f2p worlds
+    f2p_world_list = load_f2p_worlds()
+
+    if (str(world) not in f2p_world_list) or (int(tier)>9) or (int(tier)<1):
+        message = print_error_message(command='call')+'\n'+'-# Use your noggin next time.'
+        return [True, message]
+    
+    #if an entry with the same f2p world is not already in the .json file, add it!
+    world_check = world_check_flag(world, filename='active_stars.json')
+
+    if world_check:
+        message = f'A star for world {world} is already listed!'
+        return [True, message]
+    
+    return [False, None]
+
+
 class Call(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(help='Calls star and moves to $active list. Restricted to @Ranked role.\nExample usage: $call 308 akm 8')
+    ############################################################
+    #prefix command: $call
+    ############################################################
+    @commands.command(help='Calls star and moves to $active list. Restricted to @Ranked role.\nPrefix Example: $call 308 akm 8')
     @commands.has_role('Ranked')
-    async def call(self, ctx, world, loc, tier):
-
+    async def call(self, ctx, world=None, loc=None, tier=None):
+        
+        #a few...quality checks
+        check_list = call_checks(world, loc, tier)
+        
+        #if the first element is True, then print the error message (send element) and terminate the function
+        if check_list[0]:
+            await ctx.send(check_list[1])
+            return
+        
         tier = remove_frontal_corTex(tier)
-
-        #load list of f2p worlds
-        f2p_world_list = load_f2p_worlds()
-
-        if (str(world) not in f2p_world_list) or (int(tier)>9) or (int(tier)<1):
-            await ctx.send(print_error_message(command='call')+'\n'+'-# Use your noggin next time.')
-            return
-
-        #if an entry with the same f2p world is not already in the .json file, add it!
-        world_check = world_check_flag(world, filename='active_stars.json')
-
-        if world_check:
-            await ctx.send(f'A star for world {world} is already listed!')
-            return
-
+        
         #remove star from the $backups list!
         remove_star(world, 'held_stars.json')
 
@@ -58,6 +82,48 @@ class Call(commands.Cog):
 
         await ctx.send(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
      
-    
+    ############################################################
+    #slash command: /call
+    ############################################################    
+    @app_commands.command(name="call", description="Calls star [F2P world, loc shorthand, Tier 1-9] and moves to the active list.") 
+    @app_commands.checks.has_role("Ranked")
+    async def call_slash(self, interaction: Interaction, world : str, loc : str, tier: str):
+        
+        #a few...quality checks
+        check_list = call_checks(world, loc, tier)
+        
+        if check_list[0]:
+            await interaction.response.send_message(check_list[1])
+            return
+        
+        tier = remove_frontal_corTex(tier)
+
+        #remove star from the $backups list!
+        remove_star(world, 'held_stars.json')
+
+        try:
+            #cancel the job once done
+            job_id = f"hold_{world}_{tier}"
+            scheduler.remove_job(job_id)
+            print(f'Job ID {job_id} removed.')
+        except:
+            print(f'Called star in world {world} was not a backup; no job to remove.')
+
+        #add star to .json
+        author = interaction.user
+        username = author.name
+        user_id = author.id
+        add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
+
+        await interaction.response.send_message(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
+            
+#attaching a decorator to a function after the class is defined...
+#previously used @app_commands.guilds(GUILD)
+#occasionally, though, GUILD=None if not testing
+#in that case, cannot use @app_commands.guilds() decorator. returns an error!
+#instead, we 're-define' the slash command function in the class above
+if GUILD is not None:
+    Call.call_slash = app_commands.guilds(GUILD)(Call.call_slash)    
+
 async def setup(bot):
     await bot.add_cog(Call(bot))

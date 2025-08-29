@@ -20,24 +20,39 @@ class CallStarButton(Button):
     
     #when I click the button, the star will be removed from the held_stars.json list
     async def callback(self, interaction: discord.Interaction):
-        remove_star(self.world, 'held_stars.json')
+        #acknowledge the interaction to avoid timeouts!
+        await interaction.response.defer()
+        
+        try:
+            remove_star(self.world, 'held_stars.json')
+        except Exception as e:
+            print(f'Could not remove held star: {e}')
         
         #if an entry with the same f2p world is not already in the .json file, add it!
         world_check = world_check_flag(self.world, filename='active_stars.json')
 
         if world_check:
+            #star is already active...disable button
+            self.disabled = True
+            self.style = discord.ButtonStyle.grey
+            
+            #edit message (that is, change the button and print the confirmation message.)
+            await interaction.edit_original_response(view=self.view)
             await interaction.followup.send(f'A star for world {self.world} is already listed!')
+            
             return
         
+        #removeeeee the star.
         add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, 'active_stars.json')
         
+        #disable the button
         self.disabled = True
-        
         self.style = discord.ButtonStyle.grey
         
         #edit message (that is, change the button and print the confirmation message.)
-        await interaction.response.edit_message(view=self.view)
-        await interaction.followup.send(f'Star moved to $active list!\nWorld: {self.world}\nLoc: {self.loc}\nTier: T{self.tier}')
+        await interaction.edit_original_response(view=self.view)
+        await interaction.followup.send(f'Star moved to active list!\n'
+                                        f'World: {self.world}\nLoc: {self.loc}\nTier: T{self.tier}')
 
 
 #custom View class that holds the button

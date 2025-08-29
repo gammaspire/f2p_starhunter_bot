@@ -126,7 +126,7 @@ async def send_embed(filename, destination, active=False, hold=False, message_id
 
     Args:
         filename (str): Name of JSON file containing star data (active_stars.json or held_stars.json)
-        destination (discord.TextChannel): Channel to send the embed to
+        destination (discord.TextChannel | discord.Interaction): Channel or Interaction to send the embed to
         active (bool): If True, sends active stars embed
         hold (bool): If True, sends backup/held stars embed
         message_id (int, optional): If provided, updates existing message instead of sending a new one
@@ -157,9 +157,21 @@ async def send_embed(filename, destination, active=False, hold=False, message_id
         
         except discord.NotFound:
             #if the message doesn't exist anymore, fallback to sending a new one
-            message = await destination.send(embed=embed_filled)
+            if isinstance(destination, discord.Interaction):
+                message = await destination.followup.send(embed=embed_filled)
+            else:
+                message = await destination.send(embed=embed_filled)
             return message.id
     else:
-        message = await destination.send(embed=embed_filled)
+        if isinstance(destination, discord.Interaction):
+            #respond to the interaction
+            if destination.response.is_done():
+                message = await destination.followup.send(embed=embed_filled)
+            else:
+                await destination.response.send_message(embed=embed_filled)
+                message = await destination.original_response()
+        else:
+            message = await destination.send(embed=embed_filled)
+        
         #don't use return message.id here -- need message_id to be None for $active and $backups commands
         return message

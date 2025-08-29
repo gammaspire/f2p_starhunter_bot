@@ -1,7 +1,10 @@
 ############################################################
-#print wave guide URL into the chat!
-#use:
-#    $guide
+#Prints bot-kun's latency, which is a measure of how long 
+#the bot takes to communicate with Discord's servers 
+#use: 
+#   $boop
+#or
+#   /boop
 ############################################################
 
 from discord.ext import commands
@@ -11,27 +14,25 @@ import sys
 sys.path.insert(0,'../config')
 from config import GUILD
 
-def print_guide():
-    return 'Check out out Scouting Guide [Here!](https://docs.google.com/presentation/d/17bU-vGlOuT0MHBZ9HlTrfQEHKT4wHnBrLTV2_HC8LQU/)'
 
-
-class Guide(commands.Cog):
+class Boop(commands.Cog):
+    
     def __init__(self, bot):
         self.bot = bot
     
     ############################################################
-    #prefix command: $guide
+    #prefix command: $boop
     ############################################################
-    @commands.command(help='Prints link to our scouting guide, courtesy of WoolyClamoth.\nPrefix Command: $guide')
-    async def guide(self, ctx):
-        await ctx.send(print_guide())
-        
+    @commands.command(name='boop', help='Boop the bot\nPrefix Command: $boop')
+    async def boop(self, ctx):
+        await ctx.send(f"I've been booped!\nLatency: {round(self.bot.latency*1000)}ms")
+    
     ############################################################
-    #slash command: /guide
+    #slash command: /boop
     ############################################################    
-    @app_commands.command(name='guide',description='Prints the link to our scouting guide.')
-    async def guide_slash(self, interaction: Interaction):
-        interaction.response.send_message(print_guide())
+    @app_commands.command(name="boop", description="Boop the bot")  
+    async def boop_slash(self, interaction: Interaction):
+        await interaction.response.send_message(f"I've been booped!\nLatency: {round(self.bot.latency*1000)}ms")
 
 #attaching a decorator to a function after the class is defined...
 #previously used @app_commands.guilds(GUILD)
@@ -39,7 +40,10 @@ class Guide(commands.Cog):
 #in that case, cannot use @app_commands.guilds() decorator. returns an error!
 #instead, we 're-define' the slash command function in the class above
 if GUILD is not None:
-    Guide.guide_slash = app_commands.guilds(GUILD)(Guide.guide_slash)           
+    Boop.boop_slash = app_commands.guilds(GUILD)(Boop.boop_slash)           
 
+    
 async def setup(bot):
-    await bot.add_cog(Guide(bot))
+    
+    #add the Boop cog
+    await bot.add_cog(Boop(bot))
