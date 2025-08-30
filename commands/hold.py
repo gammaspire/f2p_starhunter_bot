@@ -154,9 +154,18 @@ class Hold(commands.Cog):
         await interaction.response.defer()  #acknowledge the command right away so that it does not 
                                             #break if /hold takes longer than 3 seconds to complete
         
-        #after deferring, MUST use followup.send() for *all* messages
-        await self._process_hold(interaction.user, world, loc, tier, interaction.followup.send)
+        #capture the channel before interaction expires!
+        channel = interaction.channel
+        
+        async def send_func(message: str = None, **kwargs):
+            await channel.send(message, **kwargs)
 
+        await self._process_hold(interaction.user, world, loc, tier, send_func)
+        
+        #after deferring, MUST use followup.send() for *all* messages...even though 
+        #I am sending all of the responsibility to the scheduled job
+        await interaction.followup.send("Star recorded!")
+        
 #attaching a decorator to a function after the class is defined...
 #previously used @app_commands.guilds(GUILD)
 #occasionally, though, GUILD=None if not testing
