@@ -25,7 +25,7 @@ intents.members = True   #need to detect when new members join :-)
 intents.message_content = True
 
 #create bot instance (inherits from discord.Client)
-bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)   #I am creating my own help_command
+bot = commands.Bot(command_prefix="$", intents=intents, help_command=None)   #I am creating my own help_command
 
 ################################################################################
 #loading the COGS!

@@ -34,16 +34,11 @@ def hold_checks(world, loc, tier):
     if (str(world) not in load_f2p_worlds()):
         message = print_error_message(command='hold')+'\n'+'-# Derp.'
         return [True, message]
-
-    #parse the tier...which must be between 6 and 9
-    try:
-        if not (6 <= int(tier) <= 9):
-            message = f'-# You really wanted to hold a t{tier} star? Good heavens.'
-            return [True, message]
-    except:
-        message = print_error_message(command='hold')
+    
+    if int(tier) <= 0:
+        message = f'-# I know I am now holding stars with tiers lower than 6, but could you maybe *not* with your juvenile attempts at trickery? Are you that desperate for a "gotcha!" moment? Do you swipe pacifiers from infants, too? Get real.'
         return [True, message]
-
+    
     #check if the world is already held or called
     if world_check_flag(world, filename='held_stars.json'):
         message = f'There is already a held star for world {world}.'
@@ -51,6 +46,11 @@ def hold_checks(world, loc, tier):
     if world_check_flag(world, filename='active_stars.json'):
         message = f'There is already an active star for world {world}.'
         return [True, message]
+    
+    #tier *should* be between 6 and 9
+    if not (6 <= int(tier) <= 9):
+        message = f'-# You really want to hold a t{tier} star? Good heavens, whatever.'
+        return [False, message]
 
     return [False, None]
 
@@ -71,7 +71,7 @@ class Hold(commands.Cog):
         
         hold_check = hold_checks(world, loc, tier)
 
-        #if error, send message and stop
+        #if error (flag is True), send message and stop
         if hold_check[0]:
             await send_func(hold_check[1])
             return
@@ -83,53 +83,57 @@ class Hold(commands.Cog):
             #if it is indeed time to call the star, CALL THE STAR
             #compares wave time and eow suggested call time for star
             if await check_wave_call(world, tier):
-                await send_func(
+                view = CallStarView(username, user_id, world, loc, tier)   #create the view
+                msg = await send_func(
                     f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
-                    view=CallStarView(username, user_id, world, loc, tier))   #CallStarView is a class
+                    view=view)
+                view.message = msg   #store the message so timeout can disable buttons
                 return
 
-            #lastly...if none of the above catches terminated the function, hold the star~
+            #lastly...if none of the above checks terminated the function, hold the star~
             add_star_to_list(username, user_id, world, loc, tier, filename='held_stars.json')
-            await send_func(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
-
+            
+            #add the held message
+            if hold_check[1] is None:
+                msg = await send_func(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
+            else:
+                msg = await send_func(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}\n"
+                                      f"{hold_check[1]}")
+                
             #schedule the checking job; if star is ready to call, remove job!
             async def monitor_star():
 
                 #if the world is in the $active list, REMOVE THE SCHEDULED JOB.
                 if world_check_flag(world, filename='active_stars.json'):
-                    #redefine the unique job_id
-                    job_id = f"hold_{world}_{tier}"
-                    #cancel the job
-                    scheduler.remove_job(job_id)
+                    job_id = f"hold_{world}_{tier}"  #unique job ID
+                    scheduler.remove_job(job_id)     #cancel the job
                     await send_func(f"⭐ HELD STAR World {world} {loc} t{tier} is now in the $active list and has automatically been removed from $backups.")
+                    return
 
                 #if world is not in $active list, re-check the call eligibility
                 call_flag = await check_wave_call(world, tier)
 
                 if call_flag:
-
-                    #view is what enables the button; will remove held star from .json when clicked and add to $active
                     try:
-                        await send_func(
-                            f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
-                            view=CallStarView(username, user_id, world, loc, tier))   #CallStarView is a class
+                        if hold_check[1] is None:
+                            full_call_message = f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}"
+                        else:
+                            full_call_message = f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}\n-# I can't believe I have to actually ping you for a dinky star."
+
+                        view = CallStarView(username, user_id, world, loc, tier)
+                        msg = await send_func(full_call_message, view=view)
+                        view.message = msg
                     except Exception as e:
                         print(e)
 
-                    #redefine the unique job_id
-                    job_id = f"hold_{world}_{tier}"
-                    #cancel the job
-                    scheduler.remove_job(job_id)
+                    job_id = f"hold_{world}_{tier}"  #unique job ID
+                    scheduler.remove_job(job_id)     #cancel job
 
             #non-async wrapper for the scheduler
             def run_job():
                 asyncio.run_coroutine_threadsafe(monitor_star(), self.bot.loop)
 
-            #THE FUNCTIONS DEFINED ABOVE WILL RUN WITH THE LAST FEW LINES
-            #unique job ID (based on user + star details)
             job_id = f"hold_{world}_{tier}"
-
-            #will run run_job every two minutes!
             if not scheduler.get_job(job_id):
                 scheduler.add_job(run_job, 'interval', minutes=2, id=job_id, misfire_grace_time=30)
 
@@ -143,7 +147,11 @@ class Hold(commands.Cog):
     ############################################################
     @commands.command(help='Records given world, loc, and tier into the $backups list.\nPrefix example: $hold 308 akm 8')
     async def hold(self, ctx, world=None, loc=None, tier=None):
-        await self._process_hold(ctx.author, world, loc, tier, ctx.send)  #last one is send_func
+        # ctx.send returns the message object — needed for views
+        async def send_func(*args, **kwargs):
+            return await ctx.send(*args, **kwargs)
+        
+        await self._process_hold(ctx.author, world, loc, tier, send_func)
 
 
     ############################################################
@@ -154,23 +162,17 @@ class Hold(commands.Cog):
         await interaction.response.defer()  #acknowledge the command right away so that it does not 
                                             #break if /hold takes longer than 3 seconds to complete
         
-        #capture the channel before interaction expires!
         channel = interaction.channel
         
+        # must return the message object when sending
         async def send_func(message: str = None, **kwargs):
-            await channel.send(message, **kwargs)
+            return await channel.send(message, **kwargs)
 
         await self._process_hold(interaction.user, world, loc, tier, send_func)
         
-        #after deferring, MUST use followup.send() for *all* messages...even though 
-        #I am sending all of the responsibility to the scheduled job
-        await interaction.followup.send("Star recorded!")
+        await interaction.followup.send("Confirming...")
         
 #attaching a decorator to a function after the class is defined...
-#previously used @app_commands.guilds(GUILD)
-#occasionally, though, GUILD=None if not testing
-#in that case, cannot use @app_commands.guilds() decorator. returns an error!
-#instead, we 're-define' the slash command function in the class above
 if GUILD is not None:
     Hold.hold_slash = app_commands.guilds(GUILD)(Hold.hold_slash)   
 

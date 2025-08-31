@@ -13,6 +13,10 @@ from universal_utils import remove_frontal_corTex, load_f2p_worlds, load_json_fi
 #star tier index for "Suggested EOW Call Times" sheet on dust.wiki
 tier_dict = {'6':'B', '7':'C', '8':'D', '9':'E'}
 
+#this the dict indicating when in the wave to call a star if there is no poof data!
+#the tier 6 is a bit tricky - I do default to +91 here, though it should be ~+3 into the new wave. 
+tier_call_dict = {'6':'91', '7':'87', '8':'81', '9':'75'}
+
 
 #GET SPREADSHEET after inserting credentials
 def open_spreadsheet(retries=3, delay=30):
@@ -112,7 +116,7 @@ async def get_poof_time(world_string):
 async def get_call_time(world_string, tier_string):
     '''
     Pulls suggested call time for given F2P world/tier.
-    Returns a string (e.g. '+20') or '*85*'.
+    Returns a string (e.g. '+20', '20')
     '''
     spreadsheet = await asyncio.to_thread(open_spreadsheet)
             
@@ -124,18 +128,20 @@ async def get_call_time(world_string, tier_string):
     try:
         call_time = await asyncio.to_thread(spreadsheet.worksheet('Suggested EOW Call Times').get, cell)
         return call_time[0][0]
-    except:
-        return '*85*'
+    
+    except:   #cell is empty, default to the times given in the global dictionary -- tier_call_dict
+        return tier_call_dict[str(tier_string)]
 
 
 #ASYNC check whether the star is callable; returns a bool flag!
 async def check_wave_call(world, tier):
     wave_time = int(await get_wave_time())
-    call_time = await get_call_time(world, tier)
     
-    if call_time == '*85*':
+    #if the tier is < 6...default to +85 call time.
+    if (int(tier) < 6):
         call_time = 85
     else:
+        call_time = await get_call_time(world, tier)
         call_time = int(call_time.replace('+',''))
     
     return wave_time > call_time

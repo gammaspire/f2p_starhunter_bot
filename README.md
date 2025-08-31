@@ -59,7 +59,7 @@ python main.py
 
 * $hold f2p_world loc star_tier
     * Use restricted to members with @Ranked role
-    * will place into dynamic JSON file the name of user who used the call, the world, location (shorthand) and tier of the star to be held. When the wave time ~ the EOW call time for the star, the bot will @ the user and output the star that can now be called. If EOW doesn't exist, will default to calling at a wave time of 85 minutes.
+    * will place into dynamic JSON file the name of user who used the call, the world, location (shorthand) and tier of the star to be held. When the wave time ~ the EOW call time for the star, the bot will @ the user and output the star that can now be called. If EOW doesn't exist, will default to calling at a wave time corresponding to the tier such that if you were to begin mining that star immediately, it would last at least until the end of the spawn period (+45) of the new wave.
         * Example usage: `$hold 308 akm 8`
     
 * $remove f2p_world
