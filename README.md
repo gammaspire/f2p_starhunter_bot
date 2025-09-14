@@ -46,8 +46,10 @@ python main.py
     * will output current wave time, the time until end-of-wave. the clock times are Unix Epoch values that Discord automatically converts according to the reader's timezone!
 
 * $hoplist
-    * will output a list of list of worlds, ordered from early- to late-wave spawns and with $active star worlds filtered out.
+    * will output a list of list of worlds, ordered from early-wave to late-wave to no-wave spawns and with $active and $backups star worlds filtered out.
     * this list is formatted such that users can directly copy+paste the output into the World Cycle Runelite plugin.
+    * worlds with no data are tacked on at the end in numerical order
+    * also includes a REFRESH button!
     
 * $poof_time f2p_world
     * will output the poof time from dust.wiki for the inputted f2p world as well as the current wave time, for ease of comparison.
@@ -97,21 +99,7 @@ python main.py
 
 * $stop_active_loop
     * Use restricted to members with @Mods role
-    * if sent to a channel in which $start_active_loop is active, will terminate the scheduled messages
-
-* $start_hop_loop
-    * Use restricted to members with @Mods role
-    * will begin scheduled messages (with a frequency of every # minutes per user input) which print a filtered list of f2p stars
-        * this filtered list REMOVES any worlds in which there is an $active star
-        * bulletin board style -- one message updated every N minutes. activate in a channel that is preferably locked to any non-mod messages
-    * messages will print in the same channel the command is sent to
-    * example usage: `$start_hop_loop 5`
-        * will print every 5 minutes
-        
-* $stop_hop_loop
-    * Use restricted to members with @Mods role
-    * if sent to a channel in which $start_hop_loop is active, will terminate the scheduled messages
-    
+    * if sent to a channel in which $start_active_loop is active, will terminate the scheduled messages    
 
 ## Miscellaneous Commands List
 
