@@ -8,6 +8,7 @@ from pull_f2p_worlds import pull_f2p_worlds
 
 sys.path.append('utils')
 from scheduler_utils import scheduler, init_scheduler_jobs, reset_star_jsons
+from button_utils import restore_hoplist_view
 
 sys.path.append('config')
 from config import TOKEN, GUILD
@@ -52,8 +53,9 @@ async def load_cogs():
 async def on_ready():    
     
     print(f'Logged in as {bot.user}')
+    
     #small delay to ensure guilds and channels are cached
-    await asyncio.sleep(1)
+    #await asyncio.sleep(1)
     
     #clears held_stars.json and active_stars.json to begin anew (in scheduler_jobs.py)
     reset_star_jsons()
@@ -65,6 +67,9 @@ async def on_ready():
     #also initializes the pull_f2p_worlds() job, which runs immediately and then once per 24 hours
     #(in scheduler_jobs.py)
     init_scheduler_jobs(bot)
+    
+    #if there is an existing /hoplist message, restore it. ensures the counter, etc. remains the same!
+    await restore_hoplist_view(bot)
     
     #add the Cogs!
     await load_cogs()

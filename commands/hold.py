@@ -11,16 +11,17 @@ from discord.ext import commands
 from discord import app_commands, Interaction
 import sys
 
-from discord_ui import CallStarView   #my CallStarView class lives here
-
-sys.path.insert(0, '../utils')
+sys.path.insert(0, 'utils')
 from scheduler_utils import scheduler  #import my global scheduler instance
 from universal_utils import load_f2p_worlds, remove_frontal_corTex, world_check_flag
 from googlesheet_utils import check_wave_call
 from star_utils import print_error_message, add_star_to_list, load_loc_dict
 
-sys.path.insert(0, '../config')
+sys.path.insert(0, 'config')
 from config import GUILD
+
+sys.path.insert(0, 'discord_ui')
+from call_button import CallStarView   #my 'call star' button lives here
 
 
 #check if the user-inputted star is 'holdable'!

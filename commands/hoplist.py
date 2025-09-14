@@ -16,6 +16,9 @@ from hoplist_utils import send_hoplist_message
 sys.path.insert(0, '../config')
 from config import GUILD
 
+sys.path.insert(0, '../discord_ui')
+from refresh_button import RefreshView
+
 
 class Hoplist(commands.Cog):
     
@@ -32,7 +35,10 @@ class Hoplist(commands.Cog):
         #sends the hoplist using the utility function, which handles formatting
         #'None' for message_id will make the function send a fresh message
         try:
-            await send_hoplist_message(ctx.channel, None)
+            view = RefreshView()
+            message = await send_hoplist_message(ctx.channel, None, refresh_count=view.refresh_count)
+            await message.edit(view=view)   # attach refresh button to same message
+            view.message = message          # link the view to its message
         except Exception as e:
             print(e)
         #ezpz!
@@ -43,7 +49,11 @@ class Hoplist(commands.Cog):
     @app_commands.command(name='hoplist', description='Prints comma-separated, filtered world list in order of early- to late-wave spawns.')
     async def hoplist_slash(self, interaction: Interaction):
         try:
-            await send_hoplist_message(channel=interaction.channel, message_id=None, interaction=interaction)
+            view = RefreshView()
+            message = await send_hoplist_message(channel=interaction.channel, message_id=None, interaction=interaction,
+                                                refresh_count=view.refresh_count)
+            await message.edit(view=view)   # attach refresh button
+            view.message = message
         except Exception as e:
             print(e)
 

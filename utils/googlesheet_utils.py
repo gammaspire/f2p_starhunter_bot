@@ -1,7 +1,7 @@
 # ALL OF THE FUNCTIONS WHICH INVOLVE PULLING FROM GOOGLE SHEETS (dust.wiki) ARE ADDED HERE
 
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 import numpy as np
 import json
 import time
@@ -19,7 +19,7 @@ tier_call_dict = {'6':'91', '7':'87', '8':'81', '9':'75'}
 
 
 #GET SPREADSHEET after inserting credentials
-def open_spreadsheet(retries=3, delay=30):
+def open_spreadsheet(retries=3, delay=10):
     '''
     Open the Google Sheet.
 
@@ -32,9 +32,9 @@ def open_spreadsheet(retries=3, delay=30):
     '''
 
     ###SERVICE ACCOUNT SETUP###
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name('config/animated-scope-456121-q8-5b10debc616d.json', 
-                                                             scope)
+    scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = Credentials.from_service_account_file('config/animated-scope-456121-q8-5b10debc616d.json', 
+                                                             scopes=scopes)
 
     ###OPEN SPREADSHEET WITH RETRIES###
     for attempt in range(retries):

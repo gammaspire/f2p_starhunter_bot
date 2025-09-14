@@ -10,14 +10,14 @@ def grab_job_ids(job_info):
 
 def load_json_file(filename):
     try:
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             return json.load(f)
     except (json.JSONDecodeError, FileNotFoundError):
         return {}
 
 #this will write job to filename, and create filename if does not already exist
 def save_json_file(data, filename):
-    with open(filename, 'w') as f:
+    with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f)
 
 #remove any T prefixes 
