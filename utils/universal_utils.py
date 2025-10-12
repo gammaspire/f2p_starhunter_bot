@@ -1,12 +1,14 @@
 import json
 import os
 
+
 #to reactivate any scheduled jobs, must first grab job IDs
 def grab_job_ids(job_info):            
     channel_id = job_info['channel_id']
     interval = job_info['interval'] 
     message_id = job_info.get('message_id')       
     return channel_id, interval, message_id
+
 
 def load_json_file(filename):
     try:
@@ -15,11 +17,13 @@ def load_json_file(filename):
     except (json.JSONDecodeError, FileNotFoundError):
         return {}
 
+    
 #this will write job to filename, and create filename if does not already exist
 def save_json_file(data, filename):
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f)
 
+        
 #remove any T prefixes 
 def remove_frontal_corTex(tier_string):
     try:
@@ -29,6 +33,7 @@ def remove_frontal_corTex(tier_string):
     except TypeError:
         return None
 
+    
 #read in list of currently active F2P Worlds
 def load_f2p_worlds(output_omitted_worlds = False, output_all_worlds = False):
     
@@ -64,6 +69,7 @@ def load_f2p_worlds(output_omitted_worlds = False, output_all_worlds = False):
     
     return active_worlds
 
+
 #check whether world is already in filename (either held_stars.json or active_stars.json)
 def world_check_flag(world, filename=None, active_stars=None):
     
@@ -79,3 +85,10 @@ def world_check_flag(world, filename=None, active_stars=None):
     
     return world_flag
 
+
+def get_star_holder(world: str, filename="held_stars.json"):
+    stars = load_json_file(f'keyword_lists/{filename}') or []
+    for s in stars:
+        if str(s.get("world")) == str(world):
+            return s
+    return None

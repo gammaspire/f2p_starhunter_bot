@@ -7,7 +7,7 @@ from scheduler_utils import scheduler
 from universal_utils import load_json_file, save_json_file
 
 sys.path.insert(0, '../config')
-from config import GUILD
+from config import GUILD, MOD_ROLE_NAME
 
 class Stop_Active(commands.Cog):
     
@@ -17,8 +17,8 @@ class Stop_Active(commands.Cog):
     ############################################################
     # Prefix command
     ############################################################
-    @commands.command(help="Terminates the bot's sending of $active list in the designated channel every N minutes, if applicable. Restricted to @Mods role.\nExample usage: $stop_active_loop")
-    @commands.has_role('Mods')
+    @commands.command(help=f"Terminates the bot's sending of $active list in the designated channel every N minutes, if applicable. Restricted to @{MOD_ROLE_NAME} role.\nExample usage: $stop_active_loop")
+    @commands.has_role(MOD_ROLE_NAME)
     async def stop_active_loop(self, ctx):
         try:
             guild_id = ctx.guild.id
@@ -42,8 +42,8 @@ class Stop_Active(commands.Cog):
     ############################################################
     # Slash command
     ############################################################
-    @app_commands.command(name="stop_active_loop", description="Terminates the bot's sending of active stars every N minutes. Restricted to @Mods.")
-    @app_commands.checks.has_role("Mods")
+    @app_commands.command(name="stop_active_loop", description=f"Terminates the bot's sending of active stars every N minutes. Restricted to @{MOD_ROLE_NAME}.")
+    @app_commands.checks.has_role(MOD_ROLE_NAME)
     async def stop_active_loop_slash(self, interaction: Interaction):
         try:
             guild_id = interaction.guild_id

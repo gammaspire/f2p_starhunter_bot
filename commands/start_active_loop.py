@@ -18,7 +18,7 @@ from scheduler_utils import scheduler
 from universal_utils import load_json_file, save_json_file
 
 sys.path.insert(0, '../config')
-from config import GUILD
+from config import GUILD, MOD_ROLE_NAME
 
 
 class Start_Active(commands.Cog):
@@ -90,8 +90,8 @@ class Start_Active(commands.Cog):
     ############################################################
     #prefix command: $start_active_loop
     ############################################################
-    @commands.command(help='Sets up the bot to send active list in the designated channel every N minutes, where N is an integer. Restricted to @Mods role.\nPrefix example: $start_active_loop 5')
-    @commands.has_role('Mods')
+    @commands.command(help=f'Sets up the bot to send active list in the designated channel every N minutes, where N is an integer. Restricted to @{MOD_ROLE_NAME} role.\nPrefix example: $start_active_loop 5')
+    @commands.has_role(MOD_ROLE_NAME)
 
     #registers this function as a bot command that is called when user types $start_active_loop
     async def start_active_loop(self, ctx, minutes=5):
@@ -101,8 +101,8 @@ class Start_Active(commands.Cog):
     #slash command: /start_active_loop
     ############################################################
     @app_commands.command(name='start_active_loop',
-        description='Sends/updates the active star list in the designated channel every N minutes. Restricted to @Mods.')
-    @app_commands.checks.has_role("Mods")
+        description=f'Sends/updates the active star list in the designated channel every N minutes. Restricted to @{MOD_ROLE_NAME}.')
+    @app_commands.checks.has_role(MOD_ROLE_NAME)
     async def start_active_loop_slash(self, interaction: Interaction, minutes: int = 5):
 
         #send_func will only ever send the confirmation text. send_embed() does the rest!

@@ -17,7 +17,7 @@ from googlesheet_utils import get_wave_time
 from star_utils import add_star_to_list, remove_star
 
 sys.path.insert(0, '../config')
-from config import GUILD
+from config import GUILD, RANKED_ROLE_NAME
 
 
 class Poof(commands.Cog):
@@ -51,8 +51,8 @@ class Poof(commands.Cog):
     ############################################################
     #prefix command: $poof
     ############################################################
-    @commands.command(help='Manually removes star from active list (HOWEVER -- if star is still active on SM, it will not be removed). Restricted to @Ranked role.\nPrefix example: $poof 308')
-    @commands.has_role('Ranked')
+    @commands.command(help=f'Manually removes star from active list, but only if not still active on SM. Restricted to @{RANKED_ROLE_NAME} role.\nPrefix example: $poof 308')
+    @commands.has_role(RANKED_ROLE_NAME)
     async def poof(self, ctx, world=None):
         await self._poof_logic(world, ctx.send)
 
@@ -60,7 +60,9 @@ class Poof(commands.Cog):
     ############################################################
     #slash command: /poof
     ############################################################
-    @app_commands.command(name='poof', description='Manually removes star from active list, but only if not still active on SM.')
+    @app_commands.command(name='poof', description=f'Remove star from the active list, but only if not still active on SM. Restricted to @{RANKED_ROLE_NAME} role.')
+    @app_commands.checks.has_role(RANKED_ROLE_NAME)
+    
     async def poof_slash(self, interaction: Interaction, world: str):
         #for slash commands, send_func uses interaction.response.send_message
         async def send_func(message):

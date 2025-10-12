@@ -8,17 +8,17 @@
 
 import asyncio
 from discord.ext import commands
-from discord import app_commands, Interaction
+from discord import app_commands, Interaction, utils
 import sys
 
 sys.path.insert(0, 'utils')
 from scheduler_utils import scheduler  #import my global scheduler instance
-from universal_utils import load_f2p_worlds, remove_frontal_corTex, world_check_flag
+from universal_utils import load_f2p_worlds, remove_frontal_corTex, world_check_flag, get_star_holder
 from googlesheet_utils import check_wave_call
 from star_utils import print_error_message, add_star_to_list, load_loc_dict
 
 sys.path.insert(0, 'config')
-from config import GUILD
+from config import GUILD, GUILD_VALUE, RANKED_ROLE_NAME
 
 sys.path.insert(0, 'discord_ui')
 from call_button import CallStarView   #my 'call star' button lives here
@@ -65,7 +65,7 @@ class Hold(commands.Cog):
     async def _process_hold(self, user, world, loc, tier, send_func):
         """Shared logic for holding/calling stars; send_func can be ctx.send or interaction.response/followup.send"""
         
-        username = user.name
+        username = user.display_name
         user_id = user.id
 
         tier = remove_frontal_corTex(tier)
@@ -85,9 +85,9 @@ class Hold(commands.Cog):
             #compares wave time and eow suggested call time for star
             if await check_wave_call(world, tier):
                 view = CallStarView(username, user_id, world, loc, tier)   #create the view
-                msg = await send_func(
-                    f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
-                    view=view)
+                #just ping the user who sent the message. they will figure it out.
+                msg = await send_func(f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
+                                      view=view)
                 view.message = msg   #store the message so timeout can disable buttons
                 return
 
@@ -104,24 +104,47 @@ class Hold(commands.Cog):
             #schedule the checking job; if star is ready to call, remove job!
             async def monitor_star():
 
-                #if the world is in the $active list, REMOVE THE SCHEDULED JOB.
+                #if the world is in the active list, REMOVE THE SCHEDULED JOB.
                 if world_check_flag(world, filename='active_stars.json'):
                     job_id = f"hold_{world}_{tier}"  #unique job ID
                     scheduler.remove_job(job_id)     #cancel the job
-                    await send_func(f"⭐ HELD STAR World {world} {loc} t{tier} is now in the $active list and has automatically been removed from $backups.")
+                    await send_func(f"⭐ HELD STAR World {world} {loc} t{tier} is now in the active stars list and has automatically been removed from backups.")
                     return
 
-                #if world is not in $active list, re-check the call eligibility
+                #if world is not in active list, re-check the call eligibility
                 call_flag = await check_wave_call(world, tier)
 
                 if call_flag:
                     try:
-                        if hold_check[1] is None:
-                            full_call_message = f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}"
+                        #pull the guild...
+                        guild = await self.bot.fetch_guild(GUILD_VALUE)
+                        
+                        #first: GRAB THE USER WHO IS IN THE HELD STAR .JSON FILE FOR THAT WORLD!
+                        #this is needed so bot-kun will ping the correct user!
+                        holder_entry = get_star_holder(world)
+                        
+                        holder_id = int(holder_entry.get("user_id"))  #get ID of user who held the star!
+                        holder_obj = await guild.fetch_member(holder_id)  #get ID of user who held star
+                                                                          #or was later assigned to call the star
+                        
+                        #grab the ranked role!
+                        ranked_role = utils.get(guild.roles, name=RANKED_ROLE_NAME)
+                        
+                        #now...if the user who held the star is not ranked, ping @Ranked instead of @user!
+                        #otherwise, ping the user
+                        if ranked_role not in holder_obj.roles:
+                            holder_mention = ranked_role.mention if ranked_role else f"@{RANKED_ROLE_NAME}"
                         else:
-                            full_call_message = f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}\n-# I can't believe I have to actually ping you for a dinky star."
+                            holder_mention = holder_obj.mention
+                                                
+                        if hold_check[1] is None:     #check if hold_check[1] has a message. if so, then the user
+                                                      #deserves to be reprimanded for holding a dinky star.
+                            full_call_message = f"<⭐ {holder_mention}> CALL STAR: World {world}, {loc}, Tier {tier}"
+                        else:
+                            full_call_message = f"<⭐ {holder_mention}> CALL STAR: World {world}, {loc}, Tier {tier}\n-# I can't believe I have to actually ping you for a dinky star."
 
-                        view = CallStarView(username, user_id, world, loc, tier)
+                        #this will post the holder from held_stars.json in the /active list.
+                        view = CallStarView(holder_obj.display_name, holder_id, world, loc, tier)
                         msg = await send_func(full_call_message, view=view)
                         view.message = msg
                     except Exception as e:
@@ -146,7 +169,7 @@ class Hold(commands.Cog):
     ############################################################
     #prefix command: $hold
     ############################################################
-    @commands.command(help='Records given world, loc, and tier into the $backups list.\nPrefix example: $hold 308 akm 8')
+    @commands.command(help='Records given world, loc, and tier into the list of backup stars.\nPrefix example: $hold 308 akm 8')
     async def hold(self, ctx, world=None, loc=None, tier=None):
         # ctx.send returns the message object — needed for views
         async def send_func(*args, **kwargs):

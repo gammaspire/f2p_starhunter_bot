@@ -46,7 +46,7 @@ async def create_eow_message(world_string, tier_string):
             #call_time in the cell is +xx, so remove + to convert to integer
             #otherwise...please hold the star. :-)  
             if int(wave_time) < int(call_time.replace('+','')):
-                call_notice = f"Please hold for {int(call_time.replace('+','')) - int(wave_time)} minutes."
+                call_notice = f"Please hold for {int(call_time.replace('+','')) - int(wave_time)} minute(s)."
 
             #if the wave time is larger than the call time, then I can call the star! 
             else:

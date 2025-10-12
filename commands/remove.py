@@ -17,7 +17,7 @@ from universal_utils import load_f2p_worlds
 from star_utils import remove_star
 
 sys.path.insert(0, '../config')
-from config import GUILD
+from config import GUILD, RANKED_ROLE_NAME
 
 class Remove(commands.Cog):
     
@@ -27,8 +27,8 @@ class Remove(commands.Cog):
     ############################################################
     #prefix command: $remove
     ############################################################
-    @commands.command(help='Manually removes star from backups list. Restricted to @Ranked role.\nPrefix example: $remove 308')
-    @commands.has_role('Ranked')
+    @commands.command(help=f'Manually removes star from backups list. Restricted to @{RANKED_ROLE_NAME} role.\nPrefix example: $remove 308')
+    @commands.has_role(RANKED_ROLE_NAME)
     async def remove(self, ctx, world=None):
 
         if (world is None) or (world not in load_f2p_worlds()):
@@ -56,7 +56,9 @@ class Remove(commands.Cog):
     ############################################################
     #slash command: /remove
     ############################################################
-    @app_commands.command(name='remove', description='Manually removes star from backups list. Restricted to @Ranked role.')
+    @app_commands.command(name='remove', description=f'Manually removes star from backups list. Restricted to @{RANKED_ROLE_NAME} role.')
+    @app_commands.checks.has_role(RANKED_ROLE_NAME)
+    
     async def remove_slash(self, interaction: Interaction, world: str):
         if (world is None) or (world not in load_f2p_worlds()):
             await interaction.response.send_message('Did you forget to use a valid F2P world? I suspected as much. Try again.')

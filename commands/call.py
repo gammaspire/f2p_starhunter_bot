@@ -11,7 +11,7 @@ from discord import app_commands, Interaction
 import sys
 
 sys.path.insert(0,'../config')
-from config import GUILD
+from config import GUILD, RANKED_ROLE_NAME
 
 sys.path.insert(0, '../utils')
 from scheduler_utils import scheduler
@@ -50,8 +50,8 @@ class Call(commands.Cog):
     ############################################################
     #prefix command: $call
     ############################################################
-    @commands.command(help='Calls star and moves to $active list. Restricted to @Ranked role.\nPrefix Example: $call 308 akm 8')
-    @commands.has_role('Ranked')
+    @commands.command(help=f'Calls star and moves to $active list. Restricted to @{RANKED_ROLE_NAME} role.\nPrefix Example: $call 308 akm 8')
+    @commands.has_role(RANKED_ROLE_NAME)
     async def call(self, ctx, world=None, loc=None, tier=None):
         
         #a few...quality checks
@@ -76,7 +76,7 @@ class Call(commands.Cog):
             print(f'Called star in world {world} was not a backup; no job to remove.')
 
         #add star to .json
-        username = ctx.author.name
+        username = ctx.author.display_name
         user_id = ctx.author.id
         add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
 
@@ -86,7 +86,7 @@ class Call(commands.Cog):
     #slash command: /call
     ############################################################    
     @app_commands.command(name="call", description="Calls star [F2P world, loc shorthand, Tier 1-9] and moves to the active list.") 
-    @app_commands.checks.has_role("Ranked")
+    @app_commands.checks.has_role(RANKED_ROLE_NAME)
     async def call_slash(self, interaction: Interaction, world : str, loc : str, tier: str):
         
         #a few...quality checks
@@ -111,7 +111,7 @@ class Call(commands.Cog):
 
         #add star to .json
         author = interaction.user
-        username = author.name
+        username = author.display_name
         user_id = author.id
         add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
 

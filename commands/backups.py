@@ -12,7 +12,7 @@ sys.path.insert(0, '../utils')
 from embed_utils import send_embed
 
 sys.path.insert(0,'../config')
-from config import GUILD
+from config import GUILD, RANKED_ROLE_NAME
 
 
 class Backups(commands.Cog):
@@ -23,8 +23,8 @@ class Backups(commands.Cog):
     ############################################################
     #prefix command: $backups
     ############################################################
-    @commands.command(help='Prints list of backup worlds. Restricted to @Ranked role.\nPrefix Command: $backups')
-    @commands.has_role('Ranked')
+    @commands.command(help=f'Prints list of backup worlds. Restricted to @{RANKED_ROLE_NAME} role.\nPrefix Command: $backups')
+    @commands.has_role(RANKED_ROLE_NAME)
     async def backups(self, ctx):
         try:
             await send_embed('held_stars.json', ctx, hold=True)
@@ -34,8 +34,8 @@ class Backups(commands.Cog):
     ############################################################
     #slash command: /backups
     ############################################################   
-    @app_commands.command(name="backups", description="Prints list of backup worlds. Restricted to @Ranked role.")
-    @app_commands.checks.has_role("Ranked")
+    @app_commands.command(name="backups", description=f"Prints list of backup worlds. Restricted to @{RANKED_ROLE_NAME} role.")
+    @app_commands.checks.has_role(RANKED_ROLE_NAME)
     async def backups_slash(self, interaction : Interaction):
         try:
             await send_embed('held_stars.json', interaction, hold=True)

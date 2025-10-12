@@ -63,7 +63,13 @@ python main.py
     * Use restricted to members with @Ranked role
     * will place into dynamic JSON file the name of user who used the call, the world, location (shorthand) and tier of the star to be held. When the wave time ~ the EOW call time for the star, the bot will @ the user and output the star that can now be called. If EOW doesn't exist, will default to calling at a wave time corresponding to the tier such that if you were to begin mining that star immediately, it would last at least until the end of the spawn period (+45) of the new wave.
         * Example usage: `$hold 308 akm 8`
-    
+
+* /offload @rankeduser
+    * **SLASH COMMAND ONLY!**
+    * Use restricted to members with @Ranked role
+    * will change the "person to ping" from the author (the one who called the command) to the target (the @rankeduser) stars in held_stars.json file. The author MUST have backup stars associated with their username for this to work, otherwise there will be a snarky message from the bot.
+        * Example usage: `/offload @gammasquire`
+
 * $remove f2p_world
     * will remove any held backup star in the JSON file which corresponds to the world (which acts as a unique identifier, since there can only be one star per world).
         * Example usage: `$remove 308`
