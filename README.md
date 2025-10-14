@@ -6,13 +6,24 @@ See our website, <dust.wiki>, for current wave times, star data, and our scoutin
 Also check out *F2P Starhunt*, our in-game OSRS community chat channel.
 
 ## To host this bot locally:
+
 * If using Conda, create an environment called `discord` and install requirements.txt packages. Then, run the main script in a terminal window or whatever python editor or shell you use:
 ```
 conda create -n discord
 conda activate discord
-cd ~/github/f2p_starhunter_bot
+cd $/f2p_starhunter_bot
 python main.py
 ```
+
+* If using a typical python shell, you can follow these instructions:
+```
+cd $/f2p_starhunter_bot
+python -m venv discord
+source discord/bin/activate
+pip install -r requirements.txt
+python main.py
+```
+
 * There are a few *critical* requirements in order to prepare the directory correctly for your Discord bot to run. You should start with creating a file called `token.env` and put it in the /config directory. You will then need to populate it with the following:
     * TOKEN=your_discord_access_token
         * your_discord_access_token is associated with the Discord bot or application you created for executing this code. If you have not already, you can begin that journey at <https://discord.com/developers/applications>.
