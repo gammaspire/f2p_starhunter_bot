@@ -12,7 +12,7 @@
     #TESTING = True will also send your "Welcome" messages to the testing server/channel of your choice! Otherwise, it will default to sending this message to the server in which your bot will be regularly operating.
     
 # RANKED_ROLE_NAME
-    #name of the @Ranked role in your Discord server. Default is "Ranked." See README.md to learn which commands are restricted to which roles!
+    #name of the @Ranked role in your Discord server. Default is "Scouter." See README.md to learn which commands are restricted to which roles!
 
 # MOD_ROLE_NAME
     #name of the @Mods role in your Discord server. Default is "Mods." See README.md to learn which commands are restricted to which roles!
@@ -23,7 +23,7 @@
 
 TOKEN_PATH = 'config/token.env'   #change the name of your token.env file here if applicable
 TESTING = False   
-RANKED_ROLE_NAME = 'Ranked'
+RANKED_ROLE_NAME = 'Scouter'
 MOD_ROLE_NAME = 'Mods'
 
 ####################################
