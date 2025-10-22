@@ -83,12 +83,14 @@ class Eow(commands.Cog):
     ############################################################        
     @app_commands.command(name="eow", description="Get EOW call time for the given f2p world and star tier (6-9).")  
     async def eow_slash(self, interaction: Interaction, world: str, tier: str):
+        await interaction.response.defer()  #acknowledge the command right away so that it does not 
+                                            #break if /eow takes longer than 3 seconds to complete
         if (world is None) or (tier is None):
-            await interaction.response.send_message('The correct syntax is $eow [world] [tier]. Wanna try that again?')
+            await interaction.followup.send('The correct syntax is $eow [world] [tier]. Wanna try that again?')
             return
         
         call_message = await create_eow_message(world, tier)
-        await interaction.response.send_message(call_message)
+        await interaction.followup.send(call_message)
 
 #attaching a decorator to a function after the class is defined...
 #previously used @app_commands.guilds(GUILD)

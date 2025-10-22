@@ -59,14 +59,16 @@ class Poof_Time(commands.Cog):
     ############################################################    
     @app_commands.command(name='poof_time', description='Prints poof time for the entered world.')
     async def poof_time_slash(self, interaction: Interaction, world: str):
+        await interaction.response.defer()  #acknowledge the command right away so that it does not 
+                                            #break if /poof_time takes longer than 3 seconds to complete
         f2p_world_list = load_f2p_worlds()
         
         if world not in f2p_world_list:
-            await interaction.response.send_message('Are you kidding? Use a valid F2P world!')
+            await interaction.followup.send('Are you kidding? Use a valid F2P world!')
             return
         
         poof_message = await create_poof_message(world)
-        await interaction.response.send_message(poof_message)
+        await interaction.followup.send(poof_message)
 
 #attaching a decorator to a function after the class is defined...
 #previously used @app_commands.guilds(GUILD)

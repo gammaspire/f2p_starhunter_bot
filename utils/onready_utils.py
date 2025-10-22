@@ -8,7 +8,7 @@ Various utility functions that will run when the bot activates!
 ################################################################################
 async def load_cogs(bot):
     import os
-    for folder, prefix in [("./commands", "commands"), ("./events", "events")]:
+    for folder, prefix in [("./commands", "commands"), ("./events", "events"), ("./Halloween2025", "Halloween2025")]:
         for filename in os.listdir(folder):
             if filename.endswith(".py") and filename != "__init__.py":
                 #in /commands, I have __init__.py, so python treats /commands as a package
