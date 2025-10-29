@@ -1,8 +1,6 @@
 from universal_utils import load_json_file
 from discord.ext import commands
 
-import sys
-sys.path.insert(0,'discord_ui')
 from refresh_button import RefreshView
 
 

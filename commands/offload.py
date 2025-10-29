@@ -7,12 +7,9 @@
 from discord import utils
 from discord.ext import commands
 from discord import app_commands, Interaction, Member
-import sys
 
-sys.path.insert(0, '../utils')
 from universal_utils import load_json_file, save_json_file
 
-sys.path.insert(0, '../config')
 from config import GUILD, RANKED_ROLE_NAME
 
 #path to backup stars...

@@ -12,8 +12,6 @@ import asyncio
 import random
 import os
 
-import sys
-sys.path.insert(0,'../config')
 from config import GUILD
 
 

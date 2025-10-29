@@ -6,12 +6,9 @@
 
 from discord.ext import commands
 from discord import app_commands, Interaction
-import sys
 
-sys.path.insert(0, '../utils')
 from universal_utils import load_f2p_worlds
 
-sys.path.insert(0, '../config')
 from config import GUILD
 
 class Lost_Worlds(commands.Cog):

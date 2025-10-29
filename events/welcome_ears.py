@@ -7,8 +7,6 @@ import os
 import discord
 from discord.ext import commands
 
-import sys
-sys.path.insert(0, '../config')
 from config import WELCOME_GUILD, WELCOME_CHANNEL
 
 def prep_welcome_message(new_member):

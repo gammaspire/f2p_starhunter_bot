@@ -8,15 +8,12 @@
 
 from discord.ext import commands
 from discord import app_commands, Interaction
-import sys
 
-sys.path.insert(0, '../utils')
 from scheduler_utils import scheduler
 from universal_utils import load_f2p_worlds
 from googlesheet_utils import get_wave_time
 from star_utils import add_star_to_list, remove_star
 
-sys.path.insert(0, '../config')
 from config import GUILD, RANKED_ROLE_NAME
 
 

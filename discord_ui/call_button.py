@@ -1,8 +1,6 @@
 import discord
 from discord.ui import Button, View
-import sys
 
-sys.path.insert(0,'utils')
 from universal_utils import world_check_flag
 from star_utils import remove_star, add_star_to_list
 

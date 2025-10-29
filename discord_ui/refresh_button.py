@@ -1,9 +1,7 @@
 import discord
 from discord.ui import Button, View
 import time
-import sys
 
-sys.path.insert(0, '../utils')
 from hoplist_utils import send_hoplist_message
 from universal_utils import load_json_file, save_json_file
 

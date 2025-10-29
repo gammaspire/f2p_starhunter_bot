@@ -8,13 +8,10 @@
 
 from discord.ext import commands
 from discord import app_commands, Interaction
-import sys
 
-sys.path.insert(0, '../utils')
 from universal_utils import remove_frontal_corTex, load_f2p_worlds
 from googlesheet_utils import get_call_time, get_wave_time
 
-sys.path.insert(0, '../config')
 from config import GUILD
 
 

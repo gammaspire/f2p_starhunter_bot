@@ -9,18 +9,14 @@
 import asyncio
 from discord.ext import commands
 from discord import app_commands, Interaction, utils
-import sys
 
-sys.path.insert(0, 'utils')
 from scheduler_utils import scheduler  #import my global scheduler instance
 from universal_utils import load_f2p_worlds, remove_frontal_corTex, world_check_flag, get_star_holder
 from googlesheet_utils import check_wave_call
 from star_utils import print_error_message, add_star_to_list, load_loc_dict
 
-sys.path.insert(0, 'config')
 from config import GUILD, GUILD_VALUE, RANKED_ROLE_NAME
 
-sys.path.insert(0, 'discord_ui')
 from call_button import CallStarView   #my 'call star' button lives here
 
 

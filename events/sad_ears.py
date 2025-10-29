@@ -5,9 +5,7 @@
 
 from discord.ext import commands
 import random
-import sys
 
-sys.path.insert(0,'../utils')
 from recreation_utils import load_sad_keywords, load_encouragement_keywords, sarcastify_word
 
 

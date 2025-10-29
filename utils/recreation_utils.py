@@ -18,9 +18,9 @@ def load_encouragement_keywords():
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         print('keyword_lists/response_encouragement.txt file not found; loading default list instead.')
-        return ['Keep doing your best.','Just keep swimming.','One moment at a time.',
-                'Save those tears for your pillow.','Cheer up.','Absorb some sunshine.',
-                'Any worthwhile endeavor will take time and patience.','sarcasm']
+        return ['Keep doing your worst.','Just keep swimming.','Breathe. Your brain lacks something, and it might be oxygen.',
+                'Save those tears for your pillow.','Touch grass.','Absorb some sunshine.',
+                'sarcasm']
 
 def load_sad_keywords():
     try:

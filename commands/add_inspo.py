@@ -6,13 +6,10 @@
 
 from discord.ext import commands
 from discord import app_commands, Interaction
-import sys
 import os
 
-sys.path.insert(0,'../utils')
 from recreation_utils import load_encouragement_keywords
 
-sys.path.insert(0,'../config')
 from config import GUILD
 
 

@@ -4,13 +4,17 @@ from discord.ext import commands
 import asyncio
 import sys
 
-sys.path.append('utils')
+#get this over with.
+#I only ever have to add these paths (relative to main.py) once. NOT NEEDED ELSEWHERE.
+sys.path.insert(0,'utils')
+sys.path.insert(0, 'discord_ui')
+sys.path.insert(0,'config')
+
 from scheduler_utils import scheduler, init_scheduler_jobs, reset_star_jsons
 from button_utils import restore_hoplist_view
 from onready_utils import load_cogs, sync_commands
 from pull_f2p_worlds import pull_f2p_worlds
 
-sys.path.append('config')
 from config import TOKEN, GUILD
 
 ################################################################################

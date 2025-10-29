@@ -9,14 +9,11 @@
 
 from discord.ext import commands
 from discord import app_commands, Interaction
-import sys
 
-sys.path.insert(0, '../utils')
 from scheduler_utils import scheduler
 from universal_utils import load_f2p_worlds
 from star_utils import remove_star
 
-sys.path.insert(0, '../config')
 from config import GUILD, RANKED_ROLE_NAME
 
 class Remove(commands.Cog):

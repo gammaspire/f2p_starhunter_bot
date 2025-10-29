@@ -8,15 +8,11 @@
 
 from discord.ext import commands
 from discord import app_commands, Interaction
-import sys
 
-sys.path.insert(0, '../utils')
 from hoplist_utils import send_hoplist_message
 
-sys.path.insert(0, '../config')
 from config import GUILD
 
-sys.path.insert(0, '../discord_ui')
 from refresh_button import RefreshView
 
 

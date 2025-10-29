@@ -8,12 +8,9 @@
 
 from discord.ext import commands
 from discord import app_commands, Interaction
-import sys
 
-sys.path.insert(0,'../config')
 from config import GUILD, RANKED_ROLE_NAME
 
-sys.path.insert(0, '../utils')
 from scheduler_utils import scheduler
 from universal_utils import remove_frontal_corTex, load_f2p_worlds, world_check_flag
 from star_utils import print_error_message, add_star_to_list, remove_star

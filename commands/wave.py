@@ -6,12 +6,9 @@
 
 from discord.ext import commands
 from discord import Embed, app_commands, Interaction
-import sys
 
-sys.path.insert(0, '../utils')
 from googlesheet_utils import get_wave_start_end
 
-sys.path.insert(0, '../config')
 from config import GUILD
 
 

@@ -7,12 +7,9 @@
 
 from discord.ext import commands
 from discord import app_commands, Interaction
-import sys
 
-sys.path.insert(0, '../utils')
 from star_utils import load_loc_dict
 
-sys.path.insert(0, '../config')
 from config import GUILD
 
 

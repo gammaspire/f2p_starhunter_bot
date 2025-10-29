@@ -122,13 +122,13 @@ python main.py
 
 * $add_inspo encouraging_message
     * will add an "encouraging" message to the list of options that the bot will randomly select from when it detects an "unhappy" word in a user's message
-    * Example Usage: $add_inspo Have you considered that maybe you should stop feeling that way?
+    * Example Usage: `$add_inspo Have you considered that maybe you should stop feeling that way?`
 
 * $inspire
     * will pull a randomly-generated quote from Dave Tamowski's "Disappointing Affirmations" 
 
 * $rand
-    * will print a random factoid for your amusement, taken from https://uselessfacts.jsph.pl/
+    * will print a random factoid for your amusement, taken from <https://uselessfacts.jsph.pl/>
 
 * $joke 
     * will print a random joke, pulling from a list written by our very own tj44
@@ -141,8 +141,14 @@ python main.py
 * $strike
     * will print words of forceful "encouragement" to press our leaders into allowing the scouters to unionize
     
+* $galaxy
+    * will output a image of a random nearby galaxy, with the image taken either from the Legacy Survey (http://legacysurvey.org/viewer) or SDSS (https://skyserver.sdss.org/dr16/en/home.aspx) depending on server availability
+    * if both servers are offline, you will receive an arbitrary nature scene, courtesy of <picsum.photos>.
+    * if you like a particular galaxy or have a favorite number, you can dictate the galaxy chosen by typing an integer after the command. leave blank otherwise!
+    * Example usage: `$galaxy 559`
+    
 
 ## Notes
 
-* The base of this code originated from https://www.freecodecamp.org/news/create-a-discord-bot-with-python/.
+* The base of this code originated from <https://www.freecodecamp.org/news/create-a-discord-bot-with-python/>.
 * Buyer beware: this tool may be afflicted by the spaghetti plague. I claim all responsibility for this.

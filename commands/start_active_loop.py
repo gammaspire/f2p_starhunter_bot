@@ -8,16 +8,13 @@
 
 
 from discord.ext import commands
-import sys
 import asyncio
 from discord import app_commands, Interaction
 
-sys.path.insert(0, '../utils')
 from embed_utils import send_embed
 from scheduler_utils import scheduler
 from universal_utils import load_json_file, save_json_file
 
-sys.path.insert(0, '../config')
 from config import GUILD, MOD_ROLE_NAME
 
 

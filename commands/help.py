@@ -9,9 +9,6 @@
 from discord.ext import commands
 from discord import Embed, app_commands, Interaction
 
-#import TEST_GUILD_ID for testing
-import sys
-sys.path.insert(0,'../config')
 from config import GUILD
 
 class Help(commands.Cog):

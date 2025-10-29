@@ -10,8 +10,6 @@ from discord import app_commands, Interaction
 import random
 import os
 
-import sys
-sys.path.insert(0, '../config')
 from config import GUILD
 
 #load TJ jokes from file; fallback to default jokes if file not found

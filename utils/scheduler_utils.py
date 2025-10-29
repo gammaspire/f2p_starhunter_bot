@@ -2,7 +2,6 @@ import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
 import json
-import sys
 
 from pull_f2p_worlds import pull_f2p_worlds
 from universal_utils import grab_job_ids, load_json_file

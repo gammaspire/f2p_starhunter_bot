@@ -6,12 +6,9 @@
 
 from discord.ext import commands
 from discord import Interaction, app_commands
-import sys
 
-sys.path.insert(0, '../utils')
 from embed_utils import send_embed
 
-sys.path.insert(0,'../config')
 from config import GUILD
 
 
