@@ -20,7 +20,7 @@ from embed_utils import embed_galaxy
 class Galaxy(commands.Cog):
     """
     Cog that implements both prefix and slash command variants for displaying either a 
-      user-selected or random galaxy from the Legacy Survey Viewer!
+      user-selected or random galaxy from the Legacy Survey Viewer or SDSS!
     Fallback websites include (plan B) SDSS and (plan C) some random placeholder image generator.
     """
     
@@ -31,7 +31,7 @@ class Galaxy(commands.Cog):
     ############################################################
     # Prefix command: $galaxy
     ############################################################
-    @commands.command(help='Outputs a galaxy from the Legacy Survey Viewer\n'
+    @commands.command(help='Outputs a galaxy from the Legacy Survey Viewer or SDSS!\n'
                            'Prefix Command: $galaxy\n'
                            'Slash Command: /galaxy')
     async def galaxy(self, ctx, index=None):
@@ -56,7 +56,7 @@ class Galaxy(commands.Cog):
     ############################################################
     # Slash command variant: /galaxy
     ############################################################
-    @app_commands.command(name="galaxy", description="Outputs a galaxy from the Legacy Survey Viewer.")
+    @app_commands.command(name="galaxy", description="Outputs a galaxy from the Legacy Survey Viewer or SDSS!")
     async def galaxy_slash(self, interaction: Interaction, index: int | None = None):   #can be int or None; default is None
         """
         Sends an image of a galaxy, either pre-selected by the user or randomly chosen by numpy's fancy pseudo-RNG.

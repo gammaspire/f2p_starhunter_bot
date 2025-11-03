@@ -66,7 +66,7 @@ def get_random_placeholder():
     
 def get_galaxy_info(csv_catalog, index):
     '''
-    Try Legacy Survey first, then SDSS, then Picsum.
+    Try SDSS first, then Picsum.
     Returns message that Discord bot will send publicly to the user.
     '''
     
@@ -85,11 +85,11 @@ def get_galaxy_info(csv_catalog, index):
     
     #convert distance to duckies
     nducks = dist_to_ducks(distance)
-    
-    #define the URLs for Legacy Survey and SDSS
-    urls = [("Legacy Survey", get_legacy_url(ra, dec)), ("SDSS", get_sdss_url(ra, dec))]
+        
+    #define the URLs for SDSS   (architecture is still set up for Legacy Survey integration, FYI
+    urls = [("SDSS", get_sdss_url(ra, dec))]
 
-    #first try to grab from the Legacy Survey; if the website is down, then grab instead from SDSS
+    #first try to grab from SDSS
     for source, url in urls:
         try:
             r = requests.get(url, timeout=5)
