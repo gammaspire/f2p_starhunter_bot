@@ -21,6 +21,10 @@ class Encouragements(commands.Cog):
         if message.author == self.bot.user:
             return
         
+        #MOREOVER, if the 1-10 RNG rolls any number but 5, ignore.
+        if random.randint(1,10) != 5:
+            return
+        
         #grab display name (name) and username of the message author
         name = message.author.display_name
         username = message.author.name

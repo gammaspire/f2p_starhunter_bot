@@ -26,7 +26,12 @@ def load_conch_responses():
         return ['Yes.','No.','Maybe.']
     
 def the_tysen_condition(username):
-    if username=='deleted_user102727':
+    if username=='deleted_user59471':
+        return True
+    return False
+
+def the_smelt_condition(username):
+    if username=='imsmelt':
         return True
     return False
     
@@ -42,7 +47,7 @@ class Conch(commands.Cog):
         await ctx.send("Type your yes/no question below.")
 
         #if user invoking the conch is tysen, react with poo emoji
-        if the_tysen_condition(ctx.author.name):
+        if the_tysen_condition(ctx.author.name) or the_smelt_condition(ctx.author.name):
             await ctx.message.add_reaction("💩")
 
         def check(user_message):
@@ -64,7 +69,7 @@ class Conch(commands.Cog):
 
         #if user doesn't respond within 20 seconds, the bot.wait_for will return an error
         except asyncio.TimeoutError:
-            await ctx.send("🌀 You took too long typing your query. The conch has gone back to sleep. 🌀")
+            await ctx.send("🌀 You took too long typing your query. Back to sleep for me. 🌀")
 
 
     ############################################################
@@ -77,7 +82,9 @@ class Conch(commands.Cog):
             await interaction.response.send_message("Try again when you decide to use question marks correctly.")
             return
 
-        preamble = "Question: "+question+" (💩)" if the_tysen_condition(interaction.user.name) else "Question: *"+question+"*"
+        poo_condition = (the_tysen_condition(interaction.user.name) or the_smelt_condition(interaction.user.name))
+        
+        preamble = "Question: "+question+" (💩)" if poo_condition else "Question: *"+question+"*"
         
         #select random response
         response = random.choice(load_conch_responses())
@@ -85,10 +92,6 @@ class Conch(commands.Cog):
         await interaction.response.send_message(full_response)
 
 #attaching a decorator to a function after the class is defined...
-#previously used @app_commands.guilds(GUILD)
-#occasionally, though, GUILD=None if not testing
-#in that case, cannot use @app_commands.guilds() decorator. returns an error!
-#instead, we 're-define' the slash command function in the class above
 if GUILD is not None:
     Conch.conch_slash = app_commands.guilds(GUILD)(Conch.conch_slash)   
         
