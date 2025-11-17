@@ -25,9 +25,9 @@ def run_active(bot, guild_id, channel_id, message_id):
             print(f"[run_active] Channel not found for guild {guild_id}, id {channel_id}")
             return
 
-        asyncio.run_coroutine_threadsafe(
-            send_embed("active_stars.json", channel, active=True, hold=False, message_id=message_id),
-            bot.loop)
+        asyncio.run_coroutine_threadsafe(send_embed("active_stars.json", channel, active=True, hold=False, 
+                                                    message_id=message_id),
+                                         bot.loop)
         
     #    try:
     #        result = future.result(timeout=5)
@@ -40,15 +40,14 @@ def run_active(bot, guild_id, channel_id, message_id):
 
 def run_hoplist(bot, guild_id, channel_id, message_id):
     channel = bot.get_channel(channel_id)
-    asyncio.run_coroutine_threadsafe(
-        send_hoplist_message(channel, message_id),
-        bot.loop)
+    asyncio.run_coroutine_threadsafe(send_hoplist_message(channel, message_id), bot.loop)
 
 # --- SCHEDULER INITIALIZATION ---
 def init_scheduler_jobs(bot):
     """Schedule pull_f2p_worlds and restore active/hoplist jobs."""
 
-    scheduler.start()
+    if not scheduler.running:
+        scheduler.start()
 
     # --- Pull F2P worlds job ---
     job_id = "pull_f2p_worlds_job"

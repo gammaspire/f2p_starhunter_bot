@@ -45,5 +45,6 @@ def pull_f2p_worlds():
             f2p_worlds.append(f"{int(world)+300}")
 
     #(over)write and save!
-    with open('keyword_lists/active_f2p_worlds.txt', "w") as f:
-        f.write("\n".join(f2p_worlds))
+    #with open('keyword_lists/active_f2p_worlds.txt', "w") as f:
+    #    f.write("\n".join(f2p_worlds))
+    return f2p_worlds

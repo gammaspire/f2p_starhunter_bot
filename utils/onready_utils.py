@@ -26,7 +26,8 @@ async def load_cogs(bot):
 async def sync_commands(bot, guild):
     #this will sync the commands with Discord's API.
     #it is recommended to do this only once or when you change commands.
-    #if you have a lot of commands, you might want to use `sync(guild_id=GUILD_ID)` to sync only for a specific guild.
+    #if you have a lot of commands, you might want to use `sync(guild_id=GUILD_ID)` 
+        #to sync only for a specific guild.
     #replace GUILD_ID with your actual guild ID if you want to limit the sync.
     #for global commands, you can use `bot.tree.sync()` without any parameters.
     #note: Global commands *can* take up to an hour to propagate.  

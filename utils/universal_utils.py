@@ -91,4 +91,5 @@ def get_star_holder(world: str, filename="held_stars.json"):
     for s in stars:
         if str(s.get("world")) == str(world):
             return s
+    print('I anticipate a problem stemming from universal_utils/get_star_holder might be imminent...')
     return None
