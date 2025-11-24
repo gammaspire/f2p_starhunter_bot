@@ -123,6 +123,25 @@ def remove_0tier_stars(star_list, SM_worlds):
     return scrubbed_list
 
 
+def remove_old_stars(star_list, cutoff=7200):
+    '''
+    AIM: scrub the held stars list of backups that have lingered for > cutoff (seconds).
+    Every star has a call_time, which, contrary to what the variable name hints, is NOT the time 
+        at which the star must be called. instead, it is the time at which the user held the star.
+    '''
+    
+    #get current time
+    current_time = time.time()
+    
+    scrubbed_list = [entry for entry in star_list if ((current_time - int(entry['call_time']) < cutoff))]
+    dirty_list = [entry['world'] for entry in star_list if ((current_time - int(entry['call_time']) > cutoff))]
+    
+    if len(dirty_list) != 0:
+        print(f'Removing backup star for world(s) {dirty_list} -- no longer valid.')
+    
+    return scrubbed_list
+
+
 def approximate_current_tier(call_time, original_tier):
     #max(a,b) --> gives the larger of a and b. 
     #returns current tier of the star, given the original call time (when set to $active)

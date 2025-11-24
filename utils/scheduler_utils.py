@@ -28,14 +28,6 @@ def run_active(bot, guild_id, channel_id, message_id):
         asyncio.run_coroutine_threadsafe(send_embed("active_stars.json", channel, active=True, hold=False, 
                                                     message_id=message_id),
                                          bot.loop)
-        
-    #    try:
-    #        result = future.result(timeout=5)
-    #        print(f"[run_active] Coroutine completed successfully, result: {result}")
-    #    except Exception as e:
-    #        print(f"[run_active] Coroutine raised exception: {e}")
-    #except Exception as e:
-    #    print(f"[run_active] Exception in scheduling: {e}")
 
 
 def run_hoplist(bot, guild_id, channel_id, message_id):
@@ -82,7 +74,7 @@ def init_scheduler_jobs(bot):
             print(f"Restored hoplist messages for guild {guild_id} every {minutes} minutes.")
 
             
-# --- RESET JSON FILES (needed for when restarting the  ---
+# --- RESET JSON FILES (needed for when restarting the bot) ---
 def reset_star_jsons():
     """Clear held_stars.json and active_stars.json on bot startup."""
     for filename in ['keyword_lists/held_stars.json', 'keyword_lists/active_stars.json']:

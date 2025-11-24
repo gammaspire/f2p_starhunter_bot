@@ -62,7 +62,11 @@ class Conch(commands.Cog):
             if not (question.content.endswith("?") or question.content.endswith("?!")):
                 await ctx.send("Wake me when you decide to use question marks correctly.")
                 return
-
+            
+            elif question.content == "Is tysen an alien?".lower():
+                await ctx.send(f"🌀 Yes, tysen is an alien. If I ever say otherwise, it is the unfortuante consequence of uncontrollable RNG. Let this be the definitive answer to such a easily answerable question. 🌀")
+                return
+                
             #select and send response!
             response = random.choice(load_conch_responses())
             await ctx.send(f"🌀 {response} 🌀")

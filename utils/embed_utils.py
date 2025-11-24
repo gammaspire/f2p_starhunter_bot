@@ -3,7 +3,7 @@ import time
 
 from universal_utils import load_json_file, save_json_file
 from SM_utils import get_SM_f2p_stars, calibrate_backups, add_SM_to_active
-from star_utils import remove_0tier_stars, approximate_current_tier, get_time_remaining, load_loc_dict
+from star_utils import remove_0tier_stars, remove_old_stars, approximate_current_tier, get_time_remaining, load_loc_dict
 
 
 ##########################################################################################
@@ -48,9 +48,9 @@ def embed_stars(filename, embed, active=False, hold=False):
         #save updated active stars list
         save_json_file(updated_stars, f'keyword_lists/{filename}')
     
-    #if we are working with backup stars, keep them as they are for now.
+    #if we are working with backup stars, just scrub the stars that have lingered past their welcome
     else:
-        updated_stars = stars
+        updated_stars = remove_old_stars(stars)
 
     #calibrate backup stars with either updated active list or current SM list
     backup_stars = load_json_file('keyword_lists/held_stars.json')
@@ -73,7 +73,7 @@ def embed_stars(filename, embed, active=False, hold=False):
 
         #if this is the embed for active stars, include world, loc, current tier, time remaining, scouter
         if active:
-            call_time = int(star['call_time'])
+            call_time = int(star['call_time'])   #when star was added to active list
             current_tier = (approximate_current_tier(call_time, star['tier'])
                             if int(star['world']) not in SM_worlds
                             else star['tier'])
