@@ -79,7 +79,7 @@ python main.py
     * **SLASH COMMAND ONLY!**
     * Use restricted to members with @Ranked role
     * will change the "person to ping" from the author (the one who called the command) to the target (the @rankeduser) stars in held_stars.json file. The author MUST have backup stars associated with their username for this to work, otherwise there will be a snarky message from the bot.
-        * Example usage: `/offload @gammasquire`
+        * Example usage: `/offload @gammaquire`
 
 * $remove f2p_world
     * will remove any held backup star in the JSON file which corresponds to the world (which acts as a unique identifier, since there can only be one star per world).
@@ -119,6 +119,8 @@ python main.py
     * if sent to a channel in which $start_active_loop is active, will terminate the scheduled messages    
 
 ## Miscellaneous Commands List
+### Note that every prefix command listed below has a slash command variant! Just replace the $ with / in the Discord textbox.
+
 
 * $add_inspo encouraging_message
     * will add an "encouraging" message to the list of options that the bot will randomly select from when it detects an "unhappy" word in a user's message
@@ -142,10 +144,15 @@ python main.py
     * will print words of forceful "encouragement" to press our leaders into allowing the scouters to unionize
     
 * $galaxy
-    * will output a image of a random nearby galaxy, with the image taken either from the Legacy Survey (http://legacysurvey.org/viewer) or SDSS (https://skyserver.sdss.org/dr16/en/home.aspx) depending on server availability
-    * if both servers are offline, you will receive an arbitrary nature scene, courtesy of <picsum.photos>.
+    * will output a image of a random nearby galaxy, with the image taken either from the SDSS (https://skyserver.sdss.org/dr16/en/home.aspx) depending on server availability
+    * if the SDSS server is offline, you will receive an arbitrary nature scene, courtesy of <picsum.photos>.
     * if you like a particular galaxy or have a favorite number, you can dictate the galaxy chosen by typing an integer after the command. leave blank otherwise!
-    * Example usage: `$galaxy 559`
+        * Example usage: `$galaxy 559`
+
+* /snowball @username
+    * **SLASH COMMAND ONLY!**
+    * Hurl a wholesome insult to another user in the server
+        * Example usage: `/snowball @gammaspire`
     
 
 ## Notes

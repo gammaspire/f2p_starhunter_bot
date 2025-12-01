@@ -82,7 +82,7 @@ class Ping(commands.Cog):
             #save the modified .json file!
             save_json_file(backups, BACKUPS_FILE)
 
-            await interaction.response.send_message(f'Your held stars are now the ~~problem~~ responsibility of {user.mention}!')
+            await interaction.response.send_message(f'Your {count} held star(s) are now the ~~problem~~ responsibility of {user.mention}!')
         except Exception as e:
             print(e)
 

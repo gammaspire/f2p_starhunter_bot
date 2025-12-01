@@ -22,7 +22,7 @@ class Encouragements(commands.Cog):
             return
         
         #MOREOVER, if the 1-10 RNG rolls any number but 5, ignore.
-        if random.randint(1,10) != 5:
+        if random.randint(1,8) != 5:
             return
         
         #grab display name (name) and username of the message author
@@ -39,7 +39,12 @@ class Encouragements(commands.Cog):
         
         if any(word in message.content for word in sad_keywords):
             encouragement = load_encouragement_keywords()
-            chosen_encouragement = random.choice(encouragement)
+            
+            #randomly select 4 encouragements
+            random_list = random.choice(encouragement, k=4)
+        
+            #randomly select one encouragement from this list
+            chosen_encouragement = random.choice(random_list)
             
             #there is a secret response prompt -- "sarcasm"
             #in this case, find the (or a) sad word in the user's message and *sArCaStiFy iT*

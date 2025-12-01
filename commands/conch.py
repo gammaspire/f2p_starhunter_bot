@@ -66,9 +66,9 @@ class Conch(commands.Cog):
             elif question.content == "Is tysen an alien?".lower():
                 await ctx.send(f"🌀 Yes, tysen is an alien. If I ever say otherwise, it is the unfortuante consequence of uncontrollable RNG. Let this be the definitive answer to such a easily answerable question. 🌀")
                 return
-                
-            #select and send response!
-            response = random.choice(load_conch_responses())
+
+            random_list = random.choices(load_conch_responses(), k=4)
+            response = random.choice(random_list)
             await ctx.send(f"🌀 {response} 🌀")
 
         #if user doesn't respond within 20 seconds, the bot.wait_for will return an error
@@ -91,7 +91,8 @@ class Conch(commands.Cog):
         preamble = "Question: "+question+" (💩)" if poo_condition else "Question: *"+question+"*"
         
         #select random response
-        response = random.choice(load_conch_responses())
+        random_list = random.choices(load_conch_responses(), k=4)
+        response = random.choice(random_list)
         full_response = preamble + "\n\n" + f"🌀 {response} 🌀"
         await interaction.response.send_message(full_response)
 

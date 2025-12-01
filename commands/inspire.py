@@ -33,7 +33,12 @@ class Inspire(commands.Cog):
     @commands.command()
     async def inspire(self, ctx):
         affirmations = load_affirmations()
-        await ctx.send(random.choice(affirmations))
+        
+        #randomly select 4 affirmations
+        random_list = random.choices(affirmations, k=4)
+        
+        #randomly select and send one affirmation from this list
+        await ctx.send(random.choice(random_list))
     
     ############################################################
     #slash command: /inspire
@@ -41,7 +46,12 @@ class Inspire(commands.Cog):
     @app_commands.command(name='inspire',description='Print an inspirational quote.')
     async def inspire_slash(self, interaction: Interaction):
         affirmations = load_affirmations()
-        await interaction.response.send_message(random.choice(affirmations))
+        
+        #randomly select 4 affirmations
+        random_list = random.choices(affirmations, k=4)
+        
+        #randomly select and send one affirmation from this list
+        await interaction.response.send_message(random.choice(random_list))
 
 #attaching a decorator to a function after the class is defined...
 #previously used @app_commands.guilds(GUILD)
