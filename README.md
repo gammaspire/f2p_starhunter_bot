@@ -153,6 +153,11 @@ python main.py
     * **SLASH COMMAND ONLY!**
     * Hurl a wholesome insult to another user in the server
         * Example usage: `/snowball @gammaspire`
+
+* /snowcone @username
+    * **SLASH COMMAND ONLY!**
+    * Pass a wholesome compliment to another user in the server
+        * Example usage: `/snowcone @gammaspire`
     
 
 ## Notes

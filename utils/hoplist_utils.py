@@ -49,7 +49,7 @@ async def generate_hoplist_message(channel, msg=None, refresh_count=0):
     timestamp = int(time.time())
     
     text = (
-        "List of F2P worlds in order of early- to late-wave to 'no-data spawns.\n"
+        "List of F2P worlds in order of early- to late-wave to 'no-data' spawns.\n"
         "- Directly Copy+Paste the text into the World Cycle Runelite plugin\n"
         "- Worlds without data are tacked on at the end in numerical order\n"
         "- Worlds in which there is a known active or held star are filtered out\n"
