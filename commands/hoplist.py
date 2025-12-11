@@ -45,10 +45,12 @@ class Hoplist(commands.Cog):
     @app_commands.command(name='hoplist', description='Prints comma-separated, filtered world list in order of early- to late-wave spawns.')
     async def hoplist_slash(self, interaction: Interaction):
         try:
+            await interaction.response.defer()
+            
             view = RefreshView()
             message = await send_hoplist_message(channel=interaction.channel, message_id=None, interaction=interaction,
                                                 refresh_count=view.refresh_count)
-            await message.edit(view=view)   # attach refresh button
+            await message.edit(view=view)   #attach refresh button
             view.message = message
         except Exception as e:
             print(e)

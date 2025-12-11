@@ -41,7 +41,7 @@ class Encouragements(commands.Cog):
             encouragement = load_encouragement_keywords()
             
             #randomly select 4 encouragements
-            random_list = random.choice(encouragement, k=4)
+            random_list = random.choices(encouragement, k=4)
         
             #randomly select one encouragement from this list
             chosen_encouragement = random.choice(random_list)

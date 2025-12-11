@@ -3,17 +3,28 @@
 #used for commands/hoplist.py and commands/start_hop_loop.py
 ############################################################
 
-import sys
 import time
 from discord import NotFound
 
 from universal_utils import load_json_file
 from googlesheet_utils import get_ordered_worlds
 
-#generate the actual "hoplist" text for when I send the $hoplist message
-async def generate_hoplist_worlds():
+
+#generate the actual "hoplist" text for when I send the /hoplist message
+async def generate_hoplist_worlds(filter_list=True):
+    '''
+    Generate the actual "hoplist" text for when I send the /hoplist message.
+    filter_list=True to remove active and backup star worlds
+    filter_list=False to have full f2p list, ordered according to poof time.
+    '''
+    
     #get_ordered_worlds is async now
     worlds = await get_ordered_worlds()
+    
+    #if filter_list=False, return the full ordered list of f2p worlds
+    if not filter_list:
+        return worlds
+    
     active_stars = load_json_file(f'keyword_lists/active_stars.json')
     
     #also load backup stars!
@@ -22,11 +33,12 @@ async def generate_hoplist_worlds():
     stars = active_stars+held_stars
     
     #isolate active worlds
-    #in worlds string, worlds.replace($active world,"") -- that is, filter out the active worlds
+    #in worlds string, worlds.replace(active_world, "") -- that is, filter out the active worlds
     for star in stars:
         world = str(star['world'])
-        #remove active worlds along with their comma. if world is the last world in string, there is a leading comma.
-        worlds = worlds.replace(world+',','') if world != worlds[-3:] else worlds.replace(','+world,'')
+        #remove active and backup worlds along with their comma. 
+        #if world is the last world in string, there is a leading comma.
+        worlds = worlds.replace(world+',', '') if world != worlds[-3:] else worlds.replace(','+world, '')
         
     #remove any starting/ending commas that may have regrettably been left behind. just in case.
     worlds = worlds.strip(',')
@@ -39,6 +51,9 @@ async def generate_hoplist_message(channel, msg=None, refresh_count=0):
     #generate the text (asynchronously, of course)
     worlds = await generate_hoplist_worlds()
     
+    #also pull the full, ordered f2p world list
+    worlds_all = await generate_hoplist_worlds(filter_list=False)
+    
     #if msg variable is not None (meaning we are editing a previously existing message), then pull its time of creation
     #otherwise, 'set' its time of creation as NOW
     if msg is not None:
@@ -49,11 +64,14 @@ async def generate_hoplist_message(channel, msg=None, refresh_count=0):
     timestamp = int(time.time())
     
     text = (
-        "List of F2P worlds in order of early- to late-wave to 'no-data' spawns.\n"
+        "## [F2P worlds in order of early-to-late wave spawns]\n"
         "- Directly Copy+Paste the text into the World Cycle Runelite plugin\n"
         "- Worlds without data are tacked on at the end in numerical order\n"
-        "- Worlds in which there is a known active or held star are filtered out\n"
+        "- The filtered list REMOVES worlds with a known active or held star\n\n"
+        "**Filtered list of ordered F2P worlds:**"
         f"```{worlds}```\n"
+        "**Unfiltered list of ordered F2P worlds:**"
+        f"```{worlds_all}```\n"
         f"-# Refreshes since <t:{sent_time}:R>: {refresh_count}\n"
         f"-# Time since last refresh: <t:{timestamp}:R>")
     
@@ -81,7 +99,6 @@ async def send_hoplist_message(channel, message_id=None, interaction=None, refre
             await interaction.response.defer()
         
         try:
-            
             if msg is not None:
                 #msg already defined above if message_id is not None!
                 await msg.edit(content=text)
