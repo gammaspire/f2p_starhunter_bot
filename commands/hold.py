@@ -13,7 +13,7 @@ from discord import app_commands, Interaction, utils
 from scheduler_utils import scheduler  #import my global scheduler instance
 from universal_utils import load_f2p_worlds, remove_frontal_corTex, world_check_flag, get_star_holder
 from googlesheet_utils import check_wave_call
-from star_utils import print_error_message, add_star_to_list, load_loc_dict
+from star_utils import print_error_message, add_star_to_list, load_loc_dict, get_clean_backups
 
 from config import GUILD, GUILD_VALUE, RANKED_ROLE_NAME
 
@@ -32,9 +32,14 @@ def hold_checks(world, loc, tier):
         message = print_error_message(command='hold')+'\n'+'-# Derp.'
         return [True, message]
     
+    #if tier is a <=0, send a snarky message.
     if int(tier) <= 0:
         message = f'-# I know I am now holding stars with tiers lower than 6, but could you maybe *not* with your juvenile attempts at trickery? Are you that desperate for a "gotcha!" moment? Do you swipe pacifiers from infants, too? Get real.'
         return [True, message]
+    
+    #okay. now, calibrate the list of backup stars such that there are no expired entries!
+    #this will write a new held_stars.json file which does not contain uncalled expired stars
+    _ = get_clean_backups()
     
     #check if the world is already held or called
     if world_check_flag(world, filename='held_stars.json'):
@@ -44,7 +49,7 @@ def hold_checks(world, loc, tier):
         message = f'There is already an active star for world {world}.'
         return [True, message]
     
-    #tier *should* be between 6 and 9
+    #tier *should* be between 6 and 9. if not, snarky message.
     if not (6 <= int(tier) <= 9):
         message = f'-# You really want to hold a t{tier} star? Good heavens, whatever.'
         return [False, message]

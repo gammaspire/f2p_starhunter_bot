@@ -3,7 +3,7 @@ import time
 
 from universal_utils import load_json_file, save_json_file
 from SM_utils import get_SM_f2p_stars, calibrate_backups, add_SM_to_active
-from star_utils import remove_0tier_stars, remove_old_stars, approximate_current_tier, get_time_remaining, load_loc_dict
+from star_utils import remove_0tier_stars, get_clean_backups, approximate_current_tier, get_time_remaining, load_loc_dict
 
 
 ##########################################################################################
@@ -35,7 +35,7 @@ def embed_stars(filename, embed, active=False, hold=False):
 
     #isolate list of SM worlds (will need later)
     SM_worlds = [int(sm_star['world']) for sm_star in SM_stars]
-
+    
     #if active=True, clean and update $active list
     if active:
         
@@ -43,20 +43,23 @@ def embed_stars(filename, embed, active=False, hold=False):
         updated_stars = remove_0tier_stars(stars, SM_worlds)
         
         #add SM stars
-        updated_stars = add_SM_to_active(updated_stars, SM_stars)
-        
-        #save updated active stars list
+        cleaned_stars = add_SM_to_active(updated_stars, SM_stars)
+
+        #save updated stars list!
         save_json_file(updated_stars, f'keyword_lists/{filename}')
     
     #if we are working with backup stars, just scrub the stars that have lingered past their welcome
-    else:
-        updated_stars = remove_old_stars(stars)
-
-    #calibrate backup stars with either updated active list or current SM list
-    backup_stars = load_json_file('keyword_lists/held_stars.json')
-    reference_stars = SM_stars + updated_stars if active else SM_stars
-    updated_backups = calibrate_backups(reference_stars, backup_stars)
-    save_json_file(updated_backups, 'keyword_lists/held_stars.json')
+    #that is the only self-cleaning necessary here. 
+    #I unfortunately need to save held_stars.json twice. updated_stars are the GOOD stars, whereas reference_stars
+    #(below) are BAD stars.
+    backup_stars = get_clean_backups()
+    
+    #grab the SM stars as well as the cleaned list of active stars
+    reference_stars = SM_stars + cleaned_stars if active else SM_stars
+    
+    #update the backup stars based on the ACTIVE list!
+    updated_stars = calibrate_backups(reference_stars, backup_stars)
+    save_json_file(updated_stars, 'keyword_lists/held_stars.json')
 
     #and now, we want to convert the shorthand to the full name
     
@@ -85,7 +88,7 @@ def embed_stars(filename, embed, active=False, hold=False):
                                   f"Called by: {star['username']}",
                             inline=False)
 
-        if hold:
+        if hold:            
             embed.add_field(name=f'⭐ Star {i+1} ⭐',
                             value=f"{star['world']} {star_full_loc} [{star_loc}] Tier {star['tier']} -- {star['username']}",
                             inline=False)

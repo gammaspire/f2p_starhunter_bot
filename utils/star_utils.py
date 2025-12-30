@@ -142,6 +142,16 @@ def remove_old_stars(star_list, cutoff=7200):
     return scrubbed_list
 
 
+def get_clean_backups():
+    '''
+    AIM: REMOVE EXPIRED BACKUP STARS FROM THE BACKUPS LIST!
+    '''
+    backups = load_json_file('keyword_lists/held_stars.json')
+    backups = remove_old_stars(backups)
+    save_json_file(backups, 'keyword_lists/held_stars.json')
+    return backups
+
+
 def approximate_current_tier(call_time, original_tier):
     #max(a,b) --> gives the larger of a and b. 
     #returns current tier of the star, given the original call time (when set to $active)
