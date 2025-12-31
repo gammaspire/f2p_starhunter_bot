@@ -38,15 +38,17 @@ def embed_stars(filename, embed, active=False, hold=False):
     
     #if active=True, clean and update $active list
     if active:
-        
         #remove tier=0 stars
-        updated_stars = remove_0tier_stars(stars, SM_worlds)
+        active_stars = remove_0tier_stars(stars, SM_worlds)
         
         #add SM stars
-        cleaned_stars = add_SM_to_active(updated_stars, SM_stars)
+        active_stars = add_SM_to_active(active_stars, SM_stars)
 
         #save updated stars list!
-        save_json_file(updated_stars, f'keyword_lists/{filename}')
+        save_json_file(active_stars, f'keyword_lists/{filename}')
+    
+    else:
+        active_stars = []   #dummy variable
     
     #if we are working with backup stars, just scrub the stars that have lingered past their welcome
     #that is the only self-cleaning necessary here. 
@@ -55,11 +57,11 @@ def embed_stars(filename, embed, active=False, hold=False):
     backup_stars = get_clean_backups()
     
     #grab the SM stars as well as the cleaned list of active stars
-    reference_stars = SM_stars + cleaned_stars if active else SM_stars
+    reference_stars = SM_stars + active_stars if active else SM_stars
     
     #update the backup stars based on the ACTIVE list!
-    updated_stars = calibrate_backups(reference_stars, backup_stars)
-    save_json_file(updated_stars, 'keyword_lists/held_stars.json')
+    cleaned_backups = calibrate_backups(reference_stars, backup_stars)
+    save_json_file(cleaned_backups, 'keyword_lists/held_stars.json')
 
     #and now, we want to convert the shorthand to the full name
     
@@ -67,7 +69,9 @@ def embed_stars(filename, embed, active=False, hold=False):
     loc_dict = load_loc_dict()
 
     #for every star in updated stars list, pull the loc and find (if available) its "long name" entry
-    for i, star in enumerate(updated_stars):
+    stars_to_render = active_stars if active else cleaned_backups  #assign list of stars to a common variable
+    
+    for i, star in enumerate(stars_to_render):
         star_loc = star['loc']
         try:
             star_full_loc = loc_dict[star_loc]
