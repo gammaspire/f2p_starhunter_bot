@@ -26,8 +26,42 @@ intents = Intents.default()
 intents.members = True   #need to detect when new members join :-)
 intents.message_content = True
 
-#create bot instance (inherits from discord.Client)
-bot = commands.Bot(command_prefix="$", intents=intents, help_command=None)   #I am creating my own help_command
+################################################################################
+# Create custom Bot subclass to safely sync slash commands upon restart
+################################################################################
+
+class StarBot(commands.Bot):
+    async def setup_hook(self):
+        """
+        * commands.Bot is the pre-made Discord.py bot class, with a placeholder setup_hook() function.
+        * setup_hook() does NOTHING unless explicitly overwritten.
+        * We want to overwrite this setup_hook() to sync slash commands before on_ready; indeed,
+            when sync_commands was part of on_ready, there occasionally would be the problem of the bot
+            connecting to Discord BEFORE the slash commands synchronized.
+        
+        SUCCINCTLY:
+            setup_hook() is where the bot finishes setting itself up before Discord is allowed 
+            to talk to it.
+        
+        setup_hook() runs exactly once, BEFORE the bot connects to Discord (i.e., before any
+        events are dispatched).
+        """
+
+        #load the cogs, which are inextricably connected to the slash commands
+        await load_cogs(self)
+        
+        #add a reference printed statement for debugging purposes
+        print("LOADED COGS:", list(self.cogs.keys()))
+        
+        #explicitly sync slash commands BEFORE gateway connection (which occurs with on_ready)
+        await sync_commands(self, GUILD)
+
+################################################################################
+################################################################################
+################################################################################
+
+#create bot instance (inherited from discord.Client)
+bot = StarBot(command_prefix="$", intents=intents, help_command=None)   #I am creating my own help_command
 
 #THIS is a flag to detect a hard vs. soft startup
 #hard reset --> user runs main.py
@@ -42,6 +76,7 @@ bot.first_ready = True
 ################################################################################
 
 #@bot.event is used to register an event
+#occurs once the bot is connected to Discord!
 @bot.event
 async def on_ready():    
     
@@ -53,12 +88,6 @@ async def on_ready():
     
         #initial pull of active F2P worlds (in pull_f2p_worlds.py)
         pull_f2p_worlds()
-
-        #add the Cogs!
-        await load_cogs(bot)
-
-        #syncing slash commands
-        await sync_commands(bot, GUILD)
         
         #and, of course, edit the flag
         bot.first_ready = False
@@ -66,7 +95,7 @@ async def on_ready():
     else:
         print(f'[SOFT RESET!] {bot.user} is reconnected.')
     
-    #resumes any scheduled jobs -- such as $start_hop_loop and $start_active_loop
+    #resumes any scheduled jobs -- such as $start_active_loop
     #also initializes the pull_f2p_worlds() job, which runs immediately and then once per 24 hours
     #(in scheduler_jobs.py)
     init_scheduler_jobs(bot)
