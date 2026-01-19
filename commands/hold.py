@@ -12,7 +12,7 @@ from discord import app_commands, Interaction, utils
 
 from scheduler_utils import scheduler  #import my global scheduler instance
 from universal_utils import load_f2p_worlds, remove_frontal_corTex, world_check_flag, get_star_holder
-from googlesheet_utils import check_wave_call
+from googlesheet_utils import get_call_time, get_wave_time, check_wave_call, get_call_time_unix
 from star_utils import print_error_message, add_star_to_list, load_loc_dict, get_clean_backups
 
 from config import GUILD, GUILD_VALUE, RANKED_ROLE_NAME
@@ -82,9 +82,16 @@ class Hold(commands.Cog):
         loc_dict = load_loc_dict()
 
         try:
+            #pull wave time and call time just once here, so that I only need to do so once for two commands
+            wave_time = await get_wave_time()
+            
+            #if tier < 5, set default call time to +85
+            call_time = '+85' if (int(tier) < 6) else await get_call_time(world, tier)
+            
             #if it is indeed time to call the star, CALL THE STAR
             #compares wave time and eow suggested call time for star
-            if await check_wave_call(world, tier):
+            # NOTE: adding custom wave_time and call_time so function does not re-calculate them
+            if await check_wave_call(world, tier, wave_time=wave_time, call_time=call_time):
                 view = CallStarView(username, user_id, world, loc, tier)   #create the view
                 #just ping the user who sent the message. they will figure it out.
                 msg = await send_func(f"<⭐ {user.mention}> CALL STAR: World {world}, {loc}, Tier {tier}",
@@ -92,14 +99,20 @@ class Hold(commands.Cog):
                 view.message = msg   #store the message so timeout can disable buttons
                 return
 
+            #convert the call time to unix epoch time. use custom wave_time and call_time!
+            unix_time = await get_call_time_unix(world, tier, call_time=call_time, wave_time=wave_time)
+            
             #lastly...if none of the above checks terminated the function, hold the star~
-            add_star_to_list(username, user_id, world, loc, tier, filename='held_stars.json')
+            add_star_to_list(username, user_id, world, loc, tier, unix_time=unix_time, filename='held_stars.json')
             
             #add the held message
             if hold_check[1] is None:
-                msg = await send_func(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
-            else:
                 msg = await send_func(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}\n"
+                                      f"Time to call: <t:{unix_time}:R>\n")
+            else:
+                #hold_check[1] could be a cheeky message. append it if not None.
+                msg = await send_func(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}\n"
+                                      f"Time to call: <t:{unix_time}:R>\n"
                                       f"{hold_check[1]}")
                 
             #schedule the checking job; if star is ready to call, remove job!
@@ -113,6 +126,7 @@ class Hold(commands.Cog):
                     return
 
                 #if world is not in active list, re-check the call eligibility
+                #in this case...need fresh wave_time and call_time.
                 call_flag = await check_wave_call(world, tier)
 
                 if call_flag:

@@ -27,7 +27,7 @@ async def create_eow_message(world_string, tier_string):
     
     #also...if world not found, or f2p world is temporarily a p2p world, toss this error to the user
     if world_string not in load_f2p_worlds():
-        return 'Use a valid F2P world!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! It is not that difficult, I promise.'
+        return 'Use a valid F2P world! It is not that difficult, I promise.'
     
     #otherwise...prints call time for world and current wave time.
     try:

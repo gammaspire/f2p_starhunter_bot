@@ -42,7 +42,8 @@ class CallStarButton(Button):
             return
         
         # add the star to active list
-        add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, 'active_stars.json')
+        add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, unix_time=None, 
+                         filename='active_stars.json')
         
         # disable the button
         self.disabled = True

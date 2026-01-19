@@ -93,8 +93,10 @@ def embed_stars(filename, embed, active=False, hold=False):
                             inline=False)
 
         if hold:            
+            star_message = f"{star['world']} {star_full_loc} [{star_loc}] Tier {star['tier']} -- {star['username']}\n" +\
+                           f"Time to call: <t:{star['time_to_call']}:R>"
             embed.add_field(name=f'⭐ Star {i+1} ⭐',
-                            value=f"{star['world']} {star_full_loc} [{star_loc}] Tier {star['tier']} -- {star['username']}",
+                            value=star_message,
                             inline=False)
 
     #add 'Updated/posted [xx minutes ago]'

@@ -30,7 +30,6 @@ def open_spreadsheet(retries=3, delay=10):
     Returns:
         gspread.Spreadsheet: The opened spreadsheet object, or raises Exception if it fails.
     '''
-
     ###SERVICE ACCOUNT SETUP###
     scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds = Credentials.from_service_account_file('config/animated-scope-456121-q8-5b10debc616d.json', 
@@ -133,18 +132,55 @@ async def get_call_time(world_string, tier_string):
         return tier_call_dict[str(tier_string)]
 
 
-#ASYNC check whether the star is callable; returns a bool flag!
-async def check_wave_call(world, tier):
-    wave_time = int(await get_wave_time())
+#################################################
+# CONVERT CALL TIME OF STAR TO UNIX TIME #
+# RETURNS UNIX EPOCH TIME FOR WHEN TO CALL STAR #
+#################################################
+async def get_call_time_unix(world_string, tier_string, call_time, wave_time):
     
-    #if the tier is < 6...default to +85 call time.
-    if (int(tier) < 6):
-        call_time = 85
-    else:
-        call_time = await get_call_time(world, tier)
+    #grab the suggested call time for the star
+    if call_time is None:
+        call_time = await get_call_time(world_string, tier_string)
+    
+    #grab the current wave time
+    if wave_time is None:
+        wave_time = await get_wave_time()
+    
+    #determine the minutes remaining in the wave until time to call star
+    minutes_until_call = int(call_time.replace('+','')) - int(wave_time)
+    
+    #convert minutes to seconds in order to add to unix epoch time correctly
+    seconds_until_call = minutes_until_call * 60
+
+    #grab the unix epoch time, in seconds
+    current_time_seconds = time.time()
+
+    #calculate the time to call, now in unix-ready format
+    time_to_call_unix = int(current_time_seconds + seconds_until_call)
+    
+    return time_to_call_unix
+       
+##################################################################
+# ASYNC check whether the star is callable; returns a bool flag! #
+##################################################################
+async def check_wave_call(world, tier, wave_time=None, call_time=None):
+    
+    try:
+        if wave_time is None:
+            wave_time = await get_wave_time()
+        wave_time = int(wave_time)    
+            
+        if call_time is None:
+            
+            #if the tier is < 6...default to +85 call time.
+            call_time = '+85' if (int(tier) < 6) else await get_call_time(world, tier)
+        
         call_time = int(call_time.replace('+',''))
+
+        return wave_time > call_time
     
-    return wave_time > call_time
+    except Exception as e:
+        print('check_wave_call() error:',e)
 
 
 #ASYNC function to get the list of F2P worlds in order of early-to-late poof times. 

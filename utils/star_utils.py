@@ -43,7 +43,7 @@ def load_loc_dict():
 ############################################################
 
 #using JSON file --> a convenient approach to storing dictionary keys. :-)
-def add_star_to_list(username,user_id,world,loc,tier,filename='held_stars.json'):
+def add_star_to_list(username,user_id,world,loc,tier,unix_time=None,filename='held_stars.json'):
 
     #grab time at which star is CALLED --> will use to determine star tier later on
     call_time = time.time()
@@ -53,13 +53,20 @@ def add_star_to_list(username,user_id,world,loc,tier,filename='held_stars.json')
 
     stars_list = load_json_file(f'keyword_lists/{filename}')
 
+    #if star is active, time_to_call is irrelevant. otherwise, assign the "time to call" variable to the unix epoch time 
+    #fed into the function
+    time_to_call='N/A'
+    if 'held_stars' in filename:
+        time_to_call = unix_time
+    
     stars_list.append({
         "username": username,
         "user_id": user_id,
         "world": world,
         "loc": loc,
         "tier": tier,
-        "call_time": call_time
+        "call_time": call_time,
+        "time_to_call": time_to_call
     })
 
     with open(f'keyword_lists/{filename}','w') as f:
@@ -113,9 +120,11 @@ def remove_star(world,filename='held_stars.json',output_data=False):
     
 def remove_0tier_stars(star_list, SM_worlds):
     
-    #remove stars from the list that have a t0 tier! I do not want these buggers lingering indefinitely!
+    '''
+    AIM: remove stars from the list that have a t0 tier! I do not want these buggers lingering indefinitely!
+         also must remove any stars that have, according to SM, poofed. we can remove those stars manually using $poof command; however, if we are instead automating the $active loop and have nobody actively removing poofed stars, I would like the list to cleanse itself -- like a cat.
+    '''
     active_list = [entry for entry in star_list if int(approximate_current_tier(entry['call_time'],entry['tier'])) != 0]    
-    #also must remove any stars that have, according to SM, poofed. we can remove those stars manually using $poof command; however, if we are instead automating the $active loop and have nobody actively removing poofed stars, I would like the list to cleanse itself -- like a cat.
     
     #if star in $active list has (SM) in the username variable name AND the star's world is not in the updated SM_worlds list, remove that star. Scrub-a-dub-dub
     scrubbed_list = [entry for entry in active_list if not ('(SM)' in entry['username'] and int(entry['world']) not in SM_worlds)]
