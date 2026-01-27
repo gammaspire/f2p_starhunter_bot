@@ -203,5 +203,8 @@ cython_debug/
 # my TESTING ZONE for code -- used for Tester Bot
 /testing_zone
 
+# my debugging version of main.py so I can view DEBUG error statements that would otherwise be suppressed
+main.debug
+
 # Halloween 2025 stuff
 /Halloween2025

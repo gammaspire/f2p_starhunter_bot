@@ -3,41 +3,6 @@ import os
 from discord.ext import commands
 import asyncio
 import sys
-import traceback
-import logging
-
-# -----------------------------------------------------------------------------
-# GLOBAL "NO MORE SILENT FAILURES" DEBUG/LOGGING SETUP
-# -----------------------------------------------------------------------------
-
-def global_exception_handler(exc_type, exc_value, exc_traceback):
-    """Catch any uncaught *synchronous* exceptions and print full traceback."""
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-    print("\n🔥 UNCAUGHT EXCEPTION (sys.excepthook) 🔥")
-    traceback.print_exception(exc_type, exc_value, exc_traceback)
-
-sys.excepthook = global_exception_handler
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s"
-)
-
-def handle_async_exception(loop, context):
-    """Catch exceptions from asyncio Tasks/background jobs that would otherwise be 'silent'."""
-    print("\n🔥 ASYNCIO EXCEPTION (loop.set_exception_handler) 🔥")
-    if "exception" in context and context["exception"] is not None:
-        exc = context["exception"]
-        traceback.print_exception(type(exc), exc, exc.__traceback__)
-    else:
-        # Sometimes asyncio provides only a message
-        print(context)
-
-# -----------------------------------------------------------------------------
-# PATH SETUP
-# -----------------------------------------------------------------------------
 
 #get this over with.
 #I only ever have to add these paths (relative to main.py) once. NOT NEEDED ELSEWHERE.
@@ -110,12 +75,6 @@ bot.first_ready = True
 ################################################################################
 ################################################################################
 
-# Optional but useful: make prefix-command errors loud in addition to logging
-@bot.event
-async def on_command_error(ctx, error):
-    print("\n🔥 COMMAND ERROR (on_command_error) 🔥")
-    traceback.print_exception(type(error), error, error.__traceback__)
-
 #@bot.event is used to register an event
 #occurs once the bot is connected to Discord!
 @bot.event
@@ -147,10 +106,6 @@ async def on_ready():
     
 ################################################################################
 ################################################################################
-################################################################################
-
-# IMPORTANT: set the asyncio exception handler *before* starting the bot
-loop = asyncio.get_event_loop()
-loop.set_exception_handler(handle_async_exception)
-
+################################################################################    
+    
 bot.run(TOKEN)
