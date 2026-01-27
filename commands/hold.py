@@ -11,7 +11,8 @@ from discord.ext import commands
 from discord import app_commands, Interaction, utils
 
 from scheduler_utils import scheduler  #import my global scheduler instance
-from universal_utils import load_f2p_worlds, remove_frontal_corTex, world_check_flag, get_star_holder
+from universal_utils import (load_f2p_worlds, remove_frontal_corTex, world_check_flag, get_star_holder, 
+                             load_poof_cache, fetch_poof)
 from googlesheet_utils import get_call_time, get_wave_time, check_wave_call, get_call_time_unix
 from star_utils import print_error_message, add_star_to_list, load_loc_dict, get_clean_backups
 
@@ -98,20 +99,27 @@ class Hold(commands.Cog):
                                       view=view)
                 view.message = msg   #store the message so timeout can disable buttons
                 return
-
+            
             #convert the call time to unix epoch time. use custom wave_time and call_time!
             unix_time = await get_call_time_unix(world, tier, call_time=call_time, wave_time=wave_time)
             
+            #grab the poof time estimate dictionary
+            poof_cache = load_poof_cache()
+            poof_time = fetch_poof(poof_cache, world)
+            
             #lastly...if none of the above checks terminated the function, hold the star~
-            add_star_to_list(username, user_id, world, loc, tier, unix_time=unix_time, filename='held_stars.json')
+            add_star_to_list(username, user_id, world, loc, tier, 
+                             call_time_unix=unix_time, poof_time=poof_time, filename='held_stars.json')
             
             #add the held message
             if hold_check[1] is None:
                 msg = await send_func(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}\n"
+                                      f"Estimated poof time: +{poof_time}\n"
                                       f"Time to call: <t:{unix_time}:R>\n")
             else:
                 #hold_check[1] could be a cheeky message. append it if not None.
                 msg = await send_func(f"Holding the following ⭐:\nWorld: {world}\nLoc: {loc}\nTier: {tier}\n"
+                                      f"Estimated poof time: +{poof_time}\n"
                                       f"Time to call: <t:{unix_time}:R>\n"
                                       f"{hold_check[1]}")
                 
@@ -168,7 +176,7 @@ class Hold(commands.Cog):
                     job_id = f"hold_{world}_{tier}"  #unique job ID
                     scheduler.remove_job(job_id)     #cancel job
 
-            #non-async wrapper for the scheduler
+            #wrapper for the scheduler
             def run_job():
                 asyncio.run_coroutine_threadsafe(monitor_star(), self.bot.loop)
 

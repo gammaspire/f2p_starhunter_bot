@@ -93,3 +93,19 @@ def get_star_holder(world: str, filename="held_stars.json"):
             return s
     print('I anticipate a problem stemming from universal_utils/get_star_holder might be imminent...')
     return None
+
+
+######################################################
+# LOAD THE POOF CACHE (DICTIONARY {WORLD:POOF_TIME}) #
+######################################################
+
+def load_poof_cache():
+    poof_cache = load_json_file('keyword_lists/poofdata_cache.json')
+    return poof_cache
+
+def fetch_poof(poof_cache, world: str):
+    '''
+    Easily grab poof time from the poofdata_cache.json file.
+    '''
+    poof_time = poof_cache[world]
+    return poof_time

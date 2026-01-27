@@ -1,7 +1,7 @@
 import discord
 from discord.ui import Button, View
 
-from universal_utils import world_check_flag
+from universal_utils import world_check_flag, load_poof_cache, fetch_poof
 from star_utils import remove_star, add_star_to_list
 
 
@@ -42,8 +42,10 @@ class CallStarButton(Button):
             return
         
         # add the star to active list
-        add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, unix_time=None, 
-                         filename='active_stars.json')
+        poof_cache = load_poof_cache()
+        poof_time = fetch_poof(poof_cache, self.world)
+        add_star_to_list(self.username, self.user_id, self.world, self.loc, self.tier, 
+                         call_time_unix=None, poof_time=poof_time, filename='active_stars.json')
         
         # disable the button
         self.disabled = True
@@ -62,7 +64,7 @@ class CallStarView(View):
         # dropdowns, and other UI elements in discord.
         super().__init__(timeout=timeout)
         self.add_item(CallStarButton(username, user_id, world, loc, tier))
-        self.message: discord.Message | None = None  # will be set when you send the view
+        self.message: discord.Message | None = None  #will be set when you send the view
 
     async def on_timeout(self):
         """Called automatically when the timeout is reached."""

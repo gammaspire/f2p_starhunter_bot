@@ -7,7 +7,9 @@ import json
 import time
 import asyncio
 
-from universal_utils import remove_frontal_corTex, load_f2p_worlds, load_json_file
+from universal_utils import remove_frontal_corTex, load_f2p_worlds, save_json_file
+
+from config import SHEET_ID
     
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
 #star tier index for "Suggested EOW Call Times" sheet on dust.wiki
@@ -39,17 +41,38 @@ def open_spreadsheet(retries=3, delay=10):
     for attempt in range(retries):
         try:
             gc = gspread.authorize(creds)
-            spreadsheet = gc.open_by_key('17rGbgylW_IPQHaHUW1WsJAhuWI7y2WhplQR79g-obqg')
+            spreadsheet = gc.open_by_key(SHEET_ID)
             return spreadsheet
         except Exception as e:
             print(f"[open_spreadsheet] Attempt {attempt+1} failed: {e}")
             if attempt < retries - 1:
                 time.sleep(delay)  #wait before retrying
             else:
-                raise  #only raise after final attempt
+                raise  #only raise after final attempt    
 
+                
+############################################################
+#read and parse list of f2p worlds in all_f2p_worlds.txt
+#NOTE: start and end indices are the first and last cell indices in the column
+#outputs a dictionary of worlds and their corresponding cell index in the Google Sheet
+############################################################
+def parse_world_list(start_index, end_index):
+    _, world_list = load_f2p_worlds(output_all_worlds=True)
+    
+    #poof times on dust.wiki are in cells B5:65 ('Spawn Time Estimates')
+    #on our admin sheet, cells {}11:{}70 ('Spawn Time Data') in last visible "Avg" column
+    possible_cells = np.arange(start_index, end_index+1, 1)
+    
+    #creates a dictionary that will return the cell number of the world
+    world_dict = dict(zip(world_list, possible_cells))
+    
+    return world_dict                
+            
 
-#ASYNC version of get_wave_time
+###########################
+# GET DUST.WIKI WAVE TIME #
+###########################
+
 async def get_wave_time():
     '''
     Pulls current wave time from dust.wiki Dashboard!C3
@@ -60,7 +83,10 @@ async def get_wave_time():
     return wave_time[0][0]
 
 
-#ASYNC returns Unix epoch-converted start and end wave times
+#########################################################
+# returns Unix epoch-converted start and end wave times #
+#########################################################
+
 async def get_wave_start_end():
     '''
     Returns Unix epoch start and end times of the wave, along with minutes elapsed.
@@ -75,43 +101,57 @@ async def get_wave_start_end():
     return wave_start_time, wave_end_time, int(wave_time/60)
 
 
-#read and parse list of f2p worlds in all_f2p_worlds.txt
-#NOTE: start and end indices are the first and last cell indices in the column
-#outputs a dictionary of worlds and their corresponding cell index in the Google Sheet
-def parse_world_list(start_index, end_index):
-    _, world_list = load_f2p_worlds(output_all_worlds=True)
-    
-    #poof times on dust.wiki are in cells B5:65 ('Spawn Time Estimates')
-    possible_cells = np.arange(start_index, end_index+1, 1)
-    
-    #creates a dictionary that will return the cell number of the world
-    world_dict = dict(zip(world_list, possible_cells))
-    
-    return world_dict
-
-
-#ASYNC function to pull poof time for given F2P world from dust.wiki
-async def get_poof_time(world_string):
+#################################################################
+# PULL DICT OF POOF TIMES WITH A SINGLE GOOGLE SPREADSHEET READ #
+#################################################################
+async def fetch_poof_cache():
+    '''    
+    RETURNS: a poof data dictionary {world:poof} for all active f2p worlds.
     '''
-    Pulls poof time for a given F2P world.
-    Returns a string (minutes) or 'TBD'.
-    '''
-    if world_string not in load_f2p_worlds():
-        return 'Try again, and maybe use a valid F2P world this time.'
     
-    world_dict = parse_world_list(5, 65)
-    cell_index = world_dict[world_string]
-    cell = 'B' + str(cell_index)
+    #all active f2p worlds
+    worlds_needed = load_f2p_worlds()
     
-    spreadsheet = await asyncio.to_thread(open_spreadsheet)
     try:
-        poof_time = await asyncio.to_thread(spreadsheet.worksheet('Spawn Time Estimates').get, cell)
-        return poof_time[0][0]
-    except:
-        return 'TBD'
+        #pull spreadsheet
+        spreadsheet = await asyncio.to_thread(open_spreadsheet)
+
+        #the spawn time worksheet
+        spawn_ws = spreadsheet.worksheet("Spawn Time Estimates")
+        
+        #grab the values of the column from "top" to "bottom"...threaded?
+        #simply, the purpose of threading is to keep the bot responsive while the Sheets call is in-flight (so to speak)
+        col_values = await asyncio.to_thread(spawn_ws.get, "B5:B65")
+
+        #build row->value mapping. row index: value.
+        row_to_val = {}
+        for i, row in enumerate(col_values, start=5):
+            row_to_val[i] = row[0] if row else "TBD"
+        
+        # world->poof mapping using static world_dict
+        poofs = {}
+        world_to_row = parse_world_list(5,65)
+        for w in worlds_needed:
+            row_idx = world_to_row.get(w)
+            if row_idx is None:   #if no data, set the poofs value to TBD.
+                poofs[w] = "TBD"
+            else:
+                poofs[w] = row_to_val.get(row_idx, "TBD") or "TBD"
+    
+        #save the poof_cache!
+        save_json_file(poofs, 'keyword_lists/poofdata_cache.json')
+        
+        return poofs
+    
+    except Exception as e:
+        print('google sheet', e)
 
 
-#ASYNC from the appropriate cell for the appropriate world, pull the call time
+
+#########################################################################
+# PULL CALL TIME FOR A STAR IN WORLD world_string WITH TIER tier_string #
+#########################################################################
+
 async def get_call_time(world_string, tier_string):
     '''
     Pulls suggested call time for given F2P world/tier.
@@ -160,9 +200,10 @@ async def get_call_time_unix(world_string, tier_string, call_time, wave_time):
     
     return time_to_call_unix
        
-##################################################################
-# ASYNC check whether the star is callable; returns a bool flag! #
-##################################################################
+############################################################
+# Check whether the star is callable; returns a bool flag! #
+############################################################
+
 async def check_wave_call(world, tier, wave_time=None, call_time=None):
     
     try:
@@ -183,8 +224,10 @@ async def check_wave_call(world, tier, wave_time=None, call_time=None):
         print('check_wave_call() error:',e)
 
 
-#ASYNC function to get the list of F2P worlds in order of early-to-late poof times. 
-#worlds with no poof times are defaulted to the end of the list
+##################################################################
+# get list of F2P worlds in order of early-to-late poof times #
+# worlds with no poof times are defaulted to the end of the list #
+##################################################################
 async def get_ordered_worlds():
     spreadsheet = await asyncio.to_thread(open_spreadsheet)
     worksheet = spreadsheet.worksheet('Spawn Time Estimates')
@@ -197,3 +240,57 @@ async def get_ordered_worlds():
     
     worlds_updated = str(worlds_updated).replace("[","").replace("]","").replace(" ","")
     return worlds_updated
+
+
+###########
+# ARCHIVE #
+###########
+
+
+#####################################################
+# pull poof time for given F2P world from dust.wiki #
+#####################################################
+async def get_poof_time(world_string):
+    '''
+    Pulls poof time for a given F2P world.
+    Returns a string (minutes) or 'TBD'.
+    '''
+    if world_string not in load_f2p_worlds():
+        return 'Try again, and maybe use a valid F2P world this time.'
+    
+    world_dict = parse_world_list(5, 65)
+    cell_index = world_dict[world_string]
+    cell = 'B' + str(cell_index)
+    
+    spreadsheet = await asyncio.to_thread(open_spreadsheet)
+    try:
+        poof_time = await asyncio.to_thread(spreadsheet.worksheet('Spawn Time Estimates').get, cell)
+        return poof_time[0][0]
+    except:
+        return 'TBD'
+    
+    
+    
+##################################################
+# CONVERT POOF TIME OF STAR TO UNIX TIME #
+# RETURNS UNIX EPOCH TIME FOR WHEN STAR MAY POOF #
+##################################################
+def compute_poof_unix(wave_time_minutes, poof_time_minutes):
+    """
+    * Pure computation: convert (wave_time, poof_time) to estimated poof unix time.
+        I.E., no pulls from the google spreadsheet...
+    * Mirrors the math in get_poof_time_unix(), but without any Sheets calls.
+    """
+    #grab current unix time (seconds)
+    current_time_seconds = time.time()
+    
+    #calculate poof time in minutes
+    time_until_poof_minutes = (93 - int(wave_time_minutes)) + int(poof_time_minutes)
+    
+    #convert to seconds
+    time_until_poof_seconds = time_until_poof_minutes * 60
+    
+    #add to the current time
+    poof_estimate = current_time_seconds + time_until_poof_seconds
+    
+    return int(poof_estimate)

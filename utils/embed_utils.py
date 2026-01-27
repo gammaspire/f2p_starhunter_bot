@@ -3,7 +3,8 @@ import time
 
 from universal_utils import load_json_file, save_json_file
 from SM_utils import get_SM_f2p_stars, calibrate_backups, add_SM_to_active
-from star_utils import remove_0tier_stars, get_clean_backups, approximate_current_tier, get_time_remaining, load_loc_dict
+from star_utils import (remove_0tier_stars, get_clean_backups, approximate_current_tier, 
+                       get_time_remaining, load_loc_dict)
 
 
 ##########################################################################################
@@ -13,7 +14,7 @@ from star_utils import remove_0tier_stars, get_clean_backups, approximate_curren
 
 #generating the embed message text for ACTIVE and BACKUP star lists!     
 #this text will populate the Embed initiated in send_embed()
-def embed_stars(filename, embed, active=False, hold=False):
+async def embed_stars(filename, embed, active=False, hold=False):
     """
     Populates a Discord embed with star information.
 
@@ -26,83 +27,91 @@ def embed_stars(filename, embed, active=False, hold=False):
     Returns:
         discord.Embed: Embed object populated with star information
     """
-
-    #load current list of $backups (hold) or $active (active) stars
-    stars = load_json_file(f'keyword_lists/{filename}')
-
-    #pull SM stars from server
-    SM_stars = get_SM_f2p_stars()
-
-    #isolate list of SM worlds (will need later)
-    SM_worlds = [int(sm_star['world']) for sm_star in SM_stars]
     
-    #if active=True, clean and update $active list
-    if active:
-        #remove tier=0 stars
-        active_stars = remove_0tier_stars(stars, SM_worlds)
-        
-        #add SM stars
-        active_stars = add_SM_to_active(active_stars, SM_stars)
+    try:
+    
+        #load current list of $backups (hold) or $active (active) stars
+        stars = load_json_file(f'keyword_lists/{filename}')
 
-        #save updated stars list!
-        save_json_file(active_stars, f'keyword_lists/{filename}')
-    
-    else:
-        active_stars = []   #dummy variable
-    
-    #if we are working with backup stars, just scrub the stars that have lingered past their welcome
-    #that is the only self-cleaning necessary here. 
-    #I unfortunately need to save held_stars.json twice. updated_stars are the GOOD stars, whereas reference_stars
-    #(below) are BAD stars.
-    backup_stars = get_clean_backups()
-    
-    #grab the SM stars as well as the cleaned list of active stars
-    reference_stars = SM_stars + active_stars if active else SM_stars
-    
-    #update the backup stars based on the ACTIVE list!
-    cleaned_backups = calibrate_backups(reference_stars, backup_stars)
-    save_json_file(cleaned_backups, 'keyword_lists/held_stars.json')
+        #pull SM stars from server
+        SM_stars = get_SM_f2p_stars()
 
-    #and now, we want to convert the shorthand to the full name
-    
-    #load location dictionary
-    loc_dict = load_loc_dict()
+        #isolate list of SM worlds (will need later)
+        SM_worlds = [int(sm_star['world']) for sm_star in SM_stars]
 
-    #for every star in updated stars list, pull the loc and find (if available) its "long name" entry
-    stars_to_render = active_stars if active else cleaned_backups  #assign list of stars to a common variable
-    
-    for i, star in enumerate(stars_to_render):
-        star_loc = star['loc']
-        try:
-            star_full_loc = loc_dict[star_loc]
-        except KeyError:
-            star_full_loc = star_loc if len(star_loc) < 6 else ''
-
-        #if this is the embed for active stars, include world, loc, current tier, time remaining, scouter
+        #if active=True, clean and update $active list
         if active:
-            call_time = int(star['call_time'])   #when star was added to active list
-            current_tier = (approximate_current_tier(call_time, star['tier'])
-                            if int(star['world']) not in SM_worlds
-                            else star['tier'])
-            
-            time_remaining = get_time_remaining(call_time, current_tier)
-            embed.add_field(name=f'⭐ Star {i+1} ⭐',
-                            value=f"{star['world']} {star_full_loc} [{star_loc}] Tier {current_tier}*\n"
-                                  f"Dust time: <t:{time_remaining}:R>\n"
-                                  f"Called by: {star['username']}",
-                            inline=False)
+            #remove tier=0 stars
+            active_stars = remove_0tier_stars(stars, SM_worlds)
 
-        if hold:            
-            star_message = f"{star['world']} {star_full_loc} [{star_loc}] Tier {star['tier']} -- {star['username']}\n" +\
-                           f"Time to call: <t:{star['time_to_call']}:R>"
-            embed.add_field(name=f'⭐ Star {i+1} ⭐',
-                            value=star_message,
-                            inline=False)
+            #add SM stars
+            active_stars = await add_SM_to_active(active_stars, SM_stars)
 
-    #add 'Updated/posted [xx minutes ago]'
-    timestamp = int(time.time())
-    embed.add_field(name="\u200b", value=f"Posted/last updated <t:{timestamp}:R>", inline=False)
+            #save updated stars list!
+            save_json_file(active_stars, f'keyword_lists/{filename}')
 
+        else:
+            active_stars = []   #dummy variable
+
+        #if we are working with backup stars, just scrub the stars that have lingered past their welcome
+        #that is the only self-cleaning necessary here. 
+        #I unfortunately need to save held_stars.json twice. updated_stars are the GOOD stars, whereas reference_stars
+        #(below) are BAD stars.
+        backup_stars = get_clean_backups()
+
+        #grab the SM stars as well as the cleaned list of active stars
+        reference_stars = SM_stars + active_stars if active else SM_stars
+
+        #update the backup stars based on the ACTIVE list!
+        cleaned_backups = calibrate_backups(reference_stars, backup_stars)
+        save_json_file(cleaned_backups, 'keyword_lists/held_stars.json')
+
+        #and now, we want to convert the shorthand to the full name
+
+        #load location dictionary
+        loc_dict = load_loc_dict()
+
+        #for every star in updated stars list, pull the loc and find (if available) its "long name" entry
+        stars_to_render = active_stars if active else cleaned_backups  #assign list of stars to a common variable
+
+        for i, star in enumerate(stars_to_render):
+            star_loc = star['loc']
+            try:
+                star_full_loc = loc_dict[star_loc]
+            except KeyError:
+                star_full_loc = star_loc if len(star_loc) < 6 else ''
+
+            #if this is the embed for active stars, include world, loc, current tier, time remaining, scouter
+            if active:
+                call_time = int(star['call_time'])   #when star was added to active list
+                current_tier = (approximate_current_tier(call_time, star['tier'])
+                                if int(star['world']) not in SM_worlds
+                                else star['tier'])
+
+                time_remaining = get_time_remaining(call_time, current_tier)
+
+                embed.add_field(name=f'⭐ Star {i+1} ⭐',
+                                value=f"{star['world']} {star_full_loc} [{star_loc}] Tier {current_tier}*\n"
+                                      f"Dust time: <t:{time_remaining}:R>\n"
+                                      f"Estimated poof time: +{star['poof_estimate']}\n"
+                                      f"Called by: {star['username']}",
+                                inline=False)
+
+            if hold:
+                star_message = f"{star['world']} {star_full_loc} [{star_loc}] Tier {star['tier']} -- {star['username']}\n" +\
+                               f"Estimated poof time: +{star['poof_estimate']}\n" +\
+                               f"Time to call: <t:{star['time_to_call']}:R>"
+                embed.add_field(name=f'⭐ Star {i+1} ⭐',
+                                value=star_message,
+                                inline=False)
+
+        #add 'Updated/posted [xx minutes ago]'
+        timestamp = int(time.time())
+        embed.add_field(name="\u200b", value=f"Posted/last updated <t:{timestamp}:R>", inline=False)
+    
+    except Exception as e:
+        print('embed', e)
+    
     return embed
 
 
@@ -147,7 +156,7 @@ async def send_embed(filename, destination, active=False, hold=False, message_id
 
     title = 'Active Stars' if active else 'Backup Stars'
     embed = Embed(title=title, color=0x1ABC9C)
-    embed_filled = embed_stars(filename, embed, active=active, hold=hold)
+    embed_filled = await embed_stars(filename, embed, active=active, hold=hold)
 
     #update existing message if message_id provided
     if message_id:

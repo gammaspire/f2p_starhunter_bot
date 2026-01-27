@@ -49,6 +49,9 @@ if TESTING:
     WELCOME_GUILD = int(os.getenv("TEST_GUILD_ID"))
     WELCOME_CHANNEL = int(os.getenv("TEST_CHANNEL_ID"))
     
+    #define the SHEET_ID
+    SHEET_ID = str(os.getenv("TEST_SHEET_ID"))
+    
 else:
     
     #for the slash commands to be global (i.e., when not testing whether the slash commands work), set the necessary variables to None.)
@@ -59,3 +62,6 @@ else:
     
     #define the welcome guild and channel ID into which the bot will post a welcome message to new users (if their DMs are set to private)
     WELCOME_CHANNEL = int(os.getenv("WELCOME_CHANNEL_ID"))
+    
+    #define the SHEET_ID
+    SHEET_ID = str(os.getenv("SHEET_ID"))

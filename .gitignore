@@ -186,6 +186,7 @@ cython_debug/
 /keyword_lists/held_stars.json
 /keyword_lists/hoplist_messages.json
 /scheduled_jobs/
+/keyword_lists/poofdata_cache.json
 
 # my notes
 /notes.txt

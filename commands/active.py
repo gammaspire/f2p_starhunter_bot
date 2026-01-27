@@ -29,6 +29,8 @@ class Active(commands.Cog):
     ############################################################ 
     @app_commands.command(name="active", description="Prints list of active stars")  
     async def active_slash(self, interaction: Interaction):
+        await interaction.response.defer()  #acknowledge the command right away so that it does not 
+                                            #break if /hold takes longer than 3 seconds to complete
         await send_embed('active_stars.json', interaction, active=True)
 
 #attaching a decorator to a function after the class is defined...

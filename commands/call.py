@@ -12,7 +12,7 @@ from discord import app_commands, Interaction
 from config import GUILD, RANKED_ROLE_NAME
 
 from scheduler_utils import scheduler
-from universal_utils import remove_frontal_corTex, load_f2p_worlds, world_check_flag
+from universal_utils import remove_frontal_corTex, load_f2p_worlds, world_check_flag, load_poof_cache, fetch_poof
 from star_utils import print_error_message, add_star_to_list, remove_star
 
 
@@ -75,10 +75,13 @@ class Call(commands.Cog):
         #add star to .json
         username = ctx.author.display_name
         user_id = ctx.author.id
-        add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
+        poof_cache = load_poof_cache()
+        poof_time = fetch_poof(poof_cache, world)
+        add_star_to_list(username, user_id, world, loc, tier, 
+                         call_time_unix=None, poof_time=poof_time, filename='active_stars.json')
 
         await ctx.send(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
-     
+
     ############################################################
     #slash command: /call
     ############################################################    
@@ -110,7 +113,10 @@ class Call(commands.Cog):
         author = interaction.user
         username = author.display_name
         user_id = author.id
-        add_star_to_list(username, user_id, world, loc, tier, 'active_stars.json')
+        poof_cache = load_poof_cache()
+        poof_time = fetch_poof(poof_cache, world)
+        add_star_to_list(username, user_id, world, loc, tier, 
+                         call_time_unix=None, poof_time=poof_time, filename='active_stars.json')
 
         await interaction.response.send_message(f"⭐ Star moved to $active list!\nWorld: {world}\nLoc: {loc}\nTier: {tier}")
             

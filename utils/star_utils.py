@@ -43,30 +43,33 @@ def load_loc_dict():
 ############################################################
 
 #using JSON file --> a convenient approach to storing dictionary keys. :-)
-def add_star_to_list(username,user_id,world,loc,tier,unix_time=None,filename='held_stars.json'):
+def add_star_to_list(username, user_id, world, loc, tier, 
+                     call_time_unix=None, poof_time=None, filename='held_stars.json'):
 
-    #grab time at which star is CALLED --> will use to determine star tier later on
-    call_time = time.time()
+    #grab time at which star is added to list --> will use to determine star tier later on
+    time_added = time.time()
 
     #isolate the tier number in case someone entered t# or T#
     tier = remove_frontal_corTex(tier)
 
     stars_list = load_json_file(f'keyword_lists/{filename}')
 
-    #if star is active, time_to_call is irrelevant. otherwise, assign the "time to call" variable to the unix epoch time 
+    #if star is active, time_to_call is irrelevant. similarly, if star is hold then poof_estimate is irrelevant. 
+    #otherwise, assign the "time to call" or "poof estimate" variable to the unix epoch time 
     #fed into the function
     time_to_call='N/A'
-    if 'held_stars' in filename:
-        time_to_call = unix_time
-    
+    if "held" in filename:
+        time_to_call = call_time_unix
+        
     stars_list.append({
         "username": username,
         "user_id": user_id,
         "world": world,
         "loc": loc,
         "tier": tier,
-        "call_time": call_time,
-        "time_to_call": time_to_call
+        "call_time": time_added,
+        "time_to_call": time_to_call,
+        "poof_estimate": poof_time
     })
 
     with open(f'keyword_lists/{filename}','w') as f:
@@ -119,7 +122,6 @@ def remove_star(world,filename='held_stars.json',output_data=False):
 ############################################################       
     
 def remove_0tier_stars(star_list, SM_worlds):
-    
     '''
     AIM: remove stars from the list that have a t0 tier! I do not want these buggers lingering indefinitely!
          also must remove any stars that have, according to SM, poofed. we can remove those stars manually using $poof command; however, if we are instead automating the $active loop and have nobody actively removing poofed stars, I would like the list to cleanse itself -- like a cat.

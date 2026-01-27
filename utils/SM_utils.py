@@ -4,7 +4,7 @@
 
 import requests
 
-from universal_utils import world_check_flag, load_json_file, save_json_file, load_f2p_worlds
+from universal_utils import world_check_flag, load_json_file, save_json_file, load_f2p_worlds, load_poof_cache, fetch_poof
 
 
 #extract list of Star Miners F2P active stars
@@ -37,28 +37,36 @@ def get_SM_f2p_stars():
       
 
 #add Star Miners stars to our $active list, replace stars called using $call with SM counterparts, if they exist
-def add_SM_to_active(our_active_stars, SM_stars):
+async def add_SM_to_active(our_active_stars, SM_stars):
 
-    #convert list of our_active_stars to a dictionary {world: star}
-    active_by_world = {str(star['world']): star for star in our_active_stars}
+    try:
+        #convert list of our_active_stars to a dictionary {world: star}
+        active_by_world = {str(star['world']): star for star in our_active_stars}
 
-    for SM_star in SM_stars:
+        #grab the poof cache!
+        poof_cache = load_poof_cache()
+        
+        for SM_star in SM_stars:
 
-        #grab the world of the SM star
-        world_key = str(SM_star['world'])
+            #grab the world of the SM star
+            world_key = str(SM_star['world'])
 
-        #replace or add the SM star
-        active_by_world[world_key] = {
-            "username": f"{SM_star['calledBy']} (SM)",
-            "user_id": "None",
-            "world": world_key,
-            "loc": SM_star['calledLocation'],
-            "tier": str(SM_star['tier']),
-            "call_time": int(SM_star['calledAt'])
-        }
+            #replace or add the SM star
+            active_by_world[world_key] = {
+                "username": f"{SM_star['calledBy']} (SM)",
+                "user_id": "None",
+                "world": world_key,
+                "loc": SM_star['calledLocation'],
+                "tier": str(SM_star['tier']),
+                "call_time": int(SM_star['calledAt']),
+                "poof_estimate": fetch_poof(poof_cache, world_key)
+            }
 
-    #convert back to list of stars!
-    return list(active_by_world.values())
+        #convert back to list of stars!
+        return list(active_by_world.values())
+    
+    except Exception as e:
+        print('add SM to active', e)
 
     
 #check if SM star is in our $backups list. if so, remove from $backups.        

@@ -8,8 +8,8 @@
 from discord.ext import commands
 from discord import app_commands, Interaction
 
-from universal_utils import load_f2p_worlds
-from googlesheet_utils import get_wave_time, get_poof_time
+from universal_utils import load_f2p_worlds, load_poof_cache, fetch_poof
+from googlesheet_utils import get_wave_time
 
 from config import GUILD
 
@@ -20,15 +20,16 @@ async def create_poof_message(world_string):
     
     if str(world_string) not in load_f2p_worlds():
         return 'Error, likely because you are not using a valid F2P world. What a maroon.'
-    
-    poof_time = await get_poof_time(world_string)
+
+    poof_cache = load_poof_cache()
+    poof_time = fetch_poof(poof_cache, world_string)
 
     #prints poof time for world and current wave time.
     if poof_time=='TBD':
-        return f'Poof time for {world_string} is {poof_time}!'
+        return f'The poof time for {world_string} is {poof_time}!'
     else:
         wave_time = await get_wave_time()
-        return f'Poof time for {world_string} is +{poof_time}. The current wave time is +{wave_time}.'
+        return f'The estimated poof time for {world_string} is +{poof_time}. The current wave time is +{wave_time}.'
 
     
 class Poof_Time(commands.Cog):
@@ -41,12 +42,6 @@ class Poof_Time(commands.Cog):
     ############################################################
     @commands.command(help='Prints poof time for the entered world.\nPrefix example: $poof_time 308')
     async def poof_time(self, ctx, world):
-        #load list of f2p worlds
-        f2p_world_list = load_f2p_worlds()
-
-        if world not in f2p_world_list:
-            await ctx.send('Are you kidding? USE A VALID F2P WORLD.')
-            return
 
         poof_message = await create_poof_message(world)
         await ctx.send(poof_message)
@@ -58,11 +53,6 @@ class Poof_Time(commands.Cog):
     async def poof_time_slash(self, interaction: Interaction, world: str):
         await interaction.response.defer()  #acknowledge the command right away so that it does not 
                                             #break if /poof_time takes longer than 3 seconds to complete
-        f2p_world_list = load_f2p_worlds()
-        
-        if world not in f2p_world_list:
-            await interaction.followup.send('Are you kidding? Use a valid F2P world!')
-            return
         
         poof_message = await create_poof_message(world)
         await interaction.followup.send(poof_message)

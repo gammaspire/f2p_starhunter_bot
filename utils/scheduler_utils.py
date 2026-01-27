@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 
 from pull_f2p_worlds import pull_f2p_worlds
+from googlesheet_utils import fetch_poof_cache
 from universal_utils import grab_job_ids, load_json_file
 
 from embed_utils import send_embed
@@ -13,9 +14,11 @@ from hoplist_utils import send_hoplist_message
 #global scheduler and dictionaries~
 scheduler = AsyncIOScheduler()
 
+
 #a quick function to return the scheduler for $hold
 def get_scheduler():
     return scheduler
+
 
 # --- JOB WRAPPERS ---
 def run_active(bot, guild_id, channel_id, message_id):
@@ -25,9 +28,9 @@ def run_active(bot, guild_id, channel_id, message_id):
             print(f"[run_active] Channel not found for guild {guild_id}, id {channel_id}")
             return
 
-        asyncio.run_coroutine_threadsafe(send_embed("active_stars.json", channel, active=True, hold=False, 
-                                                    message_id=message_id),
-                                         bot.loop)
+        asyncio.run_coroutine_threadsafe(
+            send_embed("active_stars.json", channel, active=True, hold=False, message_id=message_id), 
+            bot.loop)
 
 
 def run_hoplist(bot, guild_id, channel_id, message_id):
@@ -41,6 +44,14 @@ def init_scheduler_jobs(bot):
     if not scheduler.running:
         scheduler.start()
 
+    # --- Fetch Poof Dictionary job ---
+    job_id = "fetch_poofs_job"
+    if not scheduler.get_job(job_id):
+        scheduler.add_job(fetch_poof_cache, 'interval', hours=1, id=job_id,
+                         replace_existing=False, next_run_time=datetime.now())
+        
+        print("Fetch Poof Dictionary job is successfully scheduled to run once per hour!")
+        
     # --- Pull F2P worlds job ---
     job_id = "pull_f2p_worlds_job"
     if not scheduler.get_job(job_id):
@@ -59,6 +70,7 @@ def init_scheduler_jobs(bot):
         if not scheduler.get_job(job_id):
             scheduler.add_job(run_active, trigger='interval', minutes=minutes, id=job_id, 
                               args=[bot, guild_id, channel_id, message_id])
+            
             print(f"Restored active star messages for guild {guild_id} every {minutes} minutes.")
 
     # --- Restore HOPLIST jobs ---
@@ -71,6 +83,7 @@ def init_scheduler_jobs(bot):
         if not scheduler.get_job(job_id):
             scheduler.add_job(run_hoplist, trigger='interval', minutes=minutes, id=job_id, 
                               args=[bot, guild_id, channel_id, message_id])
+            
             print(f"Restored hoplist messages for guild {guild_id} every {minutes} minutes.")
 
             
@@ -80,4 +93,5 @@ def reset_star_jsons():
     for filename in ['keyword_lists/held_stars.json', 'keyword_lists/active_stars.json']:
         with open(filename, 'w') as f:
             json.dump([], f)
+    
     print("Cleared held_stars.json and active_stars.json")
