@@ -26,7 +26,7 @@ async def create_poof_message(world_string):
 
     #prints poof time for world and current wave time.
     if poof_time=='TBD':
-        return f'The poof time for {world_string} is {poof_time}!'
+        return f'The poof time for {world_string} is +{poof_time}!'
     else:
         wave_time = await get_wave_time()
         return f'The estimated poof time for {world_string} is +{poof_time}. The current wave time is +{wave_time}.'
