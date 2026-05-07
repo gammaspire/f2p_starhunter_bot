@@ -16,7 +16,7 @@ from universal_utils import remove_frontal_corTex, load_f2p_worlds, world_check_
 from star_utils import print_error_message, add_star_to_list, remove_star
 
 
-def call_checks(world, loc, tier):
+def call_checks(world, tier):
     
     if world is None or tier is None:
         message = print_error_message(command='call')+'\n'+'-# Use your noggin next time.'
@@ -51,8 +51,11 @@ class Call(commands.Cog):
     @commands.has_role(RANKED_ROLE_NAME)
     async def call(self, ctx, world=None, loc=None, tier=None):
         
+        #convert alphabet string to all lowercase
+        loc=loc.lower()
+        
         #a few...quality checks
-        check_list = call_checks(world, loc, tier)
+        check_list = call_checks(world, tier)
         
         #if the first element is True, then print the error message (send element) and terminate the function
         if check_list[0]:
@@ -89,8 +92,11 @@ class Call(commands.Cog):
     @app_commands.checks.has_role(RANKED_ROLE_NAME)
     async def call_slash(self, interaction: Interaction, world : str, loc : str, tier: str):
         
+        #convert alphabet string to all lowercase
+        loc=loc.lower()
+        
         #a few...quality checks
-        check_list = call_checks(world, loc, tier)
+        check_list = call_checks(world, tier)
         
         if check_list[0]:
             await interaction.response.send_message(check_list[1])
