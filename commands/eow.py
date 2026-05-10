@@ -44,9 +44,9 @@ async def create_eow_message(world_string, tier_string):
         else:
             call_notice = f'You can call the star now!'
 
+        #otherwise...prints call time for world and current wave time.
         return f'The suggested call time for {world_string} T{tier_string} is +{call_time}. The current wave time is +{wave_time}. {call_notice}'
     
-    #otherwise...prints call time for world and current wave time.
     except:
         return f"For Pete's sake, PLEASE use a valid F2P world."
 

@@ -56,10 +56,11 @@ def open_spreadsheet(retries=3, delay=10):
 #NOTE: start and end indices are the first and last cell indices in the column
 #outputs a dictionary of worlds and their corresponding cell index in the Google Sheet
 ############################################################
+
 def parse_world_list(start_index, end_index):
     _, world_list = load_f2p_worlds(output_all_worlds=True)
     
-    #poof times on dust.wiki are in cells B5:65 ('Spawn Time Estimates')
+    #poof times on dust.wiki are in cells B5:64 ('Spawn Time Estimates')
     #on our admin sheet, cells {}11:{}70 ('Spawn Time Data') in last visible "Avg" column
     possible_cells = np.arange(start_index, end_index+1, 1)
     
@@ -121,7 +122,7 @@ async def fetch_poof_cache():
         
         #grab the values of the column from "top" to "bottom"...threaded?
         #simply, the purpose of threading is to keep the bot responsive while the Sheets call is in-flight (so to speak)
-        col_values = await asyncio.to_thread(spawn_ws.get, "B5:B65")
+        col_values = await asyncio.to_thread(spawn_ws.get, "B5:B64")
 
         #build row->value mapping. row index: value.
         row_to_val = {}
@@ -130,7 +131,7 @@ async def fetch_poof_cache():
         
         # world->poof mapping using static world_dict
         poofs = {}
-        world_to_row = parse_world_list(5,65)
+        world_to_row = parse_world_list(5,64)
         for w in worlds_needed:
             row_idx = world_to_row.get(w)
             if row_idx is None:   #if no data, set the poofs value to TBD.
@@ -147,7 +148,6 @@ async def fetch_poof_cache():
         print('google sheet', e)
 
 
-
 #########################################################################
 # PULL CALL TIME FOR A STAR IN WORLD world_string WITH TIER tier_string #
 #########################################################################
@@ -159,7 +159,7 @@ async def get_call_time(world_string, tier_string):
     '''
     spreadsheet = await asyncio.to_thread(open_spreadsheet)
             
-    world_dict = parse_world_list(3, 63)
+    world_dict = parse_world_list(3, 62)
     column_index = tier_dict[str(tier_string)]
     world_index = world_dict[world_string]
     cell = str(column_index) + str(world_index)
@@ -258,7 +258,7 @@ async def get_poof_time(world_string):
     if world_string not in load_f2p_worlds():
         return 'Try again, and maybe use a valid F2P world this time.'
     
-    world_dict = parse_world_list(5, 65)
+    world_dict = parse_world_list(5, 64)
     cell_index = world_dict[world_string]
     cell = 'B' + str(cell_index)
     
@@ -268,7 +268,6 @@ async def get_poof_time(world_string):
         return poof_time[0][0]
     except:
         return 'TBD'
-    
     
     
 ##################################################
