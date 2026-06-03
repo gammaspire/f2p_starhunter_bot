@@ -39,7 +39,7 @@ def pull_f2p_worlds():
         #pull the world and type_ (use type_ instead of type, since type is a pre-built command in python. silly.
         world, _, _, type_, activity = cols[0], cols[1], cols[2], cols[3], cols[4]
         if "Free" in type_ and "Grid Master" not in activity:
-            #replace the pretext with blanks, otherwise each row will have 'Old School [world]' or 'OldSchool [world]
+            #replace the pretext with blanks, otherwise each row will have 'Old School [world]' or 'OldSchool [world]'
             world = world.replace('Old School ', '')
             world = world.replace('OldSchool ','')
             f2p_worlds.append(f"{int(world)+300}")

@@ -122,7 +122,7 @@ async def fetch_poof_cache():
         
         #grab the values of the column from "top" to "bottom"...threaded?
         #simply, the purpose of threading is to keep the bot responsive while the Sheets call is in-flight (so to speak)
-        col_values = await asyncio.to_thread(spawn_ws.get, "B5:B64")
+        col_values = await asyncio.to_thread(spawn_ws.get, "B5:B67")
 
         #build row->value mapping. row index: value.
         row_to_val = {}
@@ -131,7 +131,7 @@ async def fetch_poof_cache():
         
         # world->poof mapping using static world_dict
         poofs = {}
-        world_to_row = parse_world_list(5,64)
+        world_to_row = parse_world_list(5,67)
         for w in worlds_needed:
             row_idx = world_to_row.get(w)
             if row_idx is None:   #if no data, set the poofs value to TBD.
@@ -159,7 +159,7 @@ async def get_call_time(world_string, tier_string):
     '''
     spreadsheet = await asyncio.to_thread(open_spreadsheet)
             
-    world_dict = parse_world_list(3, 62)
+    world_dict = parse_world_list(3, 65)
     column_index = tier_dict[str(tier_string)]
     world_index = world_dict[world_string]
     cell = str(column_index) + str(world_index)
@@ -232,7 +232,7 @@ async def get_ordered_worlds():
     spreadsheet = await asyncio.to_thread(open_spreadsheet)
     worksheet = spreadsheet.worksheet('Spawn Time Estimates')
     
-    cell_list = await asyncio.to_thread(worksheet.get, 'K5:K64')
+    cell_list = await asyncio.to_thread(worksheet.get, 'K5:K67')
     worlds = [row[0][:3] for row in cell_list if row]
     
     f2p_worlds_list = load_f2p_worlds()
@@ -258,7 +258,7 @@ async def get_poof_time(world_string):
     if world_string not in load_f2p_worlds():
         return 'Try again, and maybe use a valid F2P world this time.'
     
-    world_dict = parse_world_list(5, 64)
+    world_dict = parse_world_list(5, 67)
     cell_index = world_dict[world_string]
     cell = 'B' + str(cell_index)
     
