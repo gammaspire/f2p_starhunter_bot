@@ -60,8 +60,8 @@ def open_spreadsheet(retries=3, delay=10):
 def parse_world_list(start_index, end_index):
     _, world_list = load_f2p_worlds(output_all_worlds=True)
     
-    #poof times on dust.wiki are in cells B5:64 ('Spawn Time Estimates')
-    #on our admin sheet, cells {}11:{}70 ('Spawn Time Data') in last visible "Avg" column
+    #poof times on dust.wiki are in cells B5:67 ('Spawn Time Estimates')
+    #on our admin sheet, cells {}11:{}73 ('Spawn Time Data') in last visible "Avg" column
     possible_cells = np.arange(start_index, end_index+1, 1)
     
     #creates a dictionary that will return the cell number of the world
