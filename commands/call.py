@@ -53,7 +53,7 @@ class Call(commands.Cog):
         
         #convert alphabet string to all lowercase
         loc=loc.lower()
-        
+
         #a few...quality checks
         check_list = call_checks(world, tier)
         
@@ -94,7 +94,7 @@ class Call(commands.Cog):
         
         #convert alphabet string to all lowercase
         loc=loc.lower()
-        
+
         #a few...quality checks
         check_list = call_checks(world, tier)
         

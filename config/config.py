@@ -16,6 +16,15 @@
 
 # MOD_ROLE_NAME
     #name of the @Mods role in your Discord server. Default is "Mods." See README.md to learn which commands are restricted to which roles!
+    
+# KEY_FILENAME
+    # important! this is the .json file which contains the information for your Google service account.
+    # this account information is needed in order to link the Discord bot with Google Sheets!
+    # keep this file in this $config subdirectory!
+    
+# START_ROW, END_ROW
+    # in the Google Sheet dust.wiki, the start and end rows for the world lists for the Spawn Time Estimates sheet
+    # these may change if f2p worlds are permanently added/removed (and the admins are actively updating the Sheet ;-))
 
 ####################################
 #    EDIT THESE VARIABLES HERE     #
@@ -25,6 +34,9 @@ TOKEN_PATH = 'config/token.env'   #change the name of your token.env file here i
 TESTING = False   
 RANKED_ROLE_NAME = 'Scouter'
 MOD_ROLE_NAME = 'Mods'
+KEY_FILENAME = 'mainbot_key.json'
+START_ROW = 5
+END_ROW = 67
 
 ####################################
 #   DO NOT EDIT BELOW THIS LINE!   #

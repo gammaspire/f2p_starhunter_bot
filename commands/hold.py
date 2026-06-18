@@ -84,7 +84,7 @@ class Hold(commands.Cog):
 
         #convert alphabet string to all lowercase
         loc=loc.lower()
-        
+
         try:
             #pull wave time and call time just once here, so that I only need to do so once for two commands
             wave_time = await get_wave_time()

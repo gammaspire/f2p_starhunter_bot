@@ -34,7 +34,8 @@ python main.py
     * WELCOME_CHANNEL_ID=welcome_channel_id
         * this one is optional, depending on whether you want to spam a new member to your server with a welcome message. The bot defaults to a DM, but if that user has DM privacy settings enabled it will instead send the message to the welcome_channel_id. You can find this ID the same way as you found the guild ID, but by instead right-clicking the desired channel in your server.
 
-* Be sure to update the config/configs.py file to check if you are loading the correct guild/channel variables from token.env into your bot! There are a few commented instructions in the .py file about what to do and why you might want to do it.
+* Be sure to update the $config/configs.py file to check if you are loading the correct guild/channel variables from token.env into your bot! There are a few commented instructions in the .py file about what to do and why you might want to do it.
+    * On that note, please also refer to the README.md in that subdirectory!
 
 * Additionally, you will need an API key in order to pull from the dust.wiki Dashboard (and other Google Sheets). The name of the .json file from which my key is read is found in `/utils/googlesheet_utils.py`. You will likely have to create a service account on Google Cloud in order to generate your own API key, and once you do so the .json file you need will automatically download. In lieu of an API key, a workaround might involve repeatedly saving the desired sheet as a .csv file and reading the cell data from there. The code is not set up for this, so you will have to fiddle around with some of the scripts in /utils. :-)
 
@@ -79,7 +80,7 @@ python main.py
     * **SLASH COMMAND ONLY!**
     * Use restricted to members with @Ranked role
     * will change the "person to ping" from the author (the one who called the command) to the target (the @rankeduser) stars in held_stars.json file. The author MUST have backup stars associated with their username for this to work, otherwise there will be a snarky message from the bot.
-        * Example usage: `/offload @gammaquire`
+        * Example usage: `/offload @gammasquire`
 
 * $remove f2p_world
     * will remove any held backup star in the JSON file which corresponds to the world (which acts as a unique identifier, since there can only be one star per world).

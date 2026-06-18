@@ -38,7 +38,7 @@ def remove_frontal_corTex(tier_string):
 def load_f2p_worlds(output_omitted_worlds = False, output_all_worlds = False):
     
     active_path = os.path.join('keyword_lists', 'active_f2p_worlds.txt')
-    all_path = os.path.join('keyword_lists', 'all_f2p_worlds.txt')
+    all_path = os.path.join('config', 'all_f2p_worlds.txt')
     
     #contains list of active worlds which may be < all_f2p_worlds.txt, either due to temporary server outages 
     #or the (temporary..?) conversion of the world to P2P-only.

@@ -9,7 +9,7 @@ import asyncio
 
 from universal_utils import remove_frontal_corTex, load_f2p_worlds, save_json_file
 
-from config import SHEET_ID
+from config import SHEET_ID, KEY_FILENAME, START_ROW, END_ROW
     
 #TIER 6 -- B, TIER 7 -- C, TIER 8 -- D, TIER 9 -- E
 #star tier index for "Suggested EOW Call Times" sheet on dust.wiki
@@ -34,8 +34,8 @@ def open_spreadsheet(retries=3, delay=10):
     '''
     ###SERVICE ACCOUNT SETUP###
     scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_file('config/animated-scope-456121-q8-5b10debc616d.json', 
-                                                             scopes=scopes)
+    creds = Credentials.from_service_account_file(f'config/{KEY_FILENAME}', 
+                                                  scopes=scopes)
 
     ###OPEN SPREADSHEET WITH RETRIES###
     for attempt in range(retries):
@@ -61,7 +61,6 @@ def parse_world_list(start_index, end_index):
     _, world_list = load_f2p_worlds(output_all_worlds=True)
     
     #poof times on dust.wiki are in cells B5:67 ('Spawn Time Estimates')
-    #on our admin sheet, cells {}11:{}73 ('Spawn Time Data') in last visible "Avg" column
     possible_cells = np.arange(start_index, end_index+1, 1)
     
     #creates a dictionary that will return the cell number of the world
@@ -122,7 +121,7 @@ async def fetch_poof_cache():
         
         #grab the values of the column from "top" to "bottom"...threaded?
         #simply, the purpose of threading is to keep the bot responsive while the Sheets call is in-flight (so to speak)
-        col_values = await asyncio.to_thread(spawn_ws.get, "B5:B67")
+        col_values = await asyncio.to_thread(spawn_ws.get, f"B{START_ROW}:B{END_ROW}")
 
         #build row->value mapping. row index: value.
         row_to_val = {}
@@ -131,7 +130,7 @@ async def fetch_poof_cache():
         
         # world->poof mapping using static world_dict
         poofs = {}
-        world_to_row = parse_world_list(5,67)
+        world_to_row = parse_world_list(START_ROW,END_ROW)
         for w in worlds_needed:
             row_idx = world_to_row.get(w)
             if row_idx is None:   #if no data, set the poofs value to TBD.
@@ -159,7 +158,7 @@ async def get_call_time(world_string, tier_string):
     '''
     spreadsheet = await asyncio.to_thread(open_spreadsheet)
             
-    world_dict = parse_world_list(3, 65)
+    world_dict = parse_world_list(START_ROW-2, END_ROW-2)
     column_index = tier_dict[str(tier_string)]
     world_index = world_dict[world_string]
     cell = str(column_index) + str(world_index)
@@ -232,7 +231,7 @@ async def get_ordered_worlds():
     spreadsheet = await asyncio.to_thread(open_spreadsheet)
     worksheet = spreadsheet.worksheet('Spawn Time Estimates')
     
-    cell_list = await asyncio.to_thread(worksheet.get, 'K5:K67')
+    cell_list = await asyncio.to_thread(worksheet.get, F'K{START_ROW}:K{END_ROW}')
     worlds = [row[0][:3] for row in cell_list if row]
     
     f2p_worlds_list = load_f2p_worlds()
@@ -258,7 +257,7 @@ async def get_poof_time(world_string):
     if world_string not in load_f2p_worlds():
         return 'Try again, and maybe use a valid F2P world this time.'
     
-    world_dict = parse_world_list(5, 67)
+    world_dict = parse_world_list(START_ROW, END_ROW)
     cell_index = world_dict[world_string]
     cell = 'B' + str(cell_index)
     

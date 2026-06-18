@@ -28,7 +28,7 @@ def print_loc_key(loc_shorthand):
 
 def loc_lowercase(loc_shorthand):
     return loc_shorthand.lower()
-    
+
 
 class Loc(commands.Cog):
     def __init__(self, bot):
@@ -50,7 +50,7 @@ class Loc(commands.Cog):
     ############################################################
     @app_commands.command(name='loc', description='Prints the full location corresponding to our scouting loc shorthand.')
     async def loc_slash(self, interaction: Interaction, shorthand: str):
-        shorthand = loc_lowercase(shorthand)
+        shorthand = low_lowercase(shorthand)
         loc_shorthand, loc_key = print_loc_key(short)
         await interaction.message.send_response(f'{loc_shorthand} = {loc_key}\n\n'
                                                 f'See https://locations.dust.wiki for a list of our scouting shorthand and the full map of exact F2P spawn locations!')  

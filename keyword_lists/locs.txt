@@ -24,3 +24,5 @@ lsw                                 Lumbridge_Southwest_Swamp_Mine
 dray                                Draynor_Bank
 wildy                               locations.dust.wiki
 .                                   locations.dust.wiki
+mg                                  Myths_Guild
+myth                                Myths_Guild
