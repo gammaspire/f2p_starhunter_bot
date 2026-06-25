@@ -131,6 +131,7 @@ async def fetch_poof_cache():
         # world->poof mapping using static world_dict
         poofs = {}
         world_to_row = parse_world_list(START_ROW,END_ROW)
+        
         for w in worlds_needed:
             row_idx = world_to_row.get(w)
             if row_idx is None:   #if no data, set the poofs value to TBD.

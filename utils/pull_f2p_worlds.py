@@ -44,12 +44,13 @@ def pull_f2p_worlds():
             world = world.replace('OldSchool ','')
             f2p_worlds.append(f"{int(world)+300}")
 
+    #(over)write and save!
+    with open('keyword_lists/active_f2p_worlds.txt', "w") as f:
+        f.write("\n".join(f2p_worlds))        
+    
     if '561' not in f2p_worlds:
         f2p_worlds += ['561']
     if '577' not in f2p_worlds:
         f2p_worlds += ['577']
-            
-    #(over)write and save!
-    with open('keyword_lists/active_f2p_worlds.txt', "w") as f:
-        f.write("\n".join(f2p_worlds))
+        
     return f2p_worlds

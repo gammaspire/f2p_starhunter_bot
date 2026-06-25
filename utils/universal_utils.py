@@ -67,6 +67,7 @@ def load_f2p_worlds(output_omitted_worlds = False, output_all_worlds = False):
         
         return active_worlds, omitted_worlds
     
+    active_worlds = active_worlds+['561'] if '561' not in active_worlds else active_worlds+['577']
     return active_worlds
 
 
