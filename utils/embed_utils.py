@@ -4,7 +4,8 @@ import time
 from universal_utils import load_json_file, save_json_file
 from SM_utils import get_SM_f2p_stars, calibrate_backups, add_SM_to_active
 from star_utils import (remove_0tier_stars, get_clean_backups, approximate_current_tier, 
-                       get_time_remaining, load_loc_dict)
+                       get_time_remaining, get_time_remaining_poof, load_loc_dict)
+from googlesheet_utils import get_wave_time
 
 
 ##########################################################################################
@@ -88,12 +89,15 @@ async def embed_stars(filename, embed, active=False, hold=False):
                                 if int(star['world']) not in SM_worlds
                                 else star['tier'])
 
+                #get current wave time
+                wavetime = await get_wave_time()
                 time_remaining = get_time_remaining(call_time, current_tier)
+                time_remaining_poof = get_time_remaining_poof(wavetime, star['poof_estimate'])
 
                 embed.add_field(name=f'⭐ Star {i+1} ⭐',
                                 value=f"{star['world']} {star_full_loc} [{star_loc}] Tier {current_tier}*\n"
                                       f"Dust time: <t:{time_remaining}:R>\n"
-                                      f"Estimated poof time: +{star['poof_estimate']}\n"
+                                      f"Estimated poof time: <t:{time_remaining_poof}:R> (+{star['poof_estimate']})\n"
                                       f"Called by: {star['username']}",
                                 inline=False)
 
@@ -105,9 +109,10 @@ async def embed_stars(filename, embed, active=False, hold=False):
                                 value=star_message,
                                 inline=False)
 
-        #add 'Updated/posted [xx minutes ago]'
+        #add 'Current Wave Time' and 'Updated/posted [xx minutes ago]'
         timestamp = int(time.time())
-        embed.add_field(name="\u200b", value=f"Posted/last updated <t:{timestamp}:R>", inline=False)
+        message = f"Current Wave Time: +{wavetime}" + '\n' + f"Posted/last updated <t:{timestamp}:R>"
+        embed.add_field(name="\u200b", value=message, inline=False)
     
     except Exception as e:
         print('embed', e)

@@ -171,7 +171,7 @@ def approximate_current_tier(call_time, original_tier):
     return current_tier
 
 
-#get time remaining (in seconds) for the star!
+#get time remaining (in seconds) for the star (UNTIL DUST)!
 def get_time_remaining(call_time, original_tier):
     original_tier = int(original_tier)
     time_since_call = time.time() - call_time
@@ -179,4 +179,30 @@ def get_time_remaining(call_time, original_tier):
     time_remaining = star_dust_time - time_since_call   #time remaining until star dusts
     time_remaining = int(time.time() + time_remaining)   #convert to Unix time
     
+    return time_remaining
+
+
+#get time remaining (in seconds) for the star (UNTIL POOF)!
+def get_time_remaining_poof(wave_time, poof_time):
+    '''
+    GOAL: convert poof time (minutes) to Unix time (seconds)
+    '''
+    #if the wave time is farther ahead than the poof time (with +10 as cushioning), then 
+    #the time remaining is the difference between the wave time and the poof time PLUS 93
+    #(since the star is estimated to poof in the next wave cycle)
+    if (int(wave_time)+10) >= int(poof_time):
+        time_remaining = int(wave_time) + int(poof_time)
+    
+    #if poof time > wave_time + 10, then the remaining time is just the difference between the wave time
+    #and the poof time
+    else:
+        time_remaining = int(wave_time) + int(poof_time)
+    
+    #convert time remaining from minutes to seconds
+    time_remaining = time_remaining*60
+    
+    #convert to real Unix time
+    time_remaining = int(time.time() + time_remaining)
+    
+    #and, obviously, return
     return time_remaining
