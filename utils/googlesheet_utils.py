@@ -220,15 +220,15 @@ async def get_poof_time_unix(poof_time=None, wave_time=None):
     #in case there is a prepended '+', remove. also, convert to integer if not already.
     poof_time = int(poof_time.replace('+',''))
     
-    #if the wave time is farther ahead than the poof time (with +10 as cushioning), then 
+    #if the wave time is farther ahead than the poof time (with +2 as cushioning), then 
     #the time remaining is the difference between the wave time and the poof time PLUS 93
     #(since the star is estimated to poof in the next wave cycle)
-    if (int(wave_time)+10) >= poof_time:
+    if (int(wave_time)+2) >= poof_time:
         time_ = 93 + poof_time - int(wave_time)
     
-    #if poof time > wave_time + 10, then the remaining time is just the difference between the wave time
+    #if poof time > wave_time + 2, then the remaining time is just the difference between the wave time
     #and the poof time
-    elif (int(wave_time)+10) < poof_time:
+    elif (int(wave_time)+2) < poof_time:
         time_ = poof_time - int(wave_time)
         
     else:
