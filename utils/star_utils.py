@@ -54,6 +54,8 @@ def add_star_to_list(username, user_id, world, loc, tier,
 
     stars_list = load_json_file(f'keyword_lists/{filename}')
 
+    #poof_time_unix = await get_poof_time_unix(poof_time=poof_time)
+    
     #if star is active, time_to_call is irrelevant. similarly, if star is hold then poof_estimate is irrelevant. 
     #otherwise, assign the "time to call" or "poof estimate" variable to the unix epoch time 
     #fed into the function
@@ -179,30 +181,4 @@ def get_time_remaining(call_time, original_tier):
     time_remaining = star_dust_time - time_since_call   #time remaining until star dusts
     time_remaining = int(time.time() + time_remaining)   #convert to Unix time
     
-    return time_remaining
-
-
-#get time remaining (in seconds) for the star (UNTIL POOF)!
-def get_time_remaining_poof(wave_time, poof_time):
-    '''
-    GOAL: convert poof time (minutes) to Unix time (seconds)
-    '''
-    #if the wave time is farther ahead than the poof time (with +10 as cushioning), then 
-    #the time remaining is the difference between the wave time and the poof time PLUS 93
-    #(since the star is estimated to poof in the next wave cycle)
-    if (int(wave_time)+10) >= int(poof_time):
-        time_remaining = int(wave_time) + int(poof_time)
-    
-    #if poof time > wave_time + 10, then the remaining time is just the difference between the wave time
-    #and the poof time
-    else:
-        time_remaining = int(wave_time) + int(poof_time)
-    
-    #convert time remaining from minutes to seconds
-    time_remaining = time_remaining*60
-    
-    #convert to real Unix time
-    time_remaining = int(time.time() + time_remaining)
-    
-    #and, obviously, return
     return time_remaining

@@ -199,7 +199,51 @@ async def get_call_time_unix(world_string, tier_string, call_time, wave_time):
     time_to_call_unix = int(current_time_seconds + seconds_until_call)
     
     return time_to_call_unix
-       
+
+
+#################################################
+# CONVERT POOF TIME OF STAR TO UNIX TIME #
+# RETURNS UNIX EPOCH TIME FOR WHEN TO CALL STAR #
+#################################################
+async def get_poof_time_unix(poof_time=None, wave_time=None):
+    '''
+    GOAL: convert poof time (minutes) to Unix time (seconds)
+    '''
+    
+    #if no poof time on star yet, then return NONE
+    if poof_time is None or poof_time=='TBD':
+        return None
+    
+    if wave_time is None:
+        wave_time = await get_wave_time()
+    
+    #in case there is a prepended '+', remove. also, convert to integer if not already.
+    poof_time = int(poof_time.replace('+',''))
+    
+    #if the wave time is farther ahead than the poof time (with +10 as cushioning), then 
+    #the time remaining is the difference between the wave time and the poof time PLUS 93
+    #(since the star is estimated to poof in the next wave cycle)
+    if (int(wave_time)+10) >= poof_time:
+        time_ = 93 + poof_time - int(wave_time)
+    
+    #if poof time > wave_time + 10, then the remaining time is just the difference between the wave time
+    #and the poof time
+    elif (int(wave_time)+10) < poof_time:
+        time_ = poof_time - int(wave_time)
+        
+    else:
+        return None
+    
+    #convert time remaining from minutes to seconds
+    time_ = time_*60
+    
+    #convert to real Unix time (current time in seconds PLUS the time until poof estimate
+    time_ = int(time.time() + time_)
+    
+    #and, obviously, return
+    return time_
+
+
 ############################################################
 # Check whether the star is callable; returns a bool flag! #
 ############################################################
@@ -268,28 +312,3 @@ async def get_poof_time(world_string):
         return poof_time[0][0]
     except:
         return 'TBD'
-    
-    
-##################################################
-# CONVERT POOF TIME OF STAR TO UNIX TIME #
-# RETURNS UNIX EPOCH TIME FOR WHEN STAR MAY POOF #
-##################################################
-def compute_poof_unix(wave_time_minutes, poof_time_minutes):
-    """
-    * Pure computation: convert (wave_time, poof_time) to estimated poof unix time.
-        I.E., no pulls from the google spreadsheet...
-    * Mirrors the math in get_poof_time_unix(), but without any Sheets calls.
-    """
-    #grab current unix time (seconds)
-    current_time_seconds = time.time()
-    
-    #calculate poof time in minutes
-    time_until_poof_minutes = (93 - int(wave_time_minutes)) + int(poof_time_minutes)
-    
-    #convert to seconds
-    time_until_poof_seconds = time_until_poof_minutes * 60
-    
-    #add to the current time
-    poof_estimate = current_time_seconds + time_until_poof_seconds
-    
-    return int(poof_estimate)

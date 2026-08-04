@@ -4,8 +4,8 @@ import time
 from universal_utils import load_json_file, save_json_file
 from SM_utils import get_SM_f2p_stars, calibrate_backups, add_SM_to_active
 from star_utils import (remove_0tier_stars, get_clean_backups, approximate_current_tier, 
-                       get_time_remaining, get_time_remaining_poof, load_loc_dict)
-from googlesheet_utils import get_wave_time
+                       get_time_remaining, load_loc_dict)
+from googlesheet_utils import get_wave_time, get_poof_time_unix
 
 
 ##########################################################################################
@@ -40,6 +40,11 @@ async def embed_stars(filename, embed, active=False, hold=False):
         #isolate list of SM worlds (will need later)
         SM_worlds = [int(sm_star['world']) for sm_star in SM_stars]
 
+        #pull current wave time
+        wavetime = await get_wave_time()
+        
+        active_stars = []  #dummy variable
+        
         #if active=True, clean and update $active list
         if active:
             #remove tier=0 stars
@@ -51,17 +56,14 @@ async def embed_stars(filename, embed, active=False, hold=False):
             #save updated stars list!
             save_json_file(active_stars, f'keyword_lists/{filename}')
 
-        else:
-            active_stars = []   #dummy variable
-
         #if we are working with backup stars, just scrub the stars that have lingered past their welcome
         #that is the only self-cleaning necessary here. 
         #I unfortunately need to save held_stars.json twice. updated_stars are the GOOD stars, whereas reference_stars
         #(below) are BAD stars.
         backup_stars = get_clean_backups()
 
-        #grab the SM stars as well as the cleaned list of active stars
-        reference_stars = SM_stars + active_stars if active else SM_stars
+        #grab the SM stars as well as the cleaned list of active stars (if active=True, otherwise active_stars=[])
+        reference_stars = SM_stars + active_stars
 
         #update the backup stars based on the ACTIVE list!
         cleaned_backups = calibrate_backups(reference_stars, backup_stars)
@@ -77,10 +79,8 @@ async def embed_stars(filename, embed, active=False, hold=False):
 
         for i, star in enumerate(stars_to_render):
             star_loc = star['loc']
-            try:
-                star_full_loc = loc_dict[star_loc]
-            except KeyError:
-                star_full_loc = star_loc if len(star_loc) < 6 else ''
+            star_full_loc = loc_dict.get(star_loc,
+                                         star_loc if len(star_loc) < 6 else '')
 
             #if this is the embed for active stars, include world, loc, current tier, time remaining, scouter
             if active:
@@ -89,15 +89,21 @@ async def embed_stars(filename, embed, active=False, hold=False):
                                 if int(star['world']) not in SM_worlds
                                 else star['tier'])
 
-                #get current wave time
-                wavetime = await get_wave_time()
+                #get current time remaining for star
                 time_remaining = get_time_remaining(call_time, current_tier)
-                time_remaining_poof = get_time_remaining_poof(wavetime, star['poof_estimate'])
+                
+                #poof times! if not TBD, convert poof time into a Discord Unix timestamp
+                time_to_poof = ''
 
+                if star['poof_estimate'] != 'TBD':
+                    unix_poof = await get_poof_time_unix(poof_time=star['poof_estimate'],
+                                                         wave_time=wavetime)
+                    time_to_poof = f'<t:{unix_poof}:R>'
+                
                 embed.add_field(name=f'⭐ Star {i+1} ⭐',
                                 value=f"{star['world']} {star_full_loc} [{star_loc}] Tier {current_tier}*\n"
                                       f"Dust time: <t:{time_remaining}:R>\n"
-                                      f"Estimated poof time: <t:{time_remaining_poof}:R> (+{star['poof_estimate']})\n"
+                                      f"Estimated poof time: {time_to_poof} (+{star['poof_estimate']})\n"
                                       f"Called by: {star['username']}",
                                 inline=False)
 
